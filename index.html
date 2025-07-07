@@ -68,15 +68,30 @@
             transform: rotate(180deg);
         }
         
-        /* 校区选择器模态窗口样式 */
-        #campus-selector-modal {
-            transition: opacity 0.3s ease-in-out;
+        /* 视图过渡效果 */
+        #detail-view, #search-view {
+            transition: transform 0.3s ease-in-out;
+        }
+
+        /* 搜索结果高亮 */
+        .search-highlight {
+            background-color: #fef9c3; /* yellow-100 */
+            border-radius: 3px;
+        }
+        
+        /* 临时高亮动画 */
+        @keyframes highlight-fade {
+            from { background-color: #fde047; } /* yellow-400 */
+            to { background-color: transparent; }
+        }
+        .temp-highlight {
+            animation: highlight-fade 2s ease-in-out;
         }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 overflow-hidden">
 
-    <!-- 校区选择器模态窗口 -->
+    <!-- 校区选择器模态窗口 (已恢复到初始版本) -->
     <div id="campus-selector-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 hidden">
         <div class="bg-white p-8 rounded-2xl shadow-2xl w-11/12 max-w-3xl transform transition-all scale-95 opacity-0" id="campus-selector-dialog">
             <div class="text-center">
@@ -112,8 +127,8 @@
         </div>
     </div>
 
-    <!-- 页面主体结构 -->
-    <div class="flex h-screen relative">
+    <!-- 主视图 -->
+    <div id="main-view" class="flex h-screen relative">
         <!-- 移动端遮罩层 -->
         <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden md:hidden"></div>
 
@@ -135,16 +150,47 @@
 
         <!-- 主内容区域 -->
         <main class="flex-1 flex flex-col h-screen">
-            <header class="bg-white shadow-md p-4 flex justify-between items-center z-10">
-                <button id="menu-toggle" class="md:hidden text-gray-700"><i data-lucide="menu"></i></button>
-                <h2 id="content-title" class="text-xl font-semibold text-gray-800 truncate"></h2>
-                <a href="#" id="home-button-top" class="text-gray-600 hover:text-blue-700 transition-colors"><i data-lucide="home" class="w-5 h-5"></i></a>
+            <header class="bg-white shadow-md p-3 flex justify-between items-center z-10 space-x-4">
+                <button id="menu-toggle" class="md:hidden text-gray-700 flex-shrink-0"><i data-lucide="menu"></i></button>
+                <h2 id="content-title" class="text-xl font-semibold text-gray-800 truncate hidden sm:block"></h2>
+                <form id="search-form" class="relative w-full max-w-xs ml-auto">
+                    <input type="search" id="search-input" placeholder="搜索指南..." class="w-full pl-10 pr-4 py-2 rounded-full border bg-gray-100 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                    <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
+                </form>
+                <a href="#" id="home-button-top" class="text-gray-600 hover:text-blue-700 transition-colors flex-shrink-0"><i data-lucide="home" class="w-5 h-5"></i></a>
             </header>
             <div id="content-area" class="flex-1 px-4 md:px-8 overflow-y-auto">
                 <!-- 内容将通过JS动态加载到这里 -->
             </div>
         </main>
     </div>
+
+    <!-- 详情视图 -->
+    <div id="detail-view" class="fixed inset-0 bg-gray-50 z-40 flex-col transform translate-x-full hidden">
+        <header class="bg-white shadow-md p-4 flex items-center z-10 flex-shrink-0">
+            <button id="back-to-main-btn" class="text-gray-600 hover:text-blue-700 transition-colors">
+                <i data-lucide="chevron-left" class="w-6 h-6"></i>
+            </button>
+            <h2 id="detail-title" class="text-xl font-semibold text-gray-800 truncate ml-4">详情</h2>
+        </header>
+        <div id="detail-content" class="flex-1 p-4 md:p-8 overflow-y-auto">
+            <!-- 详细内容将加载到这里 -->
+        </div>
+    </div>
+
+    <!-- 搜索结果视图 -->
+    <div id="search-view" class="fixed inset-0 bg-gray-50 z-40 flex-col transform translate-x-full hidden">
+        <header class="bg-white shadow-md p-4 flex items-center z-10 flex-shrink-0">
+            <button id="back-to-main-from-search-btn" class="text-gray-600 hover:text-blue-700 transition-colors">
+                <i data-lucide="chevron-left" class="w-6 h-6"></i>
+            </button>
+            <h2 id="search-title" class="text-xl font-semibold text-gray-800 truncate ml-4">搜索结果</h2>
+        </header>
+        <div id="search-results-container" class="flex-1 p-4 md:p-8 overflow-y-auto">
+            <!-- 搜索结果将加载到这里 -->
+        </div>
+    </div>
+
 
     <script>
         // ===================================================================================
@@ -236,7 +282,7 @@
                         { q: "如何查询课程表和成绩？", a: "可以通过学校的教务系统网站查询个人课程表、考试安排和各科成绩。" },
                         { q: "校园网经常掉线或者速度慢怎么办？", a: "首先可以尝试重启路由器或电脑。如果问题依然存在，可以联系你所办理的运营商客服报修。" }
                     ] },
-                    "重要部门联系方式": { title: "重要部门联系方式", content: `<div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><h3 class="text-2xl font-bold text-gray-800 mb-6">寻求帮助</h3><div class="overflow-x-auto"><table class="w-full text-left"><thead><tr class="bg-gray-100"><th class="p-3">部门</th><th class="p-3">办公地点</th><th class="p-3">联系电话</th></tr></thead><tbody><tr class="border-b"><td class="p-3">学生工作处</td><td class="p-3">行政楼A101</td><td class="p-3">0518-XXXXXXX</td></tr><tr class="border-b"><td class="p-3">教务处</td><td class="p-3">行政楼A201</td><td class="p-3">0518-XXXXXXX</td></tr><tr class="border-b"><td class="p-3">保卫处</td><td class="p-3">校南门</td><td class="p-3">0518-XXXXXXX (24小时)</td></tr><tr><td class="p-3">信息网络中心</td><td class="p-3">图文信息中心B101</td><td class="p-3">0518-XXXXXXX</td></tr></tbody></table></div></div>` }
+                    "重要部门联系方式": { title: "重要部门联系方式", content: `<div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><h3 class="text-2xl font-bold text-gray-800 mb-6">重要部门联系方式：</h3><div class="overflow-x-auto"><table class="w-full text-left"><thead><p style="color: rgb(0, 0, 255);"><a href="URL">https://www.jou.edu.cn/bgdhcx.htm</a></p>` }
                 }
             }
         };
@@ -247,171 +293,129 @@
                 name: "苍梧校区",
                 dormitory: {
                     title: "苍梧校区宿舍介绍",
-                    content: `
-                        <div class="w-full max-w-6xl mx-auto">
-                            <h3 class="text-3xl font-bold text-gray-800 mb-8 text-center">宿舍概览</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                <!-- A区宿舍 -->
-                                <div class="bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
-                                    <img src="苍梧校区/宿舍/A区宿舍.jpg" alt="[图片：A区宿舍]" class="w-full h-56 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e0e7ff/3730a3?text=Image+Not+Found';">
-                                    <div class="p-6">
-                                        <h4 class="font-bold text-xl text-gray-900">A区宿舍</h4>
-                                        <p class="text-gray-600 text-sm mt-2">女生宿舍</p>
-                                    </div>
-                                </div>
-                                <!-- B区宿舍 -->
-                                <div class="bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
-                                     <img src="苍梧校区/宿舍/B区宿舍.jpg" alt="[图片：B区宿舍]" class="w-full h-56 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e0e7ff/3730a3?text=Image+Not+Found';">
-                                     <div class="p-6">
-                                        <h4 class="font-bold text-xl text-gray-900">B区宿舍</h4>
-                                        <p class="text-gray-600 text-sm mt-2">男生宿舍</p>
-                                    </div>
-                                </div>
-                                <!-- D区宿舍 -->
-                                <div class="bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
-                                     <img src="苍梧校区/宿舍/D区宿舍.jpg" alt="[图片：D区宿舍]" class="w-full h-56 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e0e7ff/3730a3?text=Image+Not+Found';">
-                                     <div class="p-6">
-                                        <h4 class="font-bold text-xl text-gray-900">D区宿舍</h4>
-                                        <p class="text-gray-600 text-sm mt-2">男生女生宿舍都有，都是四人间、上床下桌、独立卫浴，每栋楼一楼有澡堂</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>`
+                    items: {
+                        'a_dorm': {
+                            name: 'A区宿舍',
+                            image: '苍梧校区/宿舍/A区宿舍.jpg',
+                            summary: '女生宿舍',
+                            details: `<div class="prose max-w-none"><h2>A区宿舍 详细信息</h2><p>这里是关于A区宿舍的更多详细介绍... 待补充</p></div>`
+                        },
+                        'b_dorm': {
+                            name: 'B区宿舍',
+                            image: '苍梧校区/宿舍/B区宿舍.jpg',
+                            summary: '男生宿舍',
+                            details: `<div class="prose max-w-none"><h2>B区宿舍 详细信息</h2><p>这里是关于B区宿舍的更多详细介绍... 待补充</p></div>`
+                        },
+                        'd_dorm': {
+                            name: 'D区宿舍',
+                            image: '苍梧校区/宿舍/D区宿舍.jpg',
+                            summary: '男女混宿，四人间，独立卫浴',
+                            details: `<div class="prose max-w-none"><h2>D区宿舍 详细信息</h2><p>男生女生宿舍都有，都是四人间、上床下桌、独立卫浴，每栋楼一楼有澡堂。更多信息待补充。</p></div>`
+                        }
+                    }
                 },
                 canteen: {
                     title: "苍梧校区食堂介绍",
-                    content: `
-                        <div class="w-full max-w-6xl mx-auto">
-                            <h3 class="text-3xl font-bold text-gray-800 mb-8 text-center">美食天地</h3>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                                <div class="bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
-                                    <img src="苍梧校区/食堂/第一食堂.jpg" alt="[图片：第一食堂]" class="w-full h-48 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e0e7ff/3730a3?text=Image+Not+Found';">
-                                    <div class="p-6">
-                                        <h4 class="font-bold text-xl text-gray-900">第一食堂</h4>
-                                        <p class="text-gray-600 text-sm mt-2">位于大学生活动中心旁，是相比其他食堂最为方便的一个食堂，它位于同学们上下课的必经之路上一食堂的一大特色就是快餐快餐的便捷与它的地理优势完美契合早餐也很丰盛</p>
-                                    </div>
-                                </div>
-                                <div class="bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
-                                    <img src="苍梧校区/食堂/第二食堂.jpg" alt="[图片：第二食堂]" class="w-full h-48 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e0e7ff/3730a3?text=Image+Not+Found';">
-                                    <div class="p-6">
-                                        <h4 class="font-bold text-xl text-gray-900">第二食堂&风味餐厅</h4>
-                                        <p class="text-gray-600 text-sm mt-2">位于海洋楼旁，离教学区最近。其中一楼是第二食堂，二楼是风味餐厅，可从室内走楼梯上，也可从户外的电梯直接抵达二楼。装修环境典雅</p>
-                                    </div>
-                                </div>
-                                <div class="bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
-                                    <img src="苍梧校区/食堂/第三食堂.jpg" alt="[图片：第三食堂]" class="w-full h-48 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e0e7ff/3730a3?text=Image+Not+Found';">
-                                    <div class="p-6">
-                                        <h4 class="font-bold text-xl text-gray-900">第三食堂&第四食堂</h4>
-                                        <p class="text-gray-600 text-sm mt-2">在学校的小广场旁，附近是A区女生宿舍，各营业厅商业网点，以及澡堂。一楼是三食堂。二楼是四食堂。是抖音里的网红餐厅，它里面的种类非常丰富，三食堂的五块钱的快餐真的是是月底的期盼了。四食堂的小火锅经济实惠，四食堂的麻辣烫，还是挺得麻辣烫爱好者的厚爱的</p>
-                                    </div>
-                                </div>
-                                <div class="bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
-                                    <img src="苍梧校区/食堂/东区食堂.jpg" alt="[图片：东区食堂]" class="w-full h-48 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e0e7ff/3730a3?text=Image+Not+Found';">
-                                    <div class="p-6">
-                                        <h4 class="font-bold text-xl text-gray-900">东区食堂</h4>
-                                        <p class="text-gray-600 text-sm mt-2">D区食堂，四号门一进门往右望最大的建筑便是。比较大不会出现拥挤没有座位端着饭碗找座位的现象</p>
-                                    </div>
-                                </div>
-                                <div class="bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
-                                    <img src="苍梧校区/食堂/民族餐厅.jpg" alt="[图片：民族餐厅]" class="w-full h-48 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e0e7ff/3730a3?text=Image+Not+Found';">
-                                    <div class="p-6">
-                                        <h4 class="font-bold text-xl text-gray-900">民族餐厅</h4>
-                                        <p class="text-gray-600 text-sm mt-2">位于医务室旁，清真食堂早餐种类多还好吃</p>
-                                    </div>
-                                </div>
-                                 <div class="bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
-                                    <img src="苍梧校区/食堂/南园餐厅.jpg" alt="[图片：南园餐厅]" class="w-full h-48 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e0e7ff/3730a3?text=Image+Not+Found';">
-                                    <div class="p-6">
-                                        <h4 class="font-bold text-xl text-gray-900">南园餐厅</h4>
-                                        <p class="text-gray-600 text-sm mt-2">位于文予楼旁，附近就是民族餐厅，南园的味道相比食堂就有了几分家常的感觉，南园最大的特色还是它的宴席如果说大家想在学校里坐一桌，南园应该是一个非常好的选择</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>`
+                    items: {
+                        'canteen1': {
+                            name: '第一食堂',
+                            image: '苍梧校区/食堂/第一食堂.jpg',
+                            summary: '位于大学生活动中心旁，上下课必经之路。',
+                            details: `<div class="prose max-w-none"><h2>第一食堂 详细信息</h2><p>位于大学生活动中心旁，是相比其他食堂最为方便的一个食堂，它位于同学们上下课的必经之路上一食堂的一大特色就是快餐快餐的便捷与它的地理优势完美契合早餐也很丰盛。</p></div>`
+                        },
+                        'canteen2': {
+                            name: '第二食堂&风味餐厅',
+                            image: '苍梧校区/食堂/第二食堂.jpg',
+                            summary: '位于海洋楼旁，离教学区最近，装修典雅。',
+                            details: `<div class="prose max-w-none"><h2>第二食堂&风味餐厅 详细信息</h2><p>位于海洋楼旁，离教学区最近。其中一楼是第二食堂，二楼是风味餐厅，可从室内走楼梯上，也可从户外的电梯直接抵达二楼。装修环境典雅。</p></div>`
+                        },
+                        'canteen3': {
+                            name: '第三食堂&第四食堂',
+                            image: '苍梧校区/食堂/第三食堂.jpg',
+                            summary: '网红餐厅，种类丰富，小火锅和麻辣烫是特色。',
+                            details: `<div class="prose max-w-none"><h2>第三食堂&第四食堂 详细信息</h2><p>在学校的小广场旁，附近是A区女生宿舍，各营业厅商业网点，以及澡堂。一楼是三食堂。二楼是四食堂。是抖音里的网红餐厅，它里面的种类非常丰富，三食堂的五块钱的快餐真的是是月底的期盼了。四食堂的小火锅经济实惠，四食堂的麻辣烫，还是挺得麻辣烫爱好者的厚爱的。</p></div>`
+                        },
+                        'canteen_east': {
+                            name: '东区食堂',
+                            image: '苍梧校区/食堂/东区食堂.jpg',
+                            summary: 'D区食堂，空间大，座位多。',
+                            details: `<div class="prose max-w-none"><h2>东区食堂 详细信息</h2><p>D区食堂，四号门一进门往右望最大的建筑便是。比较大不会出现拥挤没有座位端着饭碗找座位的现象。</p></div>`
+                        },
+                        'canteen_ethnic': {
+                            name: '民族餐厅',
+                            image: '苍梧校区/食堂/民族餐厅.jpg',
+                            summary: '位于医务室旁，清真食堂。',
+                            details: `<div class="prose max-w-none"><h2>民族餐厅 详细信息</h2><p>位于医务室旁，清真食堂早餐种类多还好吃。</p></div>`
+                        },
+                        'canteen_south': {
+                            name: '南园餐厅',
+                            image: '苍梧校区/食堂/南园餐厅.jpg',
+                            summary: '位于文予楼旁，可承办宴席。',
+                            details: `<div class="prose max-w-none"><h2>南园餐厅 详细信息</h2><p>位于文予楼旁，附近就是民族餐厅，南园的味道相比食堂就有了几分家常的感觉，南园最大的特色还是它的宴席如果说大家想在学校里坐一桌，南园应该是一个非常好的选择。</p></div>`
+                        }
+                    }
                 }
             },
             tongguan: {
                 name: "通灌校区",
                 dormitory: {
                     title: "通灌校区宿舍介绍",
-                    content: `<div class="w-full max-w-6xl mx-auto">
-                                <h3 class="text-3xl font-bold text-gray-800 mb-8 text-center">宿舍概览</h3>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <div class="md:col-span-2 bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 flex flex-col md:flex-row">
-                                        <img src="通灌校区/宿舍/锦绣宿舍.jpg" alt="[图片：通灌校区宿舍]" class="w-full md:w-1/2 h-64 md:h-auto object-cover" onerror="this.onerror=null;this.src='https://placehold.co/800x500/e0e7ff/3730a3?text=Image+Not+Found';">
-                                        <div class="p-8 flex flex-col justify-center">
-                                            <h4 class="font-bold text-2xl text-gray-900">锦绣宿舍</h4>
-                                            <p class="text-gray-600 text-base mt-4">内容介绍待开发...</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>`
+                    items: {
+                        'jinxiu_dorm': {
+                            name: '锦绣宿舍',
+                            image: '通灌校区/宿舍/锦绣宿舍.jpg',
+                            summary: '内容介绍待开发...',
+                            details: `<div class="prose max-w-none"><h2>锦绣宿舍 详细信息</h2><p>内容介绍待开发...</p></div>`
+                        }
+                    }
                 },
                 canteen: {
                     title: "通灌校区食堂介绍",
-                    content: `
-                        <div class="w-full max-w-6xl mx-auto">
-                            <h3 class="text-3xl font-bold text-gray-800 mb-8 text-center">美食天地</h3>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                                <div class="bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
-                                    <img src="通灌校区/食堂/前程餐厅.jpg" alt="[图片：前程餐厅]" class="w-full h-48 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e0e7ff/3730a3?text=Image+Not+Found';">
-                                    <div class="p-6">
-                                        <h4 class="font-bold text-xl text-gray-900">前程餐厅</h4>
-                                        <p class="text-gray-600 text-sm mt-2">内容介绍待开发...</p>
-                                    </div>
-                                </div>
-                                <div class="bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
-                                    <img src="通灌校区/食堂/美食广场.jpg" alt="[图片：美食广场]" class="w-full h-48 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e0e7ff/3730a3?text=Image+Not+Found';">
-                                    <div class="p-6">
-                                        <h4 class="font-bold text-xl text-gray-900">美食广场</h4>
-                                        <p class="text-gray-600 text-sm mt-2">内容介绍待开发...</p>
-                                    </div>
-                                </div>
-                                <div class="bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
-                                    <img src="通灌校区/食堂/民族风味餐厅.jpg" alt="[图片：民族风味餐厅]" class="w-full h-48 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e0e7ff/3730a3?text=Image+Not+Found';">
-                                    <div class="p-6">
-                                        <h4 class="font-bold text-xl text-gray-900">民族风味餐厅</h4>
-                                        <p class="text-gray-600 text-sm mt-2">内容介绍待开发...</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>`
+                    items: {
+                        'qiancheng_canteen': {
+                            name: '前程餐厅',
+                            image: '通灌校区/食堂/前程餐厅.jpg',
+                            summary: '内容介绍待开发...',
+                            details: `<div class="prose max-w-none"><h2>前程餐厅 详细信息</h2><p>内容介绍待开发...</p></div>`
+                        },
+                        'food_square': {
+                            name: '美食广场',
+                            image: '通灌校区/食堂/美食广场.jpg',
+                            summary: '内容介绍待开发...',
+                            details: `<div class="prose max-w-none"><h2>美食广场 详细信息</h2><p>内容介绍待开发...</p></div>`
+                        },
+                        'ethnic_canteen': {
+                            name: '民族风味餐厅',
+                            image: '通灌校区/食堂/民族风味餐厅.jpg',
+                            summary: '内容介绍待开发...',
+                            details: `<div class="prose max-w-none"><h2>民族风味餐厅 详细信息</h2><p>内容介绍待开发...</p></div>`
+                        }
+                    }
                 }
             },
             songtiao: {
                 name: "宋跳校区",
                 dormitory: {
                     title: "宋跳校区宿舍介绍",
-                    content: `<div class="w-full max-w-6xl mx-auto">
-                                <h3 class="text-3xl font-bold text-gray-800 mb-8 text-center">宿舍概览</h3>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <div class="md:col-span-2 bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 flex flex-col md:flex-row">
-                                        <img src="宋跳校区/宿舍/宋跳宿舍.jpg" alt="[图片：宋跳校区宿舍]" class="w-full md:w-1/2 h-64 md:h-auto object-contain" onerror="this.onerror=null;this.src='https://placehold.co/800x500/e0e7ff/3730a3?text=Image+Not+Found';">
-                                        <div class="p-8 flex flex-col justify-center">
-                                            <h4 class="font-bold text-2xl text-gray-900">宋跳宿舍</h4>
-                                            <p class="text-gray-600 text-base mt-4">内容介绍待开发中...</p> 
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>`
+                     items: {
+                        'songtiao_dorm': {
+                            name: '宋跳宿舍',
+                            image: '宋跳校区/宿舍/宋跳宿舍.jpg',
+                            summary: '内容介绍待开发中...',
+                            details: `<div class="prose max-w-none"><h2>宋跳宿舍 详细信息</h2><p>内容介绍待开发中...</p></div>`
+                        }
+                    }
                 },
                 canteen: {
                     title: "宋跳校区食堂介绍",
-                    content: `
-                        <div class="w-full max-w-6x1 max-w-6xl mx-auto">
-                            <h3 class="text-3xl font-bold text-gray-800 mb-8 text-center">美食天地</h3>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                               <div class="sm:col-span-2 lg:col-span-3">
-                                   <div class="bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
-                                    <img src="宋跳校区/食堂/东港餐厅.jpg" alt="[图片：东港餐厅]" class="w-full h-56 md:h-72 lg:h-90 object-cover rounded-t-xl"this.onerror=null;this.src='https://placehold.co/600x400/e0e7ff/3730a3?text=Image+Not+Found';">
-                                    <div class="p-6">
-                                        <h4 class="font-bold text-xl text-gray-900">东港餐厅</h4>
-                                        <p class="text-gray-600 text-sm mt-2">内容介绍待开发...</p>
-                                    </div>
-                                </div>
-                                </div>
-                            </div>
-                        </div>`
+                    items: {
+                       'donggang_canteen': {
+                            name: '东港餐厅',
+                            image: '宋跳校区/食堂/东港餐厅.jpg',
+                            summary: '内容介绍待开发...',
+                            details: `<div class="prose max-w-none"><h2>东港餐厅 详细信息</h2><p>内容介绍待开发...</p></div>`
+                        }
+                    }
                 }
             }
         };
@@ -429,6 +433,7 @@
                 this.scrollTimeout = null;
 
                 // 缓存DOM元素
+                this.mainView = document.getElementById('main-view');
                 this.navMenu = document.getElementById('nav-menu');
                 this.contentArea = document.getElementById('content-area');
                 this.contentTitle = document.getElementById('content-title');
@@ -440,6 +445,19 @@
                 this.campusDialog = document.getElementById('campus-selector-dialog');
                 this.changeCampusBtn = document.getElementById('change-campus-btn');
                 this.currentCampusDisplay = document.getElementById('current-campus-display');
+
+                // 详情页元素
+                this.detailView = document.getElementById('detail-view');
+                this.detailTitle = document.getElementById('detail-title');
+                this.detailContent = document.getElementById('detail-content');
+                this.backToMainBtn = document.getElementById('back-to-main-btn');
+                
+                // 搜索页元素
+                this.searchView = document.getElementById('search-view');
+                this.searchForm = document.getElementById('search-form');
+                this.searchInput = document.getElementById('search-input');
+                this.searchResultsContainer = document.getElementById('search-results-container');
+                this.backToMainFromSearchBtn = document.getElementById('back-to-main-from-search-btn');
             }
 
             init() {
@@ -523,13 +541,15 @@
                         section.dataset.categoryKey = categoryKey;
 
                         if (page.isCampusSpecific) {
-                            let campusContent = '';
-                            if(pageKey === '宿舍介绍' && this.campusData[this.selectedCampus]?.dormitory) {
-                                campusContent = this.campusData[this.selectedCampus].dormitory.content;
-                            } else if (pageKey === '食堂介绍' && this.campusData[this.selectedCampus]?.canteen) {
-                                campusContent = this.campusData[this.selectedCampus].canteen.content;
+                            let contentHtml = '';
+                            if (pageKey === '宿舍介绍') {
+                                const items = this.campusData[this.selectedCampus]?.dormitory?.items;
+                                contentHtml = this._generateCampusCards(items, 'dormitory');
+                            } else if (pageKey === '食堂介绍') {
+                                const items = this.campusData[this.selectedCampus]?.canteen?.items;
+                                contentHtml = this._generateCampusCards(items, 'canteen');
                             }
-                            section.innerHTML = campusContent;
+                            section.innerHTML = contentHtml;
                         } else if (page.type === 'faq') {
                             section.innerHTML = this._createFaqHtml(page.items);
                             this._addFaqListeners(section);
@@ -543,6 +563,33 @@
                 this._addHomeListeners();
                 lucide.createIcons();
             }
+            
+            _generateCampusCards(items, type) {
+                 if (!items) return '<p>该校区暂无相关信息。</p>';
+                 const itemKeys = Object.keys(items);
+                 const cardHtml = itemKeys.map(key => {
+                    const item = items[key];
+                    return `
+                        <a href="#" class="detail-card bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 group" data-type="${type}" data-key="${key}">
+                            <div class="h-56 overflow-hidden">
+                                <img src="${item.image}" alt="[图片：${item.name}]" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e0e7ff/3730a3?text=Image+Not+Found';">
+                            </div>
+                            <div class="p-6">
+                                <h4 class="font-bold text-xl text-gray-900">${item.name}</h4>
+                                <p class="text-gray-600 text-sm mt-2">${item.summary}</p>
+                            </div>
+                        </a>
+                    `;
+                 }).join('');
+
+                 return `<div class="w-full max-w-6xl mx-auto">
+                            <h3 class="text-3xl font-bold text-gray-800 mb-8 text-center">${type === 'dormitory' ? '宿舍概览' : '美食天地'}</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                ${cardHtml}
+                            </div>
+                        </div>`;
+            }
+
 
             _setupEventListeners() {
                 this.navMenu.addEventListener('click', this._handleNavClick.bind(this));
@@ -551,6 +598,15 @@
                 this.sidebarOverlay.addEventListener('click', this._toggleSidebar.bind(this));
                 this.campusModal.addEventListener('click', this._handleCampusSelection.bind(this));
                 this.changeCampusBtn.addEventListener('click', this._showCampusSelector.bind(this));
+                
+                // 详情页事件
+                this.contentArea.addEventListener('click', this._handleCardClick.bind(this));
+                this.backToMainBtn.addEventListener('click', this._hideDetailView.bind(this));
+
+                // 搜索事件
+                this.searchForm.addEventListener('submit', this._handleSearch.bind(this));
+                this.backToMainFromSearchBtn.addEventListener('click', this._hideSearchView.bind(this));
+                this.searchResultsContainer.addEventListener('click', this._handleSearchResultClick.bind(this));
             }
 
             _showCampusSelector() {
@@ -587,10 +643,9 @@
             }
 
              _setupIntersectionObserver() {
-                // 【已修复】重写侦测逻辑，使其更准确
                 const options = {
-                    root: this.contentArea, // 观察区域为内容区本身
-                    threshold: 0, // 元素一出现就触发
+                    root: this.contentArea,
+                    threshold: 0,
                     rootMargin: `-${document.querySelector('header').offsetHeight}px 0px -${this.contentArea.clientHeight - document.querySelector('header').offsetHeight - 1}px 0px`
                 };
 
@@ -609,6 +664,7 @@
                     this.observer.observe(section);
                 });
             }
+            
             _updateActiveState(categoryKey, pageKey) {
                 const pageData = this.guideData[categoryKey]?.pages[pageKey];
                 if (pageData) {
@@ -627,18 +683,22 @@
                     activeLink.classList.add('active');
                     const submenu = activeLink.closest('.submenu');
                     if (submenu && !submenu.classList.contains('open')) {
-                        document.querySelectorAll('.submenu.open').forEach(s => s.classList.remove('open'));
-                        document.querySelectorAll('.category-header.open').forEach(h => h.classList.remove('open'));
+                        document.querySelectorAll('.submenu.open').forEach(s => {
+                            s.classList.remove('open');
+                            s.previousElementSibling.classList.remove('open');
+                        });
                         submenu.classList.add('open');
                         submenu.previousElementSibling.classList.add('open');
                     }
                 }
             }
+            
             _handleNavClick(e) {
                  const link = e.target.closest('.sidebar-link');
                  const header = e.target.closest('.category-header');
                  if (link) {
                      e.preventDefault();
+                     this._hideAllViews();
                      const href = link.getAttribute('href');
                      if (href && href.startsWith('#')) {
                          const { category, page } = link.dataset;
@@ -653,28 +713,39 @@
                      submenu.classList.toggle('open');
                  }
             }
+            
             _handleHomeClick(e) {
                 e.preventDefault();
+                this._hideAllViews();
                 const homeElement = document.getElementById('page-主页-home');
                 if(homeElement) {
                     this._updateActiveState("主页", "home");
                     this._scrollToElement(homeElement);
                 }
             }
+            
             _toggleSidebar() {
                 const isHidden = this.sidebar.classList.contains('-translate-x-full');
                 this.sidebar.classList.toggle('-translate-x-full');
                 this.sidebarOverlay.classList.toggle('hidden', !isHidden);
             }
-            _scrollToElement(targetElement) {
+            
+            _scrollToElement(targetElement, keyword = null) {
                 this.isScrollingProgrammatically = true;
                 const topOffset = document.querySelector('header').offsetHeight;
                 const elementPosition = targetElement.getBoundingClientRect().top;
                 const offsetPosition = elementPosition + this.contentArea.scrollTop - topOffset;
+                
                 this.contentArea.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+
+                if (keyword) {
+                    setTimeout(() => this._highlightKeywordInSection(targetElement, keyword), 500);
+                }
+
                 clearTimeout(this.scrollTimeout);
                 this.scrollTimeout = setTimeout(() => { this.isScrollingProgrammatically = false; }, 1000); 
             }
+            
             _createFaqHtml(items) {
                 let html = '<div class="space-y-4 w-full max-w-4xl mx-auto">';
                 items.forEach((item) => {
@@ -683,6 +754,7 @@
                 html += '</div>';
                 return html;
             }
+            
             _addFaqListeners(container) {
                 const headers = container.querySelectorAll('.accordion-header');
                 headers.forEach(header => {
@@ -690,9 +762,11 @@
                         const content = header.nextElementSibling;
                         header.classList.toggle('open');
                         content.style.display = header.classList.contains('open') ? 'block' : 'none';
+                        header.querySelector('.accordion-icon').classList.toggle('rotate-180');
                     });
                 });
             }
+            
             _addHomeListeners() {
                 document.getElementById('explore-btn')?.addEventListener('click', (e) => {
                     e.preventDefault();
@@ -712,6 +786,228 @@
                              this._scrollToElement(targetElement);
                         }
                     });
+                });
+            }
+
+            _hideAllViews() {
+                this._hideDetailView();
+                this._hideSearchView();
+            }
+
+            // --- 详情页方法 ---
+            _handleCardClick(e) {
+                const card = e.target.closest('.detail-card');
+                if (!card) return;
+                e.preventDefault();
+
+                const { type, key } = card.dataset;
+                this._showDetailView(type, key);
+            }
+
+            _showDetailView(type, itemKey) {
+                const itemData = this.campusData[this.selectedCampus]?.[type]?.items?.[itemKey];
+                if (!itemData) return;
+
+                this.detailTitle.textContent = itemData.name;
+                this.detailContent.innerHTML = `
+                    <div class="max-w-4xl mx-auto">
+                        <img src="${itemData.image}" alt="[图片：${itemData.name}]" class="w-full h-auto max-h-96 object-cover rounded-xl shadow-lg mb-8" onerror="this.onerror=null;this.src='https://placehold.co/800x400/e0e7ff/3730a3?text=Image+Not+Found';">
+                        <div class="bg-white p-8 rounded-xl shadow-lg">
+                            ${itemData.details}
+                        </div>
+                    </div>
+                `;
+                
+                this.mainView.classList.add('hidden');
+                this.detailView.classList.remove('hidden', 'translate-x-full');
+                this.detailView.classList.add('flex');
+                setTimeout(() => {
+                    this.detailView.classList.remove('translate-x-full');
+                }, 10);
+                lucide.createIcons();
+            }
+
+            _hideDetailView() {
+                if (!this.detailView.classList.contains('hidden')) {
+                    this.detailView.classList.add('translate-x-full');
+                    setTimeout(() => {
+                        this.detailView.classList.add('hidden');
+                        this.detailView.classList.remove('flex');
+                        this.mainView.classList.remove('hidden');
+                    }, 300);
+                }
+            }
+            
+            // --- 搜索功能方法 ---
+            _handleSearch(e) {
+                e.preventDefault();
+                const query = this.searchInput.value.trim();
+                if (query) {
+                    const results = this._performSearch(query);
+                    this._displaySearchResults(results, query);
+                }
+            }
+
+            _performSearch(query) {
+                const results = [];
+                const tempDiv = document.createElement('div');
+                const queryLower = query.toLowerCase();
+
+                // 搜索通用数据
+                for (const categoryKey in this.guideData) {
+                    for (const pageKey in this.guideData[categoryKey].pages) {
+                        const page = this.guideData[categoryKey].pages[pageKey];
+                        
+                        let searchableText = page.title;
+                        tempDiv.innerHTML = page.content || '';
+                        searchableText += ' ' + tempDiv.textContent;
+
+                        if (page.type === 'faq') {
+                            page.items.forEach(item => {
+                                searchableText += ' ' + item.q + ' ' + item.a;
+                            });
+                        }
+
+                        if (searchableText.toLowerCase().includes(queryLower)) {
+                            results.push({
+                                title: page.title,
+                                text: tempDiv.textContent,
+                                categoryKey,
+                                pageKey
+                            });
+                        }
+                    }
+                }
+
+                // 搜索校区特定数据
+                const campus = this.campusData[this.selectedCampus];
+                if (campus) {
+                    ['dormitory', 'canteen'].forEach(type => {
+                        if (campus[type] && campus[type].items) {
+                            for (const itemKey in campus[type].items) {
+                                const item = campus[type].items[itemKey];
+                                let searchableText = `${item.name} ${item.summary}`;
+                                tempDiv.innerHTML = item.details;
+                                searchableText += ' ' + tempDiv.textContent;
+
+                                if (searchableText.toLowerCase().includes(queryLower)) {
+                                    results.push({
+                                        title: item.name,
+                                        text: tempDiv.textContent,
+                                        isDetail: true,
+                                        detailType: type,
+                                        detailKey: itemKey
+                                    });
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                return results;
+            }
+
+            _displaySearchResults(results, query) {
+                if (results.length === 0) {
+                    this.searchResultsContainer.innerHTML = `<p class="text-center text-gray-500">未能找到与“${query}”相关的内容。</p>`;
+                } else {
+                    this.searchResultsContainer.innerHTML = results.map(result => {
+                        const snippet = this._createSnippet(result.text, query);
+                        const highlightedSnippet = snippet.replace(new RegExp(query, 'gi'), (match) => `<mark class="search-highlight">${match}</mark>`);
+                        
+                        const dataAttrs = result.isDetail
+                            ? `data-is-detail="true" data-detail-type="${result.detailType}" data-detail-key="${result.detailKey}"`
+                            : `data-category-key="${result.categoryKey}" data-page-key="${result.pageKey}"`;
+
+                        return `
+                            <a href="#" class="search-result-item block p-4 mb-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow" ${dataAttrs} data-keyword="${query}">
+                                <h4 class="font-bold text-blue-800">${result.title}</h4>
+                                <p class="text-sm text-gray-600 mt-2">...${highlightedSnippet}...</p>
+                            </a>
+                        `;
+                    }).join('');
+                }
+
+                this.mainView.classList.add('hidden');
+                this.searchView.classList.remove('hidden', 'translate-x-full');
+                this.searchView.classList.add('flex');
+                 setTimeout(() => {
+                    this.searchView.classList.remove('translate-x-full');
+                }, 10);
+            }
+
+            _createSnippet(text, query) {
+                const index = text.toLowerCase().indexOf(query.toLowerCase());
+                if (index === -1) return text.substring(0, 100);
+
+                const start = Math.max(0, index - 30);
+                const end = Math.min(text.length, index + query.length + 70);
+                return text.substring(start, end);
+            }
+
+            _hideSearchView() {
+                if (!this.searchView.classList.contains('hidden')) {
+                    this.searchView.classList.add('translate-x-full');
+                    setTimeout(() => {
+                        this.searchView.classList.add('hidden');
+                        this.searchView.classList.remove('flex');
+                        this.mainView.classList.remove('hidden');
+                        this.searchInput.value = '';
+                    }, 300);
+                }
+            }
+
+            _handleSearchResultClick(e) {
+                const item = e.target.closest('.search-result-item');
+                if (!item) return;
+                e.preventDefault();
+
+                this._hideSearchView();
+                const { isDetail, detailType, detailKey, categoryKey, pageKey, keyword } = item.dataset;
+                
+                if (isDetail) {
+                    this._showDetailView(detailType, detailKey);
+                    // 在详情页高亮关键词
+                    setTimeout(() => this._highlightKeywordInSection(this.detailContent, keyword), 500);
+                } else {
+                    const targetElement = document.getElementById(`page-${categoryKey}-${pageKey}`);
+                    if (targetElement) {
+                        this._updateActiveState(categoryKey, pageKey);
+                        this._scrollToElement(targetElement, keyword);
+                    }
+                }
+            }
+
+            _highlightKeywordInSection(sectionElement, keyword) {
+                const regex = new RegExp(keyword, 'gi');
+                const walker = document.createTreeWalker(sectionElement, NodeFilter.SHOW_TEXT, null, false);
+                let node;
+                const nodesToReplace = [];
+
+                while (node = walker.nextNode()) {
+                    if (node.textContent.toLowerCase().includes(keyword.toLowerCase())) {
+                        nodesToReplace.push(node);
+                    }
+                }
+                
+                nodesToReplace.forEach(textNode => {
+                    const parent = textNode.parentNode;
+                    const parts = textNode.textContent.split(regex);
+                    const matches = textNode.textContent.match(regex);
+
+                    if (!parent || !matches) return;
+
+                    const fragment = document.createDocumentFragment();
+                    parts.forEach((part, index) => {
+                        fragment.appendChild(document.createTextNode(part));
+                        if (index < matches.length) {
+                            const mark = document.createElement('mark');
+                            mark.className = 'temp-highlight';
+                            mark.textContent = matches[index];
+                            fragment.appendChild(mark);
+                        }
+                    });
+                    parent.replaceChild(fragment, textNode);
                 });
             }
         }
