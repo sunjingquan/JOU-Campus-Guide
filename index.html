@@ -8,8 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Tailwind CSS 配置 -->
     <script>
-      // **关键修复**: 明确告诉Tailwind使用 'class' 策略进行深色模式切换
-      // 这段脚本必须在主Tailwind脚本加载之后运行
+      // 明确告诉Tailwind使用 'class' 策略进行深色模式切换
       tailwind.config = {
         darkMode: 'class',
       }
@@ -145,14 +144,14 @@
                     <button data-campus="cangwu" class="campus-select-btn w-full text-left rounded-xl shadow-lg group transform hover:scale-105 transition-transform duration-300 overflow-hidden bg-gray-100 dark:bg-gray-800">
                         <div class="md:hidden flex items-center p-2">
                             <div class="w-24 h-16 rounded-lg bg-gray-200 dark:bg-gray-700 flex-shrink-0">
-                                <img src="images/苍梧校区.jpg?nf_resize=fit&w=200" alt="[图片：苍梧校区]" class="w-full h-full object-contain">
+                                <img src="images/苍梧校区.jpg?nf_resize=fit&w=200" alt="[苍梧校区的图片]" class="w-full h-full object-contain">
                             </div>
                             <div class="ml-4">
                                 <h3 class="text-gray-800 dark:text-gray-100 text-lg font-bold">苍梧校区</h3>
                             </div>
                         </div>
                         <div class="hidden md:block relative h-56">
-                            <img src="images/苍梧校区.jpg?nf_resize=fit&w=800&fm=webp" alt="[图片：苍梧校区]" class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110">
+                            <img src="images/苍梧校区.jpg?nf_resize=fit&w=800&fm=webp" alt="[苍梧校区的图片]" class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110">
                             <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                             <div class="absolute bottom-0 left-0 p-4">
                                 <h3 class="text-white text-2xl font-bold drop-shadow-lg">苍梧校区</h3>
@@ -163,14 +162,14 @@
                      <button data-campus="tongguan" class="campus-select-btn w-full text-left rounded-xl shadow-lg group transform hover:scale-105 transition-transform duration-300 overflow-hidden bg-gray-100 dark:bg-gray-800">
                         <div class="flex items-center p-2 md:hidden">
                            <div class="w-24 h-16 rounded-lg bg-gray-200 dark:bg-gray-700 flex-shrink-0">
-                                <img src="images/通灌校区.jpg?nf_resize=fit&w=200" alt="[图片：通灌校区]" class="w-full h-full object-contain">
+                                <img src="images/通灌校区.jpg?nf_resize=fit&w=200" alt="[通灌校区的图片]" class="w-full h-full object-contain">
                             </div>
                             <div class="ml-4">
                                 <h3 class="text-gray-800 dark:text-gray-100 text-lg font-bold">通灌校区</h3>
                             </div>
                         </div>
                         <div class="hidden md:block relative h-56">
-                            <img src="images/通灌校区.jpg?nf_resize=fit&w=800&fm=webp" alt="[图片：通灌校区]" class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110">
+                            <img src="images/通灌校区.jpg?nf_resize=fit&w=800&fm=webp" alt="[通灌校区的图片]" class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110">
                             <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                             <div class="absolute bottom-0 left-0 p-4">
                                 <h3 class="text-white text-2xl font-bold drop-shadow-lg">通灌校区</h3>
@@ -181,14 +180,14 @@
                     <button data-campus="songtiao" class="campus-select-btn w-full text-left rounded-xl shadow-lg group transform hover:scale-105 transition-transform duration-300 overflow-hidden bg-gray-100 dark:bg-gray-800">
                         <div class="flex items-center p-2 md:hidden">
                             <div class="w-24 h-16 rounded-lg bg-gray-200 dark:bg-gray-700 flex-shrink-0">
-                                <img src="images/宋跳校区.jpg?nf_resize=fit&w=200" alt="[图片：宋跳校区]" class="w-full h-full object-contain">
+                                <img src="images/宋跳校区.jpg?nf_resize=fit&w=200" alt="[宋跳校区的图片]" class="w-full h-full object-contain">
                             </div>
                             <div class="ml-4">
                                 <h3 class="text-gray-800 dark:text-gray-100 text-lg font-bold">宋跳校区</h3>
                             </div>
                         </div>
                         <div class="hidden md:block relative h-56">
-                            <img src="images/宋跳校区.jpg?nf_resize=fit&w=800&fm=webp" alt="[图片：宋跳校区]" class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110">
+                            <img src="images/宋跳校区.jpg?nf_resize=fit&w=800&fm=webp" alt="[宋跳校区的图片]" class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110">
                             <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                             <div class="absolute bottom-0 left-0 p-4">
                                 <h3 class="text-white text-2xl font-bold drop-shadow-lg">宋跳校区</h3>
@@ -286,17 +285,14 @@
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
-            <!-- **关键改动 1**: 添加 name 和 data-netlify="true" 属性 -->
             <form id="feedback-form" name="feedback" data-netlify="true">
                 <div class="space-y-4">
                     <div>
                         <label for="feedback-content" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">反馈内容</label>
-                        <!-- Netlify 需要 name 属性来识别字段 -->
                         <textarea id="feedback-content" name="content" rows="4" required class="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="请详细描述您发现的问题或建议..."></textarea>
                     </div>
                     <div>
                         <label for="feedback-contact" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">联系方式 (可选)</label>
-                        <!-- Netlify 需要 name 属性来识别字段 -->
                         <input type="text" id="feedback-contact" name="contact" class="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="QQ / 微信 / 邮箱">
                     </div>
                 </div>
@@ -316,48 +312,44 @@
     <script>
         // ===================================================================================
         // --- 数据中心 (Data Center) ---
-        // **重要**：数据结构已重构！
-        // 1. `guideData`: 存放所有校区通用的信息。
-        // 2. `campusData`: 存放各个校区独有的信息。
-        // 这样做的好处是，通用信息和特定信息完全分离，维护起来非常清晰。
         // ===================================================================================
         const guideData = {
             "主页": {
                 icon: "home",
                 isHomePage: true,
                 pages: { "home": { title: "欢迎来到江苏海洋大学", content: `
-                                <div class="flex flex-col justify-center items-center h-full">
-                                    <div class="hero-bg text-white p-12 rounded-2xl text-center flex flex-col items-center justify-center shadow-xl mb-12">
-                                        <h1 class="text-5xl font-extrabold mb-4 drop-shadow-lg">开启你的大学新篇章</h1>
-                                        <p class="text-lg max-w-2xl mb-8 drop-shadow-md">本指南将帮助你快速熟悉校园生活，解决入学遇到的各种问题。准备好了吗？</p>
-                                        <button id="explore-btn" class="bg-white text-blue-800 font-bold py-3 px-8 rounded-full text-lg hover:bg-blue-100 transform hover:scale-105 transition-all duration-300 shadow-lg">开始探索</button>
-                                    </div>
-                                    <div>
-                                        <h2 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-8 text-center">快速导航</h2>
-                                        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-                                            <a href="#" data-navlink='{"category": "入学准备", "page": "新生入学流程"}' class="nav-card bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md hover:shadow-2xl dark:hover:shadow-blue-500/20 hover:-translate-y-2 transition-all duration-300 flex flex-col items-center text-center">
-                                                <div class="bg-blue-100 text-blue-600 p-4 rounded-full mb-4"><i data-lucide="list-checks" class="w-8 h-8"></i></div>
-                                                <h3 class="font-semibold text-lg text-gray-900 dark:text-gray-100">入学流程</h3>
-                                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">报到注册步骤全解析</p>
-                                            </a>
-                                            <a href="#" data-navlink='{"category": "校园生活", "page": "宿舍介绍"}' class="nav-card bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md hover:shadow-2xl dark:hover:shadow-green-500/20 hover:-translate-y-2 transition-all duration-300 flex flex-col items-center text-center">
-                                                <div class="bg-green-100 text-green-600 p-4 rounded-full mb-4"><i data-lucide="bed-double" class="w-8 h-8"></i></div>
-                                                <h3 class="font-semibold text-lg text-gray-900 dark:text-gray-100">宿舍介绍</h3>
-                                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">了解你的新家</p>
-                                            </a>
-                                            <a href="#" data-navlink='{"category": "学习科研", "page": "关于绩点和学分"}' class="nav-card bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md hover:shadow-2xl dark:hover:shadow-purple-500/20 hover:-translate-y-2 transition-all duration-300 flex flex-col items-center text-center">
-                                                <div class="bg-purple-100 text-purple-600 p-4 rounded-full mb-4"><i data-lucide="graduation-cap" class="w-8 h-8"></i></div>
-                                                <h3 class="font-semibold text-lg text-gray-900 dark:text-gray-100">学业发展</h3>
-                                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">绩点、转专业、竞赛</p>
-                                            </a>
-                                            <a href="#" data-navlink='{"category": "答疑与支持", "page": "常见问题汇总"}' class="nav-card bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md hover:shadow-2xl dark:hover:shadow-red-500/20 hover:-translate-y-2 transition-all duration-300 flex flex-col items-center text-center">
-                                                <div class="bg-red-100 text-red-600 p-4 rounded-full mb-4"><i data-lucide="help-circle" class="w-8 h-8"></i></div>
-                                                <h3 class="font-semibold text-lg text-gray-900 dark:text-gray-100">常见问题</h3>
-                                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">新生疑惑解答</p>
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>` 
+                                        <div class="flex flex-col justify-center items-center h-full">
+                                            <div class="hero-bg text-white p-12 rounded-2xl text-center flex flex-col items-center justify-center shadow-xl mb-12">
+                                                <h1 class="text-5xl font-extrabold mb-4 drop-shadow-lg">开启你的大学新篇章</h1>
+                                                <p class="text-lg max-w-2xl mb-8 drop-shadow-md">本指南将帮助你快速熟悉校园生活，解决入学遇到的各种问题。准备好了吗？</p>
+                                                <button id="explore-btn" class="bg-white text-blue-800 font-bold py-3 px-8 rounded-full text-lg hover:bg-blue-100 transform hover:scale-105 transition-all duration-300 shadow-lg">开始探索</button>
+                                            </div>
+                                            <div>
+                                                <h2 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-8 text-center">快速导航</h2>
+                                                <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                                                    <a href="#" data-navlink='{"category": "入学准备", "page": "新生入学流程"}' class="nav-card bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md hover:shadow-2xl dark:hover:shadow-blue-500/20 hover:-translate-y-2 transition-all duration-300 flex flex-col items-center text-center">
+                                                        <div class="bg-blue-100 text-blue-600 p-4 rounded-full mb-4"><i data-lucide="list-checks" class="w-8 h-8"></i></div>
+                                                        <h3 class="font-semibold text-lg text-gray-900 dark:text-gray-100">入学流程</h3>
+                                                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">报到注册步骤全解析</p>
+                                                    </a>
+                                                    <a href="#" data-navlink='{"category": "校园生活", "page": "宿舍介绍"}' class="nav-card bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md hover:shadow-2xl dark:hover:shadow-green-500/20 hover:-translate-y-2 transition-all duration-300 flex flex-col items-center text-center">
+                                                        <div class="bg-green-100 text-green-600 p-4 rounded-full mb-4"><i data-lucide="bed-double" class="w-8 h-8"></i></div>
+                                                        <h3 class="font-semibold text-lg text-gray-900 dark:text-gray-100">宿舍介绍</h3>
+                                                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">了解你的新家</p>
+                                                    </a>
+                                                    <a href="#" data-navlink='{"category": "学习科研", "page": "关于绩点和学分"}' class="nav-card bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-2xl dark:hover:shadow-purple-500/20 hover:-translate-y-2 transition-all duration-300 flex flex-col items-center text-center">
+                                                        <div class="bg-purple-100 text-purple-600 p-4 rounded-full mb-4"><i data-lucide="graduation-cap" class="w-8 h-8"></i></div>
+                                                        <h3 class="font-semibold text-lg text-gray-900 dark:text-gray-100">学业发展</h3>
+                                                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">绩点、转专业、竞赛</p>
+                                                    </a>
+                                                    <a href="#" data-navlink='{"category": "答疑与支持", "page": "常见问题汇总"}' class="nav-card bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md hover:shadow-2xl dark:hover:shadow-red-500/20 hover:-translate-y-2 transition-all duration-300 flex flex-col items-center text-center">
+                                                        <div class="bg-red-100 text-red-600 p-4 rounded-full mb-4"><i data-lucide="help-circle" class="w-8 h-8"></i></div>
+                                                        <h3 class="font-semibold text-lg text-gray-900 dark:text-gray-100">常见问题</h3>
+                                                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">新生疑惑解答</p>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>` 
                 } }
             },
             "入学准备": {
@@ -474,7 +466,7 @@
                         { q: "如何查询课程表和成绩？", a: "可以通过学校的教务系统网站查询个人课程表、考试安排和各科成绩。" },
                         { q: "校园网经常掉线或者速度慢怎么办？", a: "首先可以尝试重启路由器或电脑。如果问题依然存在，可以联系你所办理的运营商客服报修。" }
                     ] },
-                    "重要部门联系方式": { title: "重要部门联系方式", content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">学校官网链接：</h3><div class="overflow-x-auto"><table class="w-full text-left"><thead><p style="color: rgb(0, 0, 255);"><a href="URL">https://www.jou.edu.cn/bgdhcx.htm</a></p>` }
+                    "重要部门联系方式": { title: "重要部门联系方式", content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">学校官网链接：</h3><div class="overflow-x-auto"><table class="w-full text-left"><thead><p style="color: rgb(0, 0, 255);"><a href="https://www.jou.edu.cn/bgdhcx.htm">https://www.jou.edu.cn/bgdhcx.htm</a></p>` }
                 }
             }
         };
@@ -486,20 +478,236 @@
                 dormitory: {
                     title: "苍梧校区宿舍介绍",
                     items: {
-                        'a_dorm': { name: 'A区宿舍', image: 'images/苍梧校区/宿舍/A区宿舍.jpg', summary: '女生宿舍', details: `<div class="prose dark:prose-invert max-w-none"><h2>A区宿舍 详细信息</h2><p>这里是关于A区宿舍的更多详细介绍... 待补充</p></div>` },
-                        'b_dorm': { name: 'B区宿舍', image: 'images/苍梧校区/宿舍/B区宿舍.jpg', summary: '男生宿舍', details: `<div class="prose dark:prose-invert max-w-none"><h2>B区宿舍 详细信息</h2><p>这里是关于B区宿舍的更多详细介绍... 待补充</p></div>` },
-                        'd_dorm': { name: 'D区宿舍', image: 'images/苍梧校区/宿舍/D区宿舍.jpg', summary: '有男生宿舍也有女生宿舍，有本科宿舍也有研究生宿舍，四人间，独立卫浴', details: `<div class="prose dark:prose-invert max-w-none"><h2>D区宿舍 详细信息</h2><p>男生女生宿舍都有，都是四人间、上床下桌、独立卫浴，每栋楼一楼有澡堂。更多信息待补充。</p></div>` }
+                        'a_dorm': {
+                            name: 'A区宿舍 (女生)',
+                            image: 'images/苍梧校区/宿舍/A区宿舍.jpg',
+                            summary: '主要为女生宿舍，靠近三食堂和浴室，生活便利。',
+                            details: [
+                                {
+                                    building: 'A1-A4,A8-A10栋',
+                                    image: 'images/苍梧校区/宿舍/A区/A1-A4,A8-A9栋楼/A1-A4,A8-A9宿舍内景.jpg',
+                                    roomType: '四人间',
+                                    layout: '上下铺',
+                                    bathroom: '独立卫生间，澡堂在三食堂附近',
+                                    ac: '有',
+                                    balcony: '有',
+                                    network: '周日至周四24:00断网，周五周六不断网',
+                                    laundry: '一楼有洗衣房',
+                                    waterHeater: '部分楼层有',
+                                    price: '1200元/年',
+                                    notes: '传统的宿舍结构，空间紧凑但生活气息浓厚。开门使用校卡'
+                                },
+                                {
+                                    building: 'A5-A8栋',
+                                    image: 'images/苍梧校区/宿舍/A区/A5-A8栋楼/A5-A8栋楼宿舍内景.jpg',
+                                    roomType: '四人间',
+                                    layout: '上床下桌',
+                                    bathroom: '独立卫生间，澡堂在三食堂附近',
+                                    ac: '有',
+                                    balcony: '有',
+                                    network: '周日至周四24:00断网，周五周六不断网',
+                                    laundry: '一楼有洗衣房',
+                                    waterHeater: '部分楼层有',
+                                    price: '1200元/年',
+                                    notes: '24年暑假刚装修过，装修后变成上床下桌了，宿舍内环境新颖友好。开门使用校卡'
+                                },
+                            ]
+                        },
+                        'b_dorm': { 
+                            name: 'B区宿舍 (男生)', 
+                            image: 'images/苍梧校区/宿舍/B区宿舍.jpg', 
+                            summary: '主要为男生宿舍，楼栋数量多，覆盖多个学院。', 
+                            details: [
+                                {
+                                    building: 'B1-B4栋',
+                                    image: 'images/苍梧校区/宿舍/B区/B1-B4/B1-B4宿舍内景.jpg',
+                                    roomType: '四人间',
+                                    layout: '上下铺，床对面一排桌子',
+                                    bathroom: '三食堂西边',
+                                    ac: '有',
+                                    balcony: '有',
+                                    network: '周日至周四24:00断网，周五周六不断网',
+                                    laundry: 'B5楼下，篮球场南边',
+                                    waterHeater: '每层楼一个热水机，24H供热水',
+                                    price: '1200元/年',
+                                    notes: 'B区是最大的宿舍区之一，楼下有小卖部和活动空间。开门使用单独的门卡。'
+                                },
+                                {
+                                    building: 'B5-B6栋',
+                                    image: 'images/苍梧校区/宿舍/B区/B5-B6/B5-B6宿舍内景.jpg', 
+                                    roomType: '四人间',
+                                    layout: '上床下桌',
+                                    bathroom: '有独立卫生间，公共浴室在三食堂西边',
+                                    ac: '有',
+                                    balcony: '有',
+                                    network: '周日至周四24:00断网，周五周六不断网',
+                                    laundry: 'B5楼下，篮球场南边',
+                                    waterHeater: '每层楼一个热水机，24H供热水',
+                                    price: '1000（3、4人间）',
+                                    notes: 'B区是最大的宿舍区之一，楼下有小卖部和活动空间。开门使用单独的门卡。'
+                                },
+                                {
+                                    building: 'B7-B12栋',
+                                    image: 'images/苍梧校区/宿舍/B区/B7-B12/B7-B12宿舍内景.jpg', 
+                                    roomType: '六人间',
+                                    layout: '上下铺',
+                                    bathroom: '有独立卫生间',
+                                    ac: '有',
+                                    balcony: '有',
+                                    network: '周日至周四24:00断网，周五周六不断网',
+                                    laundry: '洗衣房在B5楼下，篮球场南边',
+                                    waterHeater: '部分楼层有开水',
+                                    price: '950元/年',
+                                    notes: 'B区是最大的宿舍区之一，楼下有小卖部和活动空间。开门使用单独的门卡。'
+                                },
+                            ]
+                        },
+                        'd_dorm': { 
+                            name: 'D区宿舍 (东区)', 
+                            image: 'images/苍梧校区/宿舍/D区宿舍.jpg', 
+                            summary: '男女生宿舍都有，四人间独立卫浴，条件优越。', 
+                            details: [
+                                {
+                                    building: 'D5-6，D9-10栋',
+                                    image: 'images/苍梧校区/宿舍/D区/D5,6,9,10/D5,6,9,10宿舍内景.jpg',
+                                    roomType: '四人间',
+                                    layout: '上床下桌',
+                                    bathroom: '独立卫浴，一楼也有公共澡堂',
+                                    ac: '有',
+                                    balcony: '两个宿舍共用一个大阳台',
+                                    network: '周日至周四24:00断电',
+                                    laundry: '宿舍楼一楼有公共洗衣房',
+                                    waterHeater: '宿舍内刷卡可取热水，每层楼有一个饮水机',
+                                    price: '1500元/年（未免费供应热水，实际按1350元/年收取）',
+                                    notes: '位于学校东侧，也被称为东区宿舍，靠近东区食堂和四号门，环境安静。'
+                                },
+                                {
+                                    building: 'D7-8栋',
+                                    image: 'images/苍梧校区/宿舍/D区/D7-D8栋楼/D7-D8栋楼宿舍内景.jpg',
+                                    roomType: '三人间',
+                                    layout: '上床下桌',
+                                    bathroom: '独立卫浴',
+                                    ac: '有',
+                                    balcony: '有',
+                                    network: '周日至周四24:00断网，周五周六不断网',
+                                    laundry: '宿舍楼一楼有洗衣房',
+                                    waterHeater: '每层楼有热水机',
+                                    price: '1500元/年',
+                                    notes: '位于学校东侧，也被称为东区宿舍，靠近东区食堂和四号门，环境安静。'
+                                },
+                            ]
+                        }
                     }
                 },
                 canteen: {
-                    title: "苍梧校区食堂介绍",
+                    title: "苍梧校区食堂介绍(未完成，内容仅仅是占位用的，未核实，待开发)",
                     items: {
-                        'canteen1': { name: '第一食堂', image: 'images/苍梧校区/食堂/第一食堂.jpg', summary: '位于大学生活动中心旁，上下课必经之路。', details: `<div class="prose dark:prose-invert max-w-none"><h2>第一食堂 详细信息</h2><p>位于大学生活动中心旁，是相比其他食堂最为方便的一个食堂，它位于同学们上下课的必经之路上一食堂的一大特色就是快餐快餐的便捷与它的地理优势完美契合早餐也很丰盛。</p></div>` },
-                        'canteen2': { name: '第二食堂&风味餐厅', image: 'images/苍梧校区/食堂/第二食堂.jpg', summary: '位于海洋楼旁，离教学区最近，装修典雅。', details: `<div class="prose dark:prose-invert max-w-none"><h2>第二食堂&风味餐厅 详细信息</h2><p>位于海洋楼旁，离教学区最近。其中一楼是第二食堂，二楼是风味餐厅，可从室内走楼梯上，也可从户外的电梯直接抵达二楼。装修环境典雅。</p></div>` },
-                        'canteen3': { name: '第三食堂&第四食堂', image: 'images/苍梧校区/食堂/第三食堂.jpg', summary: '网红餐厅，种类丰富，小火锅和麻辣烫是特色。', details: `<div class="prose dark:prose-invert max-w-none"><h2>第三食堂&第四食堂 详细信息</h2><p>在学校的小广场旁，附近是A区女生宿舍，各营业厅商业网点，以及澡堂。一楼是三食堂。二楼是四食堂。是抖音里的网红餐厅，它里面的种类非常丰富，三食堂的五块钱的快餐真的是是月底的期盼了。四食堂的小火锅经济实惠，四食堂的麻辣烫，还是挺得麻辣烫爱好者的厚爱的。</p></div>` },
-                        'canteen_east': { name: '东区食堂', image: 'images/苍梧校区/食堂/东区食堂.jpg', summary: 'D区食堂，空间大，座位多。', details: `<div class="prose dark:prose-invert max-w-none"><h2>东区食堂 详细信息</h2><p>D区食堂，四号门一进门往右望最大的建筑便是。比较大不会出现拥挤没有座位端着饭碗找座位的现象。</p></div>` },
-                        'canteen_ethnic': { name: '民族餐厅', image: 'images/苍梧校区/食堂/民族餐厅.jpg', summary: '位于医务室旁，清真食堂。', details: `<div class="prose dark:prose-invert max-w-none"><h2>民族餐厅 详细信息</h2><p>位于医务室旁，清真食堂早餐种类多还好吃。</p></div>` },
-                        'canteen_south': { name: '南园餐厅', image: 'images/苍梧校区/食堂/南园餐厅.jpg', summary: '位于文予楼旁，特色是宴席。', details: `<div class="prose dark:prose-invert max-w-none"><h2>南园餐厅 详细信息</h2><p>位于文予楼旁，附近就是民族餐厅，南园的味道相比食堂就有了几分家常的感觉，南园最大的特色还是它的宴席如果说大家想在学校里坐一桌，南园应该是一个非常好的选择。</p></div>` }
+                        'canteen1': { 
+                            name: '第一食堂', 
+                            image: 'images/苍梧校区/食堂/第一食堂.jpg', 
+                            summary: '位于大学生活动中心旁，上下课必经之路。', 
+                            details: [
+                                {
+                                    area: '一楼大众菜',
+                                    image: 'images/苍梧校区/食堂/一食堂快餐.jpg',
+                                    specialty: ['自选快餐', '特色炒饭', '瓦罐汤'],
+                                    priceRange: '人均8-15元',
+                                    openingHours: '早餐 06:30-09:00 | 午餐 11:00-13:00 | 晚餐 17:00-19:00',
+                                    notes: '主打便捷快餐，出餐速度快，是上下课间快速解决吃饭问题的首选。'
+                                }
+                            ]
+                        },
+                        'canteen2': { 
+                            name: '第二食堂 & 风味餐厅', 
+                            image: 'images/苍梧校区/食堂/第二食堂.jpg', 
+                            summary: '位于海洋楼旁，离教学区最近，装修典雅。', 
+                            details: [
+                               {
+                                    area: '一楼：第二食堂',
+                                    image: 'images/苍梧校区/食堂/二食堂大众菜.jpg',
+                                    specialty: ['大众快餐', '特色面食', '早餐'],
+                                    priceRange: '人均8-15元',
+                                    openingHours: '早餐 06:30-09:00 | 午餐 11:00-13:00 | 晚餐 17:00-19:00',
+                                    notes: '离教学楼最近，菜品实惠，是解决日常三餐的主要场所。'
+                                },
+                                {
+                                    area: '二楼：风味餐厅',
+                                    image: 'images/苍梧校区/食堂/风味餐厅.jpg',
+                                    specialty: ['木桶饭', '铁板饭', '石锅拌饭', '果茶饮品'],
+                                    priceRange: '人均15-25元',
+                                    openingHours: '午餐 11:00-13:30 | 晚餐 17:00-19:30',
+                                    notes: '环境优雅，提供各地风味美食，适合改善伙食或朋友小聚。'
+                                }
+                            ]
+                        },
+                        'canteen3': { 
+                            name: '第三 & 第四食堂', 
+                            image: 'images/苍梧校区/食堂/第三食堂.jpg', 
+                            summary: '网红餐厅，种类丰富，小火锅和麻辣烫是特色。', 
+                            details: [
+                                {
+                                    area: '一楼：第三食堂',
+                                    image: 'images/苍梧校区/食堂/三食堂快餐.jpg',
+                                    specialty: ['5元特价快餐', '精品小炒', '肠粉'],
+                                    priceRange: '人均5-18元',
+                                    openingHours: '午餐 11:00-13:00 | 晚餐 17:00-19:00',
+                                    notes: '以其超高性价比的5元快餐闻名，是月底的“救星”。'
+                                },
+                                {
+                                    area: '二楼：第四食堂',
+                                    image: 'images/苍梧校区/食堂/四食堂麻辣烫.jpg',
+                                    specialty: ['麻辣烫', '旋转小火锅', '烤肉饭'],
+                                    priceRange: '人均15-30元',
+                                    openingHours: '午餐 11:00-14:00 | 晚餐 17:00-21:00',
+                                    notes: '学校的美食中心，选择多样，麻辣烫和小火锅人气超高，晚上营业时间较长。'
+                                }
+                            ]
+                        },
+                        'canteen_east': { 
+                            name: '东区食堂', 
+                            image: 'images/苍梧校区/食堂/东区食堂.jpg', 
+                            summary: 'D区食堂，空间大，座位多。', 
+                            details: [
+                                {
+                                    area: '一楼 & 二楼',
+                                    image: 'images/苍梧校区/食堂/东区食堂大厅.jpg',
+                                    specialty: ['大众快餐', '面食窗口', '水饺馄饨', '轻食沙拉'],
+                                    priceRange: '人均10-20元',
+                                    openingHours: '早餐 06:30-09:00 | 午餐 11:00-13:00 | 晚餐 17:00-19:00',
+                                    notes: '空间宽敞明亮，座位充足，不用担心饭点找不到位置。服务D区及附近师生。'
+                                }
+                            ]
+                        },
+                        'canteen_ethnic': { 
+                            name: '民族餐厅', 
+                            image: 'images/苍梧校区/食堂/民族餐厅.jpg', 
+                            summary: '位于医务室旁，清真食堂。', 
+                            details: [
+                               {
+                                    area: '清真美食',
+                                    image: 'images/苍梧校区/食堂/民族餐厅美食.jpg',
+                                    specialty: ['兰州拉面', '大盘鸡', '羊肉串', '特色早餐'],
+                                    priceRange: '人均12-25元',
+                                    openingHours: '早餐 06:30-09:00 | 午餐 11:00-13:30 | 晚餐 17:00-19:30',
+                                    notes: '严格的清真食堂，为有需要的同学提供地道的民族风味美食，早餐的饼类尤其受欢迎。'
+                                }
+                            ]
+                        },
+                        'canteen_south': { 
+                            name: '南园餐厅', 
+                            image: 'images/苍梧校区/食堂/南园餐厅.jpg', 
+                            summary: '位于文予楼旁，特色是宴席。', 
+                            details: [
+                                {
+                                    area: '家常小炒 & 宴席',
+                                    image: 'images/苍梧校区/食堂/南园餐厅包间.jpg',
+                                    specialty: ['家常炒菜', '特色淮扬菜', '承办宴席'],
+                                    priceRange: '人均30-80元',
+                                    openingHours: '午餐 11:00-14:00 | 晚餐 17:00-21:00',
+                                    notes: '更像是校内的社会餐厅，提供点菜服务和包间，适合班级聚餐、生日宴请等活动。'
+                                }
+                            ]
+                        }
                     }
                 }
             },
@@ -508,15 +716,90 @@
                 dormitory: {
                     title: "通灌校区宿舍介绍",
                     items: {
-                        'jinxiu_dorm': { name: '锦绣宿舍', image: 'images/通灌校区/宿舍/锦绣宿舍.jpg', summary: '内容介绍待开发...', details: `<div class="prose dark:prose-invert max-w-none"><h2>锦绣宿舍 详细信息</h2><p>内容介绍待开发...</p></div>` }
+                        'jinxiu_dorm': { 
+                            name: '锦绣宿舍', 
+                            image: 'images/通灌校区/宿舍/锦绣宿舍.jpg', 
+                            summary: '通灌校区主要学生宿舍区。', 
+                            details: [
+                                {
+                                    building: '锦绣1,2,5号楼',
+                                    image: 'images/通灌校区/宿舍/锦绣1,2,5号楼/锦绣1,2,5号楼宿舍内景.jpg',
+                                    roomType: '四人间',
+                                    layout: '上下铺',
+                                    bathroom: '无独立卫生间，每层楼有隔间式厕所，有人定期打扫。澡堂在前程餐厅旁',
+                                    ac: '有',
+                                    balcony: '无',
+                                    network: '周日至周四24:00断网，周五周六不断网',
+                                    laundry: '部分楼层有公共洗衣机',
+                                    waterHeater: '部分楼层有开水炉',
+                                    price: '900元/年',
+                                    notes: '部分水泥地部分有地砖，桌子上面有柜子可以放东西，宿舍还有大柜子，每个宿舍都有一套打扫工具，每层楼都有大的洗漱台，宿舍开门使用钥匙'
+                                },
+                                {
+                                    building: '锦绣3，4，8号楼',
+                                    image: 'images/通灌校区/宿舍/锦绣3,4,8号楼/宿舍内情况.jpg', 
+                                    roomType: '四人间（少量双人间）',
+                                    layout: '上下铺',
+                                    bathroom: '有独立卫生间，澡堂在前程餐厅旁',
+                                    ac: '有',
+                                    balcony: '有',
+                                    network: '周日至周四24:00断网，周五周六不断网',
+                                    laundry: '有',
+                                    waterHeater: '双数楼层有热水机',
+                                    price: '1200元/年',
+                                    notes: '不仅每间宿舍内有洗漱台 每层楼也安排大洗漱台，开门使用钥匙'
+                                },
+                                {
+                                    building: '锦绣6，7号楼',
+                                    image: 'images/通灌校区/宿舍/锦绣6,7号楼/锦绣6,7号楼宿舍内景.jpg',
+                                    roomType: '五人间，四个人上下铺，一个人上床下桌',
+                                    layout: '上床下桌/上下铺',
+                                    bathroom: '无独立卫生间，请到前程餐厅附近的澡堂洗澡',
+                                    ac: '有',
+                                    balcony: '无',
+                                    network: '周日至周四24:00断网，周五周六不断网',
+                                    laundry: '两层中有一层会有洗衣机',
+                                    waterHeater: '两层中有一层会有热水炉',
+                                    price: '700元/年',
+                                    notes: '部分水泥地部分地砖，开门使用钥匙。多出来的桌子是上床下桌，比其他桌子大一些'
+                                }
+                            ]
+                        }
                     }
                 },
                 canteen: {
-                    title: "通灌校区食堂介绍",
+                    title: "通灌校区食堂介绍(未完成，内容仅仅是占位用的，未核实，待开发)",
                     items: {
-                        'qiancheng_canteen': { name: '前程餐厅', image: 'images/通灌校区/食堂/前程餐厅.jpg', summary: '内容介绍待开发...', details: `<div class="prose dark:prose-invert max-w-none"><h2>前程餐厅 详细信息</h2><p>内容介绍待开发...</p></div>` },
-                        'food_square': { name: '美食广场', image: 'images/通灌校区/食堂/美食广场.jpg', summary: '内容介绍待开发...', details: `<div class="prose dark:prose-invert max-w-none"><h2>美食广场 详细信息</h2><p>内容介绍待开发...</p></div>` },
-                        'ethnic_canteen': { name: '民族风味餐厅', image: 'images/通灌校区/食堂/民族风味餐厅.jpg', summary: '内容介绍待开发...', details: `<div class="prose dark:prose-invert max-w-none"><h2>民族风味餐厅 详细信息</h2><p>内容介绍待开发...</p></div>` }
+                        'qiancheng_canteen': { 
+                            name: '前程餐厅', 
+                            image: 'images/通灌校区/食堂/前程餐厅.jpg', 
+                            summary: '校区主食堂，满足日常用餐需求。', 
+                            details: [
+                                {
+                                    area: '一楼 & 二楼',
+                                    image: 'images/通灌校区/食堂/前程餐厅大厅.jpg',
+                                    specialty: ['大众快餐', '地方特色小吃', '麻辣香锅'],
+                                    priceRange: '人均10-20元',
+                                    openingHours: '早餐 07:00-09:00 | 午餐 11:00-13:00 | 晚餐 17:00-19:00',
+                                    notes: '菜品丰富，价格实惠，是通灌校区学生的主要就餐选择。'
+                                }
+                            ]
+                        },
+                        'food_square': { 
+                            name: '美食广场', 
+                            image: 'images/通灌校区/食堂/美食广场.jpg', 
+                            summary: '汇集多种风味美食，提供多样化选择。', 
+                            details: [
+                                {
+                                    area: '风味档口',
+                                    image: 'images/通灌校区/食堂/美食广场档口.jpg',
+                                    specialty: ['炸鸡汉堡', '奶茶饮品', '特色烧烤', '品牌连锁快餐'],
+                                    priceRange: '人均15-30元',
+                                    openingHours: '全天 10:00-21:00',
+                                    notes: '年轻人喜爱的地方，营业时间长，适合休闲和夜宵。'
+                                }
+                            ]
+                        }
                     }
                 }
             },
@@ -525,13 +808,75 @@
                 dormitory: {
                     title: "宋跳校区宿舍介绍",
                      items: {
-                        'songtiao_dorm': { name: '宋跳宿舍', image: 'images/宋跳校区/宿舍/宋跳宿舍.jpg', summary: '内容介绍待开发中...', details: `<div class="prose dark:prose-invert max-w-none"><h2>宋跳宿舍 详细信息</h2><p>内容介绍待开发中...</p></div>` }
+                        'songtiao_dorm': { 
+                            name: '宋跳校区宿舍', 
+                            image: 'images/宋跳校区/宿舍/宋跳宿舍.jpg', 
+                            summary: '宋跳校区学生生活区。',
+                            details: [
+                                {
+                                    building: '1，2号楼',
+                                    image: 'images/宋跳校区/宿舍/1,2号楼/1,2号楼宿舍内景.jpg',
+                                    roomType: '四人间',
+                                    layout: '上床下桌',
+                                    bathroom: '无独立卫生间，楼内有公共卫生间。大澡堂洗澡',
+                                    ac: '有',
+                                    balcony: '无',
+                                    network: '周日至周四24:00断网，周五周六不断网',
+                                    laundry: '阳台可自行安装洗衣机',
+                                    waterHeater: '宿舍内独立热水器',
+                                    price: '1000元/年',
+                                    notes: '宿舍条件较好，均为标准四人间配置，生活舒适。新改造的卫生间有自洁功能'
+                                },
+                                {
+                                building: '3，6号楼(六人间)',
+                                    image: 'images/宋跳校区/宿舍/3,6号楼/3,6号楼宿舍内景.jpg',
+                                    roomType: '六人间',
+                                    layout: '上下铺',
+                                    bathroom: '有独立卫生间，有公共卫生间，大澡堂洗澡',
+                                    ac: '有',
+                                    balcony: '未知',
+                                    network: '周日至周四24:00断网，周五周六不断网',
+                                    laundry: '有',
+                                    waterHeater: '未知',
+                                    price: '1000元/年',
+                                    notes: '宿舍条件较好，均为标准六人间配置，生活舒适。'
+                                },
+                                {
+                                    building: '6号楼(四人间)，7，8号楼',
+                                    image: 'images/宋跳校区/宿舍/6,7,8号楼/6,7,8号楼宿舍内景.jpg',
+                                    roomType: '四人间',
+                                    layout: '上床下桌',
+                                    bathroom: '有独立卫生间和公共卫生间，大澡堂洗澡',
+                                    ac: '有',
+                                    balcony: '有',
+                                    network: '周日至周四24:00断网，周五周六不断网',
+                                    laundry: '未知',
+                                    waterHeater: '未知',
+                                    price: '1200元/年',
+                                    notes: '宿舍条件较好，均为标准四人间配置，生活舒适。宿舍空间大。'
+                                }
+                            ]
+                        }
                     }
                 },
                 canteen: {
-                    title: "宋跳校区食堂介绍",
+                    title: "宋跳校区食堂介绍(未完成，内容仅仅是占位用的，未核实，待开发)",
                     items: {
-                       'donggang_canteen': { name: '东港餐厅', image: 'images/宋跳校区/食堂/东港餐厅.jpg', summary: '内容介绍待开发...', details: `<div class="prose dark:prose-invert max-w-none"><h2>东港餐厅 详细信息</h2><p>内容介绍待开发...</p></div>` }
+                       'donggang_canteen': { 
+                           name: '东港餐厅', 
+                           image: 'images/宋跳校区/食堂/东港餐厅.jpg', 
+                           summary: '校区内唯一的学生食堂。',
+                           details: [
+                               {
+                                    area: '综合食堂',
+                                    image: 'images/宋跳校区/食堂/东港餐厅菜品.jpg',
+                                    specialty: ['大众快餐', '特色面点', '盖浇饭'],
+                                    priceRange: '人均10-18元',
+                                    openingHours: '早餐 07:00-09:00 | 午餐 11:00-13:00 | 晚餐 17:00-19:00',
+                                    notes: '虽然选择不如主校区多，但能满足日常基本用餐需求，口味不错。'
+                               }
+                           ]
+                        }
                     }
                 }
             }
@@ -703,11 +1048,10 @@
                  const itemKeys = Object.keys(items);
                  const cardHtml = itemKeys.map(key => {
                      const item = items[key];
-                     const optimizedImageSrc = `${item.image}?nf_resize=fit&w=800&q=85&fm=webp`;
                      return `
                          <a href="#" class="detail-card bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 group" data-type="${type}" data-key="${key}">
                              <div class="h-56 overflow-hidden">
-                                 <img src="${optimizedImageSrc}" alt="[图片：${item.name}]" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                                 <img src="${item.image}" alt="[${item.name}的图片]" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
                              </div>
                              <div class="p-6">
                                  <h4 class="font-bold text-xl text-gray-900 dark:text-gray-100">${item.name}</h4>
@@ -948,17 +1292,66 @@
                 this._showDetailView(type, key);
             }
 
+            _generateDormitoryDetailsHtml(details) {
+                return details.map(dorm => `
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg mb-6 shadow-md border border-gray-200 dark:border-gray-700">
+                        <h4 class="font-bold text-xl text-blue-800 dark:text-blue-400 mb-4">${dorm.building}</h4>
+                        <img src="${dorm.image}" alt="[${dorm.building}的图片]" class="w-full h-auto object-cover rounded-lg mb-4">
+                        <ul class="space-y-3 text-gray-700 dark:text-gray-300">
+                            <li class="flex items-center"><i data-lucide="users" class="w-5 h-5 mr-3 text-blue-500"></i><strong>房型：</strong> ${dorm.roomType}</li>
+                            <li class="flex items-center"><i data-lucide="layout-grid" class="w-5 h-5 mr-3 text-blue-500"></i><strong>布局：</strong> ${dorm.layout}</li>
+                            <li class="flex items-center"><i data-lucide="wallet" class="w-5 h-5 mr-3 text-blue-500"></i><strong>费用：</strong> ${dorm.price}</li>
+                            <li class="flex items-center"><i data-lucide="shower-head" class="w-5 h-5 mr-3 text-blue-500"></i><strong>卫浴：</strong> ${dorm.bathroom}</li>
+                            <li class="flex items-center"><i data-lucide="heater" class="w-5 h-5 mr-3 text-blue-500"></i><strong>热水：</strong> ${dorm.waterHeater}</li>
+                            <li class="flex items-center"><i data-lucide="air-vent" class="w-5 h-5 mr-3 text-blue-500"></i><strong>空调：</strong> ${dorm.ac}</li>
+                            <li class="flex items-center"><i data-lucide="sun" class="w-5 h-5 mr-3 text-blue-500"></i><strong>阳台：</strong> ${dorm.balcony}</li>
+                            <li class="flex items-center"><i data-lucide="wifi" class="w-5 h-5 mr-3 text-blue-500"></i><strong>网络：</strong> ${dorm.network}</li>
+                            <li class="flex items-center"><i data-lucide="washing-machine" class="w-5 h-5 mr-3 text-blue-500"></i><strong>洗衣：</strong> ${dorm.laundry}</li>
+                            ${dorm.notes ? `<li class="flex items-start"><i data-lucide="info" class="w-5 h-5 mr-3 mt-1 text-blue-500 flex-shrink-0"></i><div><strong>备注：</strong> ${dorm.notes}</div></li>` : ''}
+                        </ul>
+                    </div>
+                `).join('');
+            }
+
+            _generateCanteenDetailsHtml(details) {
+                return details.map(canteen => `
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg mb-6 shadow-md border border-gray-200 dark:border-gray-700">
+                        <h4 class="font-bold text-xl text-green-800 dark:text-green-400 mb-4">${canteen.area}</h4>
+                         <img src="${canteen.image}" alt="[${canteen.area}的图片]" class="w-full h-auto object-cover rounded-lg mb-4">
+                        <ul class="space-y-3 text-gray-700 dark:text-gray-300">
+                            <li class="flex items-start"><i data-lucide="sparkles" class="w-5 h-5 mr-3 mt-1 text-green-500 flex-shrink-0"></i><div><strong>特色菜品：</strong> ${canteen.specialty.join('、 ')}</div></li>
+                            <li class="flex items-center"><i data-lucide="wallet" class="w-5 h-5 mr-3 text-green-500"></i><strong>价格范围：</strong> ${canteen.priceRange}</li>
+                            <li class="flex items-center"><i data-lucide="clock" class="w-5 h-5 mr-3 text-green-500"></i><strong>营业时间：</strong> ${canteen.openingHours}</li>
+                            ${canteen.notes ? `<li class="flex items-start"><i data-lucide="info" class="w-5 h-5 mr-3 mt-1 text-green-500 flex-shrink-0"></i><div><strong>备注：</strong> ${canteen.notes}</div></li>` : ''}
+                        </ul>
+                    </div>
+                `).join('');
+            }
+
             _showDetailView(type, itemKey) {
                 const itemData = this.campusData[this.selectedCampus]?.[type]?.items?.[itemKey];
                 if (!itemData) return;
 
                 this.detailTitle.textContent = itemData.name;
-                const detailImageSrc = `${itemData.image}?nf_resize=fit&w=1200&q=90&fm=webp`;
+
+                let detailsHtml = '';
+                if (Array.isArray(itemData.details)) {
+                    if (type === 'dormitory') {
+                        detailsHtml = this._generateDormitoryDetailsHtml(itemData.details);
+                    } else if (type === 'canteen') {
+                        detailsHtml = this._generateCanteenDetailsHtml(itemData.details);
+                    }
+                } else {
+                    // Fallback for old string format
+                    detailsHtml = `<div class="prose dark:prose-invert max-w-none">${itemData.details}</div>`;
+                }
+
                 this.detailContent.innerHTML = `
                     <div class="max-w-4xl mx-auto">
-                        <img src="${detailImageSrc}" alt="[图片：${itemData.name}]" class="w-full h-auto max-h-96 object-cover rounded-xl shadow-lg mb-8">
-                        <div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg">
-                            ${itemData.details}
+                        <img src="${itemData.image}" alt="[${itemData.name}的图片]" class="w-full h-auto max-h-[450px] object-cover rounded-xl shadow-lg mb-8">
+                        <div class="bg-gray-100 dark:bg-gray-800/50 p-4 sm:p-8 rounded-xl">
+                            <h3 class="text-2xl font-bold mb-6 border-b pb-4 dark:border-gray-700 text-gray-800 dark:text-gray-100">详细情况概览</h3>
+                            ${detailsHtml}
                         </div>
                     </div>
                 `;
@@ -1032,13 +1425,18 @@
                             for (const itemKey in campus[type].items) {
                                 const item = campus[type].items[itemKey];
                                 let searchableText = `${item.name} ${item.summary}`;
-                                tempDiv.innerHTML = item.details;
-                                searchableText += ' ' + tempDiv.textContent;
+                                // **搜索逻辑更新**：如果details是数组，则搜索数组内的文本
+                                if (Array.isArray(item.details)) {
+                                    searchableText += item.details.map(d => Object.values(d).join(' ')).join(' ');
+                                } else if (typeof item.details === 'string') {
+                                    tempDiv.innerHTML = item.details;
+                                    searchableText += ' ' + tempDiv.textContent;
+                                }
 
                                 if (searchableText.toLowerCase().includes(queryLower)) {
                                     results.push({
                                         title: item.name,
-                                        text: tempDiv.textContent,
+                                        text: searchableText,
                                         isDetail: true,
                                         detailType: type,
                                         detailKey: itemKey
@@ -1077,8 +1475,8 @@
                 this.searchView.classList.remove('hidden', 'translate-x-full');
                 this.searchView.classList.add('flex');
                  setTimeout(() => {
-                    this.searchView.classList.remove('translate-x-full');
-                }, 10);
+                     this.searchView.classList.remove('translate-x-full');
+                 }, 10);
             }
 
             _createSnippet(text, query) {
@@ -1137,10 +1535,12 @@
                 
                 nodesToReplace.forEach(textNode => {
                     const parent = textNode.parentNode;
+                    if (!parent || parent.nodeName === 'MARK') return; // 避免重复高亮
+                    
                     const parts = textNode.textContent.split(regex);
                     const matches = textNode.textContent.match(regex);
 
-                    if (!parent || !matches) return;
+                    if (!matches) return;
 
                     const fragment = document.createDocumentFragment();
                     parts.forEach((part, index) => {
@@ -1211,7 +1611,6 @@
                 }, 300);
             }
 
-            // **关键改动 2**: 更新JS以适配Netlify的表单提交方式
             _handleFeedbackSubmit(e) {
                 e.preventDefault();
                 const form = e.target;
@@ -1234,7 +1633,6 @@
                 .catch((error) => {
                     // 处理错误情况
                     console.error(error);
-                    // 你可以在这里添加一个自定义的错误提示UI，而不是用alert
                     const submitButton = form.querySelector('button[type="submit"]');
                     submitButton.textContent = '提交失败!';
                     submitButton.classList.add('bg-red-600');
