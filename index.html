@@ -121,6 +121,54 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        /* --- 新增：图片轮播器样式 --- */
+        .image-slider .slider-wrapper {
+            transition: transform 0.5s ease-in-out;
+        }
+        .image-slider .slider-slide {
+            flex-shrink: 0;
+            width: 100%;
+            aspect-ratio: 16 / 9; /* 保持图片比例 */
+        }
+        .image-slider .slider-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .image-slider .slider-nav {
+            background-color: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(4px);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        .image-slider .slider-nav:hover {
+            background-color: rgba(0, 0, 0, 0.6);
+            transform: scale(1.1);
+        }
+        .image-slider .slider-dots .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        .image-slider .slider-dots .dot.active {
+            background-color: white;
+            transform: scale(1.2);
+        }
+        .slider-caption {
+            transition: opacity 0.5s ease-in-out;
+        }
     </style>
 </head>
 <body class="overflow-hidden">
@@ -485,7 +533,11 @@
                             details: [
                                 {
                                     building: 'A1-A4,A8-A10栋',
-                                    image: 'images/苍梧校区/宿舍/A区/A1-A4,A8-A9栋楼/A1-A4,A8-A9宿舍内景.jpg',
+                                    // --- 修改开始: 将单个 image 替换为 images 数组 ---
+                                    images: [
+                                        { src: 'images/苍梧校区/宿舍/A区/A1-A4,A8-A9栋楼/A1-A4,A8-A9宿舍内景.jpg', caption: '宿舍内景（上下铺）' },
+                                    ],
+                                    // --- 修改结束 ---
                                     roomType: '四人间',
                                     layout: '上下铺',
                                     bathroom: '独立卫生间，澡堂在三食堂附近',
@@ -499,7 +551,9 @@
                                 },
                                 {
                                     building: 'A5-A8栋',
-                                    image: 'images/苍梧校区/宿舍/A区/A5-A8栋楼/A5-A8栋楼宿舍内景.jpg',
+                                    images: [
+                                        { src: 'images/苍梧校区/宿舍/A区/A5-A8栋楼/A5-A8栋楼宿舍内景.jpg', caption: '宿舍内景（上床下桌）' },
+                                    ],
                                     roomType: '四人间',
                                     layout: '上床下桌',
                                     bathroom: '独立卫生间，澡堂在三食堂附近',
@@ -520,7 +574,7 @@
                             details: [
                                 {
                                     building: 'B1-B4栋',
-                                    image: 'images/苍梧校区/宿舍/B区/B1-B4/B1-B4宿舍内景.jpg',
+                                    images: [{ src: 'images/苍梧校区/宿舍/B区/B1-B4/B1-B4宿舍内景.jpg', caption: '宿舍内景（上下铺）' }],
                                     roomType: '四人间',
                                     layout: '上下铺，床对面一排桌子',
                                     bathroom: '三食堂西边',
@@ -534,7 +588,13 @@
                                 },
                                 {
                                     building: 'B5-B6栋',
-                                    image: 'images/苍梧校区/宿舍/B区/B5-B6/B5-B6宿舍内景.jpg', 
+                                    images: 
+                                    [
+                                        { src: 'images/苍梧校区/宿舍/B区/B5-B6/B5-B6宿舍内景.jpg', caption: '宿舍内景（上床下桌）' },
+                                        { src: 'images/苍梧校区/宿舍/B区/B5-B6/宿舍内详景.jpg', caption: '宿舍内详景' },
+                                        { src: 'image/苍梧校区/宿舍/B区/B5-B6/公共卫生间.jpg', caption: '公共卫生间' },
+                                        { src: 'images/苍梧校区/宿舍/B区/B5-B6/公共卫生间洗手池.jpg', caption: '公共卫生间洗手池' }
+                                     ], 
                                     roomType: '四人间',
                                     layout: '上床下桌',
                                     bathroom: '公共卫生间，公共浴室在三食堂西边',
@@ -548,7 +608,7 @@
                                 },
                                 {
                                     building: 'B7-B12栋',
-                                    image: 'images/苍梧校区/宿舍/B区/B7-B12/B7-B12宿舍内景.jpg', 
+                                    images: [{ src: 'images/苍梧校区/宿舍/B区/B7-B12/B7-B12宿舍内景.jpg', caption: '宿舍内景（六人间）' }], 
                                     roomType: '六人间',
                                     layout: '上下铺',
                                     bathroom: '有独立卫生间',
@@ -569,7 +629,7 @@
                             details: [
                                 {
                                     building: 'D5-6，D9-10栋',
-                                    image: 'images/苍梧校区/宿舍/D区/D5,6,9,10/D5,6,9,10宿舍内景.jpg',
+                                    images: [{ src: 'images/苍梧校区/宿舍/D区/D5,6,9,10/D5,6,9,10宿舍内景.jpg', caption: '宿舍内景（四人间）' }],
                                     roomType: '四人间',
                                     layout: '上床下桌',
                                     bathroom: '独立卫浴，一楼也有公共澡堂',
@@ -583,7 +643,7 @@
                                 },
                                 {
                                     building: 'D7-8栋',
-                                    image: 'images/苍梧校区/宿舍/D区/D7-D8栋楼/D7-D8栋楼宿舍内景.jpg',
+                                    images: [{ src: 'images/苍梧校区/宿舍/D区/D7-D8栋楼/D7-D8栋楼宿舍内景.jpg', caption: '宿舍内景（三人间）' }],
                                     roomType: '三人间',
                                     layout: '上床下桌',
                                     bathroom: '独立卫浴',
@@ -608,11 +668,15 @@
                             summary: '位于大学生活动中心旁，上下课必经之路。', 
                             details: [
                                 {
-                                    area: '一楼大众菜',
-                                    image: 'images/苍梧校区/食堂/一食堂快餐.jpg',
-                                    specialty: ['自选快餐', '特色炒饭', '瓦罐汤'],
-                                    priceRange: '人均8-15元',
-                                    openingHours: '早餐 06:30-09:00 | 午餐 11:00-13:00 | 晚餐 17:00-19:00',
+                                    area: '第一食堂',
+                                    images: [
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=4746df24b7d3572c66e29cd4ba116352/2ab0842bd40735faab5ac674db510fb30d2408f9.jpg?tbpicau=2025-07-22-05_a05d7640197fcee3c1ff4e051cba083f', caption: '麻辣香锅' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=9bf203015b178a82ce3c7fa8c601737f/262eda177f3e6709d0e9bc327ec79f3dfadc55be.jpg?tbpicau=2025-07-22-05_a0fcec0e9795afd25cc706123b217b62', caption: '腊汁肉夹馍' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=70a95923d982d158bb8259b9b00819d5/47f403385343fbf213b179eef57eca8067388f83.jpg?tbpicau=2025-07-22-05_4c406bebed463795dd657da1b2f7a766', caption: '鸡蛋拌面' },
+                                    ],
+                                    specialty: ['自选快餐', '特色炒饭', '肉夹馍','包子'],
+                                    priceRange: '待补充',
+                                    openingHours: '待补充',
                                     notes: '主打便捷快餐，出餐速度快，是上下课间快速解决吃饭问题的首选。'
                                 }
                             ]
@@ -624,18 +688,28 @@
                             details: [
                                {
                                     area: '一楼：第二食堂',
-                                    image: 'images/苍梧校区/食堂/二食堂大众菜.jpg',
-                                    specialty: ['大众快餐', '特色面食', '早餐'],
-                                    priceRange: '人均8-15元',
-                                    openingHours: '早餐 06:30-09:00 | 午餐 11:00-13:00 | 晚餐 17:00-19:00',
+                                    images: [
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=f19fe2ddcbb1cb133e693c1bed5456da/484206ce36d3d539733786f17c87e950352ab027.jpg?tbpicau=2025-07-22-05_6a1e65a578bf549457f0a979c78ca769', caption: '明炉羊肉' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=d3ff7b3cf73533faf5b6932698d3fdca/4b2876380cd791235dfa6646eb345982b2b78017.jpg?tbpicau=2025-07-22-05_6d7e252117f840e23dbb55d42285986d', caption: '虾仁鸡蛋炒面' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=e6d5541a707adab43dd01b4bbbd5b36b/f3235410b912c8fcdd0211ffba039245d78821b3.jpg?tbpicau=2025-07-22-05_cd05486838bf4867a34cc59e16e09b2e', caption: '卤汁香肠拌面' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=4df74d50de22720e7bcee2f24bcb0a3a/769ebcc379310a55f71936c6f14543a98226106f.jpg?tbpicau=2025-07-22-05_ca7ca3422ed8d01c253a07abeda23ee9', caption: '水煮小酥肉' },
+                                    ], 
+                                    specialty: ['小火锅','盖浇饭', '川菜', '拌饭'],
+                                    priceRange: '待补充',
+                                    openingHours: '待补充',
                                     notes: '离教学楼最近，菜品实惠，是解决日常三餐的主要场所。'
                                 },
                                 {
                                     area: '二楼：风味餐厅',
-                                    image: 'images/苍梧校区/食堂/风味餐厅.jpg',
+                                    images: [
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=6527e200764e251fe2f7e4f09786c9c2/331fc3a20cf431adeffc03030d36acaf2edd9802.jpg?tbpicau=2025-07-22-05_0f40bd873627a192b1b23106a50b73a7', caption: '特色米线' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=041e879f4c7b02080cc93fe952d9f25f/b873a5fd5266d016633c3112d12bd40735fa350f.jpg?tbpicau=2025-07-22-05_e2ca4c08798331b01b844913144c32b3', caption: '煎肉拌饭' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=4a5c1be6cc13632715edc23ba18ea056/676568899e510fb354a7f0ad9f33c895d0430cf2.jpg?tbpicau=2025-07-22-05_10258b18d91f8a760fa0ae1ae5bb8987', caption: '招牌法式咖喱蛋包饭' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=b0a4bd453ef0f736d8fe4c093a54b382/b252918ba61ea8d3e6dfff3ed10a304e241f58b7.jpg?tbpicau=2025-07-22-05_b7926dab35b2628b169fe1c874c6f15c', caption: '淮南牛肉汤' },
+                                    ],
                                     specialty: ['木桶饭', '铁板饭', '石锅拌饭', '果茶饮品'],
-                                    priceRange: '人均15-25元',
-                                    openingHours: '午餐 11:00-13:30 | 晚餐 17:00-19:30',
+                                    priceRange: '待补充',
+                                    openingHours: '待补充',
                                     notes: '环境优雅，提供各地风味美食，适合改善伙食或朋友小聚。'
                                 }
                             ]
@@ -643,23 +717,39 @@
                         'canteen3': { 
                             name: '第三 & 第四食堂', 
                             image: 'images/苍梧校区/食堂/第三食堂.jpg', 
-                            summary: '网红餐厅，种类丰富，小火锅和麻辣烫是特色。', 
+                            summary: '网红餐厅，种类丰富，最大和豪华的食堂。', 
                             details: [
                                 {
                                     area: '一楼：第三食堂',
-                                    image: 'images/苍梧校区/食堂/三食堂快餐.jpg',
-                                    specialty: ['5元特价快餐', '精品小炒', '肠粉'],
-                                    priceRange: '人均5-18元',
-                                    openingHours: '午餐 11:00-13:00 | 晚餐 17:00-19:00',
-                                    notes: '以其超高性价比的5元快餐闻名，是月底的“救星”。'
+                                    images: [
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=15d155c03f310a55c424defc87444387/297bee1f4134970ad2a9df1cd3cad1c8a6865d50.jpg?tbpicau=2025-07-22-05_b92b3e108fd8fdb1c12f194f98d559e7', caption: '干锅鸡快' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=c286bd15d513b07ebdbd50003cd79113/cda07d061d950a7b3b7c74f04cd162d9f3d3c9e5.jpg?tbpicau=2025-07-22-05_135882bd6aa878d35cd3f926769acb10', caption: '鸡肉铁板饭' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=c96b3230729b033b2c88fcd225ce3620/b7d2c9b44aed2e739695a918c101a18b87d6fa2a.jpg?tbpicau=2025-07-22-05_8f11ccce0d77f9c747d7ecd0262147b5', caption: '5元特价快餐' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=3d71d98be6ec08fa260013af69ee3d4d/c30fca33c895d1436739991735f082025baf07db.jpg?tbpicau=2025-07-22-05_d239bf281d9eae35bb81b454767001d7', caption: '武汉热干面' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=c124d231a3dde711e7d243fe97efcef4/566268cb0a46f21faa4f3c67b0246b600c33ae37.jpg?tbpicau=2025-07-22-05_a0195006196af11255b661b7a4ecfa02', caption: '成都担担面' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=58c5aa3936cf3bc7e800cde4e101babd/22646fd98d1001e906cd423bfe0e7bec55e797bd.jpg?tbpicau=2025-07-22-05_7a28e9d56cc06fab49996728b082f8ba', caption: '回锅肉炒饭' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=85683c274ff79052ef1f47363cf2d738/82e76bf0f736afc3dcfd7051f519ebc4b64512bd.jpg?tbpicau=2025-07-22-05_7ae716091e8cacd3e13907c0a521d8ea', caption: '南京鸭血粉丝' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=33ae1f5549b30f24359aec0bf895d192/4abb5a540923dd541e69135c9709b3de9c824810.jpg?tbpicau=2025-07-22-05_bd322efac175c42e478223232857fb31', caption: '重庆小面' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=5f937dca7dc79f3d8fe1e4388aa0cdbc/fd719e1001e93901b791b50b3dec54e737d19698.jpg?tbpicau=2025-07-22-05_b79677618473c09d8d71a2c99583a5ee', caption: '汉堡工厂' },
+                                    ],
+                                    specialty: ['5元特价快餐', '校园川菜', '拉面','武汉热干面'],
+                                    priceRange: '待补充',
+                                    openingHours: '待补充',
+                                    notes: '学以其超高性价比的5元快餐闻名，是月底的“救星”。'
                                 },
                                 {
                                     area: '二楼：第四食堂',
-                                    image: 'images/苍梧校区/食堂/四食堂麻辣烫.jpg',
-                                    specialty: ['麻辣烫', '旋转小火锅', '烤肉饭'],
-                                    priceRange: '人均15-30元',
-                                    openingHours: '午餐 11:00-14:00 | 晚餐 17:00-21:00',
-                                    notes: '学校的美食中心，选择多样，麻辣烫和小火锅人气超高，晚上营业时间较长。'
+                                    images: [
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=7f44930d3df40ad115e4c7eb672c1151/d3cec3160924ab18e214450273fae6cd7b890b29.jpg?tbpicau=2025-07-22-05_8c10476305cb5aa07ea065419b0b4d7c', caption: '烤盘饭' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=069881a29f33c895a67e9873e1127397/5cfc454e9258d109ba625f879758ccbf6d814dae.jpg?tbpicau=2025-07-22-05_c2468989c3ef378d458078a780c672e6', caption: '招牌烤肉拌饭' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=3a2552d6bb1f4134e0370576151f95c1/20ecbe345982b2b74c99f6f177adcbef76099b2e.jpg?tbpicau=2025-07-22-05_0c0a92cb55a8b1bae0139f578cadc877', caption: '肥牛麻酱拌面' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=aef4dc15f51bb0518f24b320067bda77/7974c200baa1cd117508a217ff12c8fcc2ce2df7.jpg?tbpicau=2025-07-22-05_7ab95acb38502c5ca679a95abbcdb558', caption: '冒烤鸭' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=440f6b4c9088d43ff0a991fa4d1ed2aa/049df6dde71190efceca5ee6881b9d16fdfa607b.jpg?tbpicau=2025-07-22-05_b3d9097744d1d4fb5f085cb6a46f51ee', caption: '鸡排意面' },
+                                    ],
+                                    specialty: ['麻辣烫', '冒烤鸭', '烤肉饭'],
+                                    priceRange: '待补充',
+                                    openingHours: '待补充',
+                                    notes: '学校的美食中心，选择多样，冒烤鸭尤其好吃。'
                                 }
                             ]
                         },
@@ -669,11 +759,18 @@
                             summary: 'D区食堂，空间大，座位多。', 
                             details: [
                                 {
-                                    area: '一楼 & 二楼',
-                                    image: 'images/苍梧校区/食堂/东区食堂大厅.jpg',
-                                    specialty: ['大众快餐', '面食窗口', '水饺馄饨', '轻食沙拉'],
-                                    priceRange: '人均10-20元',
-                                    openingHours: '早餐 06:30-09:00 | 午餐 11:00-13:00 | 晚餐 17:00-19:00',
+                                    area: 'D区食堂',
+                                    images: [
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=69b542f7bdedab6474724dc8c737af81/9870af3eb13533fa4f31af12eed3fd1f40345bab.jpg?tbpicau=2025-07-22-05_824c24f1ebf92243db466b9c8b3b37ea', caption: '麻辣香锅' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=7cef733d4c55b3199cf9827d73a98286/7cb75234970a304ef6339fc697c8a786c9175c25.jpg?tbpicau=2025-07-22-05_6fc15a311a34a774b8169fa6717fd74b', caption: '石锅菜' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=d203ad1dd513b07ebdbd50003cd69113/cda07d061d950a7b2bf964f84cd162d9f3d3c962.jpg?tbpicau=2025-07-22-05_6d200a6ba8227a301f93395d70e7ebf5', caption: '鸡肉拌面' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=3140be06764e251fe2f7e4f09786c9c2/331fc3a20cf431adbb9b5f050d36acaf2fdd98ed.jpg?tbpicau=2025-07-22-05_99b6d5c7c92b76f1dd57c909fd91c0c9', caption: '烤肉饭' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=83e25a0a5b950a7b75354ecc3ad0625c/00632adbb6fd52661ffc3d28ed18972bd507365b.jpg?tbpicau=2025-07-22-05_ecf50ebba508635a7f2b6f68f239ea4a', caption: '牛肉汤水饺' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=243fae83e6ec08fa260013af69ee3d4d/c30fca33c895d1437e77ee1f35f082025aaf0735.jpg?tbpicau=2025-07-22-05_490bc14768dba3a53c67e84352c3ff63', caption: '快餐' },
+                                    ],
+                                    specialty: ['大众快餐', '面食窗口', '水饺', '香锅'],
+                                    priceRange: '待补充',
+                                    openingHours: '待补充',
                                     notes: '空间宽敞明亮，座位充足，不用担心饭点找不到位置。服务D区及附近师生。'
                                 }
                             ]
@@ -685,10 +782,16 @@
                             details: [
                                {
                                     area: '清真美食',
-                                    image: 'images/苍梧校区/食堂/民族餐厅美食.jpg',
-                                    specialty: ['兰州拉面', '大盘鸡', '羊肉串', '特色早餐'],
-                                    priceRange: '人均12-25元',
-                                    openingHours: '早餐 06:30-09:00 | 午餐 11:00-13:30 | 晚餐 17:00-19:30',
+                                    images: [
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=dacc456b72a85edffa8cfe2b795509d8/829348b5c9ea15ce502ecc32f0003af33b87b275.jpg?tbpicau=2025-07-22-05_2a9232d5654cabfc8ed0edb311b7a870', caption: '特色风味面' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=edbd34d6e5cc7cd9fa2d34d109012104/d095359759ee3d6d14e9a8f005166d224f4ade02.jpg?tbpicau=2025-07-22-05_5bc8e5e20677aae24b3c2ee85ee9a6df', caption: '龙虾牛肉面' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=550e9eaa8b11728b302d8c2af8fcc3b3/39a668ec54e736d1ab209d33dd504fc2d5626906.jpg?tbpicau=2025-07-22-05_f588ef4d4111c056b0a26aec63932ce9', caption: '精品快餐' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=f9e48108d78fa0ec7fc764051697594a/8e8c51a7d933c8954a77db40971373f08202002c.jpg?tbpicau=2025-07-22-05_167b11609af0b7d31c032657b8942070', caption: '清真涮煮' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=390e15c197c8a786be2a4a065709c9c7/b005d8ef76094b36b0beaed6e5cc7cd98d109d01.jpg?tbpicau=2025-07-22-05_8f4c867ec9027d429e7877fa2c197027', caption: '营养早餐' },
+                                    ],
+                                    specialty: ['清真涮煮', '风味面', '炒面', '特色早餐'],
+                                    priceRange: '待补充',
+                                    openingHours: '待补充',
                                     notes: '严格的清真食堂，为有需要的同学提供地道的民族风味美食，早餐的饼类尤其受欢迎。'
                                 }
                             ]
@@ -699,11 +802,17 @@
                             summary: '位于文予楼旁，特色是宴席。', 
                             details: [
                                 {
-                                    area: '家常小炒 & 宴席',
-                                    image: 'images/苍梧校区/食堂/南园餐厅包间.jpg',
-                                    specialty: ['家常炒菜', '特色淮扬菜', '承办宴席'],
-                                    priceRange: '人均30-80元',
-                                    openingHours: '午餐 11:00-14:00 | 晚餐 17:00-21:00',
+                                    area: '海洋餐厅',
+                                    images: [
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=229a9af1173d26972ed3085565fbb24f/493dc243ad4bd113f18610091cafa40f4afb05ee.jpg?tbpicau=2025-07-22-05_709020a5db457cb117a5154b14e742a7', caption: '隆江猪脚饭' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=41a036e6ed64034f0fcdc20e9fc37980/3d96a23533fa828bac4565d8bb1f4134960a5acb.jpg?tbpicau=2025-07-22-05_60ec64fd8aec31bb4aa3410a78aa972a', caption: '番茄鸡蛋' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=d7a7d31ccc82b9013dadc33b438da97e/48bf6c3e6709c93d6894f6ccd93df8dcd00054cb.jpg?tbpicau=2025-07-22-05_d76cdad4dd7c38ba7c3901437b2a2ceb', caption: '小炒' },
+
+                                    ],
+
+                                    specialty: ['家常炒菜', '隆江猪脚饭', '小炒'],
+                                    priceRange: '待补充',
+                                    openingHours: '待补充',
                                     notes: '更像是校内的社会餐厅，提供点菜服务和包间，适合班级聚餐、生日宴请等活动。'
                                 }
                             ]
@@ -723,7 +832,9 @@
                             details: [
                                 {
                                     building: '锦绣1,2,5号楼',
-                                    image: 'images/通灌校区/宿舍/锦绣1,2,5号楼/锦绣1,2,5号楼宿舍内景.jpg',
+                                    images: [
+                                        { src: 'images/通灌校区/宿舍/锦绣1,2,5号楼/锦绣1,2,5号楼宿舍内景.jpg', caption: '宿舍内景（上下铺）' },
+                                    ],
                                     roomType: '四人间',
                                     layout: '上下铺',
                                     bathroom: '无独立卫生间，每层楼有隔间式厕所，有人定期打扫。澡堂在前程餐厅旁',
@@ -737,7 +848,7 @@
                                 },
                                 {
                                     building: '锦绣3，4，8号楼',
-                                    image: 'images/通灌校区/宿舍/锦绣3,4,8号楼/宿舍内情况.jpg', 
+                                    images: [{ src: 'images/通灌校区/宿舍/锦绣3,4,8号楼/宿舍内情况.jpg', caption: '宿舍内景' }], 
                                     roomType: '四人间（少量双人间）',
                                     layout: '上下铺',
                                     bathroom: '有独立卫生间，澡堂在前程餐厅旁',
@@ -751,7 +862,7 @@
                                 },
                                 {
                                     building: '锦绣6，7号楼',
-                                    image: 'images/通灌校区/宿舍/锦绣6,7号楼/锦绣6,7号楼宿舍内景.jpg',
+                                    images: [{ src: 'images/通灌校区/宿舍/锦绣6,7号楼/锦绣6,7号楼宿舍内景.jpg', caption: '五人间宿舍内景' }],
                                     roomType: '五人间，四个人上下铺，一个人上床下桌',
                                     layout: '上床下桌/上下铺',
                                     bathroom: '无独立卫生间，请到前程餐厅附近的澡堂洗澡',
@@ -768,7 +879,7 @@
                     }
                 },
                 canteen: {
-                    title: "通灌校区食堂介绍(未完成，内容仅仅是占位用的，未核实，待开发)",
+                    title: "通灌校区食堂介绍",
                     items: {
                         'qiancheng_canteen': { 
                             name: '前程餐厅', 
@@ -776,12 +887,16 @@
                             summary: '校区主食堂，满足日常用餐需求。', 
                             details: [
                                 {
-                                    area: '一楼 & 二楼',
-                                    image: 'images/通灌校区/食堂/前程餐厅大厅.jpg',
-                                    specialty: ['大众快餐', '地方特色小吃', '麻辣香锅'],
-                                    priceRange: '人均10-20元',
-                                    openingHours: '早餐 07:00-09:00 | 午餐 11:00-13:00 | 晚餐 17:00-19:00',
-                                    notes: '菜品丰富，价格实惠，是通灌校区学生的主要就餐选择。'
+                                    area: '前程餐厅',
+                                    images: [
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=3f3345dc4c46f21fc9345e5bc6256b31/6a6ca44543a9822627052000cc82b9014b90eb7e.jpg?tbpicau=2025-07-22-05_a0ee442390293df20715293e8b95262c', caption: '西红柿鸡蛋版面' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=a7f204a68d1349547e1ee86c664e92dd/946625d3d539b600c3deb390af50352ac65cb72a.jpg?tbpicau=2025-07-22-05_eda35f3216afadc0f6769c7902d2131a', caption: '招牌鸡腿饭' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=ec3a91583ef0f736d8fe4c093a55b382/b252918ba61ea8d3ba41d323d10a304e241f58da.jpg?tbpicau=2025-07-22-05_573e82489a2b10422410f3f4f72f90e5', caption: '藤椒鸡柳拌面' },
+                                    ],
+                                    specialty: ['版面', '快餐', '水饺','烤鸭'],
+                                    priceRange: '待补充',
+                                    openingHours: '待补充',
+                                    notes: '菜品丰富，价格实惠，快餐很棒，窗口很多'
                                 }
                             ]
                         },
@@ -791,11 +906,34 @@
                             summary: '汇集多种风味美食，提供多样化选择。', 
                             details: [
                                 {
-                                    area: '风味档口',
-                                    image: 'images/通灌校区/食堂/美食广场档口.jpg',
-                                    specialty: ['炸鸡汉堡', '奶茶饮品', '特色烧烤', '品牌连锁快餐'],
-                                    priceRange: '人均15-30元',
-                                    openingHours: '全天 10:00-21:00',
+                                    area: '美食广场',
+                                    images: [
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=e7bcb82cf0003af34dbadc68052ac619/202394d6277f9e2fd667452d5930e924b999f3ea.jpg?tbpicau=2025-07-22-05_77a785628016801eee86ae8a8bdf2839', caption: '中式快餐' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=4d74830ac101a18bf0eb1247ae2e0761/7dab8145d688d43f413494d43b1ed21b0ff43b9b.jpg?tbpicau=2025-07-22-05_3ca07a38812dd5ac5b18540ca112426a', caption: '麻辣烫香锅' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=4c17d452eb345982c58ae59a3cf5310b/737b442c11dfa9ec51d9163124d0f703908fc14e.jpg?tbpicau=2025-07-22-05_12e932f374047c334eb175cdeabac8f2', caption: '小碗牛肉面' },
+                                    ],
+                                    specialty: ['中式快餐', '鸡肉饭', '拌面', '香锅'],
+                                    priceRange: '待补充',
+                                    openingHours: '待补充',
+                                    notes: '年轻人喜爱的地方，营业时间长，适合休闲和夜宵。'
+                                }
+                            ]
+                        },
+                        '民族风味餐厅': { 
+                            name: '民族风味餐厅', 
+                            image: 'images/通灌校区/食堂/民族风味餐厅.jpg', 
+                            summary: '汇集多种风味美食，提供多样化选择。', 
+                            details: [
+                                {
+                                    area: '民族风味餐厅',
+                                    images: [
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=a46223cb24d9f2d3201124e799ed8a53/888cb818972bd407ea6ccfd73d899e510eb3099d.jpg?tbpicau=2025-07-22-05_cc5375c53f5823b62acdba42dcbab3e5', caption: '番茄鸡排饭' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=b315b2128f3d70cf4cfaaa05c8dcd1ba/af75b0cc7cd98d10cdc2ec1a673fb80e7bec9034.jpg?tbpicau=2025-07-22-05_3ecf2afb6c3b2c520ccd3b271b1d4f13', caption: '酸菜牛肉炒饭' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=6c660aef91ca7bcb7d7bc7278e096b3f/8bfda019ebc4b7455dc1843a89fc1e178b8215e8.jpg?tbpicau=2025-07-22-05_11e2c66a36e4703429ad63de71ff04ce', caption: '鸡排烤冷面' }   
+                                    ],
+                                    specialty: ['黄焖鸡', '粉丝', '鸡排饭', ],
+                                    priceRange: '待补充',
+                                    openingHours: '待补充',
                                     notes: '年轻人喜爱的地方，营业时间长，适合休闲和夜宵。'
                                 }
                             ]
@@ -815,7 +953,9 @@
                             details: [
                                 {
                                     building: '1，2号楼',
-                                    image: 'images/宋跳校区/宿舍/1,2号楼/1,2号楼宿舍内景.jpg',
+                                    images: [
+                                        { src: 'images/宋跳校区/宿舍/1,2号楼/1,2号楼宿舍内景.jpg', caption: '四人间（上床下桌）' },
+                                    ],
                                     roomType: '四人间',
                                     layout: '上床下桌',
                                     bathroom: '无独立卫生间，楼内有公共卫生间。大澡堂洗澡',
@@ -829,7 +969,7 @@
                                 },
                                 {
                                 building: '3，6号楼(六人间)',
-                                    image: 'images/宋跳校区/宿舍/3,6号楼/3,6号楼宿舍内景.jpg',
+                                    images: [{ src: 'images/宋跳校区/宿舍/3,6号楼/3,6号楼宿舍内景.jpg', caption: '六人间宿舍内景' }],
                                     roomType: '六人间',
                                     layout: '上下铺',
                                     bathroom: '有独立卫生间，有公共卫生间，大澡堂洗澡',
@@ -843,7 +983,7 @@
                                 },
                                 {
                                     building: '6号楼(四人间)，7，8号楼',
-                                    image: 'images/宋跳校区/宿舍/6,7,8号楼/6,7,8号楼宿舍内景.jpg',
+                                    images: [{ src: 'images/宋跳校区/宿舍/6,7,8号楼/6,7,8号楼宿舍内景.jpg', caption: '宽敞的四人间宿舍' }],
                                     roomType: '四人间',
                                     layout: '上床下桌',
                                     bathroom: '有独立卫生间和公共卫生间，大澡堂洗澡',
@@ -860,7 +1000,7 @@
                     }
                 },
                 canteen: {
-                    title: "宋跳校区食堂介绍(未完成，内容仅仅是占位用的，未核实，待开发)",
+                    title: "宋跳校区食堂介绍",
                     items: {
                        'donggang_canteen': { 
                            name: '东港餐厅', 
@@ -869,10 +1009,15 @@
                            details: [
                                {
                                     area: '综合食堂',
-                                    image: 'images/宋跳校区/食堂/东港餐厅菜品.jpg',
-                                    specialty: ['大众快餐', '特色面点', '盖浇饭'],
-                                    priceRange: '人均10-18元',
-                                    openingHours: '早餐 07:00-09:00 | 午餐 11:00-13:00 | 晚餐 17:00-19:00',
+                                    images: [
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=305b44d54c46f21fc9345e5bc6256b31/6a6ca44543a98226286d2109cc82b9014b90eb9d.jpg?tbpicau=2025-07-22-05_ef7ca37f9e9f60f0ffc94c610c2a7428', caption: '兰州拉面' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=3022822d8e95d143da76e42b43f18296/d7e68158d109b3deee078a468abf6c81810a4c88.jpg?tbpicau=2025-07-22-05_7cfbe64f9095180cce0ef034fbce59a5', caption: '新疆炒米粉' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=d1028ded91ca7bcb7d7bc7278e096b3f/8bfda019ebc4b745e0a5033889fc1e178a821517.jpg?tbpicau=2025-07-22-05_f02c62dd9c5f7a30156ba2d41efc50d1', caption: '中式快餐' },
+                                        { src: 'http://tiebapic.baidu.com/forum/w%3D580/sign=48b769468abf6c81f7372ce08c3eb1d7/d2ebe8f2b2119313644b729e23380cd791238d39.jpg?tbpicau=2025-07-22-05_31849d17c8c8e6f55556bb29f72cd85b', caption: '川味小炒' },
+                                    ],
+                                    specialty: ['新疆炒米粉', '兰州拉面', '盖浇饭','川味小炒'],
+                                    priceRange: '待补充',
+                                    openingHours: '待补充',
                                     notes: '虽然选择不如主校区多，但能满足日常基本用餐需求，口味不错。'
                                }
                            ]
@@ -1292,12 +1437,60 @@
                 this._showDetailView(type, key);
             }
 
+            // --- 新增: 生成图片轮播器的HTML ---
+            _generateSliderHtml(images) {
+                if (!images || images.length === 0) {
+                    return `<img src="https://placehold.co/800x450/cccccc/ffffff?text=无图片" alt="无图片" class="w-full h-auto object-cover rounded-lg mb-4">`;
+                }
+
+                const slidesHtml = images.map((img, index) => `
+                    <div class="slider-slide" data-index="${index}">
+                        <img src="${img.src}" alt="${img.caption}" onerror="this.onerror=null;this.src='https://placehold.co/800x450/fecaca/991b1b?text=图片加载失败';">
+                    </div>
+                `).join('');
+
+                const dotsHtml = images.map((_, index) => `
+                    <button class="dot" data-index="${index}"></button>
+                `).join('');
+
+                return `
+                    <div class="image-slider relative overflow-hidden rounded-lg shadow-md mb-4">
+                        <div class="slider-wrapper flex">
+                            ${slidesHtml}
+                        </div>
+                        
+                        ${images.length > 1 ? `
+                        <button class="slider-nav prev absolute top-1/2 -translate-y-1/2 left-3 z-10">
+                            <i data-lucide="chevron-left" class="w-6 h-6"></i>
+                        </button>
+                        <button class="slider-nav next absolute top-1/2 -translate-y-1/2 right-3 z-10">
+                            <i data-lucide="chevron-right" class="w-6 h-6"></i>
+                        </button>
+                        
+                        <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent z-10">
+                            <p class="slider-caption text-white text-center text-sm font-semibold truncate"></p>
+                            <div class="slider-dots flex justify-center space-x-2 mt-2">
+                                ${dotsHtml}
+                            </div>
+                        </div>
+                        ` : `
+                        <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent z-10">
+                           <p class="text-white text-center text-sm font-semibold truncate">${images[0].caption}</p>
+                        </div>
+                        `}
+                    </div>
+                `;
+            }
+
             _generateDormitoryDetailsHtml(details) {
-                return details.map(dorm => `
+                return details.map(dorm => {
+                    // --- 修改: 使用 _generateSliderHtml ---
+                    const sliderHtml = this._generateSliderHtml(dorm.images);
+                    return `
                     <div class="bg-white dark:bg-gray-800 p-6 rounded-lg mb-6 shadow-md border border-gray-200 dark:border-gray-700">
                         <h4 class="font-bold text-xl text-blue-800 dark:text-blue-400 mb-4">${dorm.building}</h4>
-                        <img src="${dorm.image}" alt="[${dorm.building}的图片]" class="w-full h-auto object-cover rounded-lg mb-4">
-                        <ul class="space-y-3 text-gray-700 dark:text-gray-300">
+                        ${sliderHtml}
+                        <ul class="space-y-3 text-gray-700 dark:text-gray-300 mt-4">
                             <li class="flex items-center"><i data-lucide="users" class="w-5 h-5 mr-3 text-blue-500"></i><strong>房型：</strong> ${dorm.roomType}</li>
                             <li class="flex items-center"><i data-lucide="layout-grid" class="w-5 h-5 mr-3 text-blue-500"></i><strong>布局：</strong> ${dorm.layout}</li>
                             <li class="flex items-center"><i data-lucide="wallet" class="w-5 h-5 mr-3 text-blue-500"></i><strong>费用：</strong> ${dorm.price}</li>
@@ -1310,22 +1503,25 @@
                             ${dorm.notes ? `<li class="flex items-start"><i data-lucide="info" class="w-5 h-5 mr-3 mt-1 text-blue-500 flex-shrink-0"></i><div><strong>备注：</strong> ${dorm.notes}</div></li>` : ''}
                         </ul>
                     </div>
-                `).join('');
+                `}).join('');
             }
 
             _generateCanteenDetailsHtml(details) {
-                return details.map(canteen => `
+                 return details.map(canteen => {
+                    // --- 修改: 使用 _generateSliderHtml ---
+                    const sliderHtml = this._generateSliderHtml(canteen.images);
+                    return `
                     <div class="bg-white dark:bg-gray-800 p-6 rounded-lg mb-6 shadow-md border border-gray-200 dark:border-gray-700">
                         <h4 class="font-bold text-xl text-green-800 dark:text-green-400 mb-4">${canteen.area}</h4>
-                         <img src="${canteen.image}" alt="[${canteen.area}的图片]" class="w-full h-auto object-cover rounded-lg mb-4">
-                        <ul class="space-y-3 text-gray-700 dark:text-gray-300">
+                        ${sliderHtml}
+                        <ul class="space-y-3 text-gray-700 dark:text-gray-300 mt-4">
                             <li class="flex items-start"><i data-lucide="sparkles" class="w-5 h-5 mr-3 mt-1 text-green-500 flex-shrink-0"></i><div><strong>特色菜品：</strong> ${canteen.specialty.join('、 ')}</div></li>
                             <li class="flex items-center"><i data-lucide="wallet" class="w-5 h-5 mr-3 text-green-500"></i><strong>价格范围：</strong> ${canteen.priceRange}</li>
                             <li class="flex items-center"><i data-lucide="clock" class="w-5 h-5 mr-3 text-green-500"></i><strong>营业时间：</strong> ${canteen.openingHours}</li>
                             ${canteen.notes ? `<li class="flex items-start"><i data-lucide="info" class="w-5 h-5 mr-3 mt-1 text-green-500 flex-shrink-0"></i><div><strong>备注：</strong> ${canteen.notes}</div></li>` : ''}
                         </ul>
                     </div>
-                `).join('');
+                `}).join('');
             }
 
             _showDetailView(type, itemKey) {
@@ -1342,7 +1538,6 @@
                         detailsHtml = this._generateCanteenDetailsHtml(itemData.details);
                     }
                 } else {
-                    // Fallback for old string format
                     detailsHtml = `<div class="prose dark:prose-invert max-w-none">${itemData.details}</div>`;
                 }
 
@@ -1363,6 +1558,58 @@
                     this.detailView.classList.remove('translate-x-full');
                 }, 10);
                 lucide.createIcons();
+                // --- 新增: 初始化详情页里的所有轮播器 ---
+                this._initAllSliders(this.detailContent);
+            }
+
+            // --- 新增: 初始化所有轮播器 ---
+            _initAllSliders(container) {
+                const sliders = container.querySelectorAll('.image-slider');
+                sliders.forEach(slider => {
+                    const wrapper = slider.querySelector('.slider-wrapper');
+                    const slides = slider.querySelectorAll('.slider-slide');
+                    const prevBtn = slider.querySelector('.slider-nav.prev');
+                    const nextBtn = slider.querySelector('.slider-nav.next');
+                    const captionEl = slider.querySelector('.slider-caption');
+                    const dotsContainer = slider.querySelector('.slider-dots');
+                    
+                    if (slides.length <= 1) return; // 如果只有一张图或没有图，则不初始化
+
+                    const imagesData = this.campusData[this.selectedCampus]; // 需要找到对应的数据源
+                    let currentIndex = 0;
+                    const totalSlides = slides.length;
+
+                    const goToSlide = (index) => {
+                        currentIndex = (index + totalSlides) % totalSlides;
+                        wrapper.style.transform = `translateX(-${currentIndex * 100}%)`;
+                        
+                        // 从数据源获取标题
+                        const detailItemElement = slider.closest('[data-building]');
+                        const detailItemBuilding = detailItemElement?.dataset.building;
+                        const detailType = slider.closest('.detail-card-container')?.dataset.type; // 假设有这个
+                        
+                        // This logic is complex, let's simplify and get caption from the image data directly
+                        const slideElement = slides[currentIndex];
+                        const imgElement = slideElement.querySelector('img');
+                        captionEl.textContent = imgElement.alt;
+
+                        // 更新 dots
+                        dotsContainer.querySelectorAll('.dot').forEach((dot, dotIndex) => {
+                            dot.classList.toggle('active', dotIndex === currentIndex);
+                        });
+                    };
+
+                    prevBtn.addEventListener('click', () => goToSlide(currentIndex - 1));
+                    nextBtn.addEventListener('click', () => goToSlide(currentIndex + 1));
+
+                    dotsContainer.querySelectorAll('.dot').forEach(dot => {
+                        dot.addEventListener('click', (e) => {
+                            goToSlide(parseInt(e.target.dataset.index));
+                        });
+                    });
+
+                    goToSlide(0); // 初始化
+                });
             }
 
             _hideDetailView() {
@@ -1425,7 +1672,6 @@
                             for (const itemKey in campus[type].items) {
                                 const item = campus[type].items[itemKey];
                                 let searchableText = `${item.name} ${item.summary}`;
-                                // **搜索逻辑更新**：如果details是数组，则搜索数组内的文本
                                 if (Array.isArray(item.details)) {
                                     searchableText += item.details.map(d => Object.values(d).join(' ')).join(' ');
                                 } else if (typeof item.details === 'string') {
@@ -1648,4 +1894,3 @@
     </script>
 </body>
 </html>
-```
