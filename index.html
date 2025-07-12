@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>江苏海洋大学新生入学指南 (校区选择版)</title>
+    <title>江苏海洋大学校园指南 (社团更新)</title>
     <!-- 引入Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Tailwind CSS 配置 -->
@@ -122,7 +122,7 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* --- 新增：图片轮播器样式 --- */
+        /* --- 图片轮播器样式 --- */
         .image-slider .slider-wrapper {
             transition: transform 0.5s ease-in-out;
         }
@@ -168,6 +168,34 @@
         }
         .slider-caption {
             transition: opacity 0.5s ease-in-out;
+        }
+
+        /* --- 社团选项卡样式 --- */
+        .club-tabs .tab-button {
+            transition: all 0.3s ease-in-out;
+            border-bottom: 3px solid transparent;
+        }
+        .club-tabs .tab-button.active {
+            font-weight: 600;
+            color: #2563eb; /* blue-600 */
+            border-bottom-color: #2563eb;
+        }
+        html.dark .club-tabs .tab-button.active {
+            color: #3b82f6; /* blue-500 */
+            border-bottom-color: #3b82f6;
+        }
+        
+        .club-pane {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .club-pane.active {
+            display: block; /* 修改：从 grid 改为 block */
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
@@ -486,7 +514,54 @@
                     "食堂介绍": { title: "食堂介绍", isCampusSpecific: true },
                     "宿舍介绍": { title: "宿舍介绍", isCampusSpecific: true },
                     "校园超市与共享单车": { title: "校园超市与共享单车", content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><div class="p-6 rounded-xl w-full"><h3 class="text-2xl font-bold text-purple-800 dark:text-purple-400 mb-4 border-l-4 border-purple-700 dark:border-purple-500 pl-4">校园超市</h3><p class="text-gray-700 dark:text-gray-300">校内设有多个超市，苍梧校区在三食堂旁、顺丰快递旁有超市。支持使用校园卡、微信、支付宝等多种支付方式。</p></div><div class="p-6 rounded-xl w-full mt-8"><h3 class="text-2xl font-bold text-sky-800 dark:text-sky-400 mb-4 border-l-4 border-sky-700 dark:border-sky-500 pl-4">校园共享单车</h3><p class="text-gray-700 dark:text-gray-300">由于校园面积较大，各功能区之间有一定距离，共享单车是校内非常便捷的代步工具。校园内有7MA”小蓝车“，用微信扫码即可开锁使用。请大家注意遵守交通规则，并将车辆停放在指定的划线区域内，共同维护校园环境。</p></div></div>` },
-                    "社团与组织": { title: "社团与组织", content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><div class="w-full"><h3 class="text-2xl font-bold text-rose-800 dark:text-rose-400 mb-6 border-l-4 border-rose-700 dark:border-rose-500 pl-4">学生社团</h3><p class="text-gray-700 dark:text-gray-300 mb-4">大学生活不只有学习，丰富多彩的社团活动是结交朋友、培养兴趣、提升能力的重要平台。我校拥有上百个学生社团，百花齐放，主要分为以下几类：</p><ul class="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-400"><li><strong>学术科技类：</strong>如机器人协会、程序设计爱好者协会等，适合热爱钻研的你。</li><li><strong>文化艺术类：</strong>如书画社、汉服社、吉他社、舞蹈团等，是文艺青年的聚集地。</li><li><strong>体育竞技类：</strong>如篮球协会、足球协会、轮滑社、武术协会等，挥洒汗水，强健体魄。</li><li><strong>志愿服务类：</strong>如青年志愿者协会等，奉献爱心，服务社会。</li></ul><p class="text-gray-700 dark:text-gray-300 mt-4">每年开学季，学校都会举办盛大的“百团大战”社团招新活动，届时所有社团都会集中展示自己，是了解和加入社团的最佳时机！</p></div><div class="w-full mt-8"><h3 class="text-2xl font-bold text-indigo-800 dark:text-indigo-400 mb-6 border-l-4 border-indigo-700 dark:border-indigo-500 pl-4">团学组织</h3><p class="text-gray-700 dark:text-gray-300">团学组织是学生自我管理、自我服务、自我教育的重要载体，主要包括校级和院级的<strong>学生会各部门和团委</strong>等。加入这些组织，不仅可以锻炼自己的组织协调、沟通表达、活动策划等多方面能力，还能更深入地参与到学校和学院的管理服务工作中，为同学们发声，为校园建设贡献力量。团学组织的招新信息通常会在开学后通过官方公众号、班级群等渠道发布，有意向的同学可以多多关注。</p></div></div>` }
+                    "社团与组织": { 
+                        title: "社团与组织", 
+                        type: "clubs",
+                        data: {
+                            introduction: "大学生活不只有学习，丰富多彩的社团活动是结交朋友、培养兴趣、提升能力的重要平台。我校拥有上百个学生社团，百花齐放。每年开学季，学校都会举办盛大的“百团大战”社团招新活动，届时所有社团都会集中展示自己，是了解和加入社团的最佳时机！",
+                            clubs: [
+                                {
+                                    level: 5,
+                                    label: "五星级社团",
+                                    icon: "star",
+                                    color: "text-yellow-400",
+                                    list: ["大学生科技协会", "青年志愿者协会", "大学生艺术团", "生命-海洋协会", "“淮海之声”广播站", "大学生书画协会", "艺馨艺术团", "大学生通讯社", "大学生创新创业协会"]
+                                },
+                                {
+                                    level: 4,
+                                    label: "四星级社团",
+                                    icon: "award",
+                                    color: "text-slate-400",
+                                    list: ["绿色能源协会", "琢闻编校社", "大学生读者之友协会", "淮海思源社", "大学生飞镖协会", "淮海棋社", "演讲与口才协会", "白桦俄语社", "大学生就业服务协会"]
+                                },
+                                {
+                                    level: 3,
+                                    label: "三星级社团",
+                                    icon: "medal",
+                                    color: "text-orange-400",
+                                    list: ["小企鹅海洋保护协会", "大学生“三农”协会", "大学生法律之友协会", "大学生英语沙龙协会", "韩屋村", "青年学习社", "大学生燎原学社", "国贸协会", "翻译工作者协会", "大学生模拟联合国大会协会", "金融协会", "天文探索者协会", "中医药协会", "海航社", "阳光手语社", "大学生乒乓球协会", "羽毛球协会", "未央话剧社", "Boom DayBreak街舞社", "GTR动漫社", "国风社", "樱花社", "民族之汇", "纵横辩论社", "大学生心理协会", "未来管理者协会", "企业模拟运营协会", "风暴足球联盟", "大学生排球协会"]
+                                },
+                                {
+                                    level: 2,
+                                    label: "二星级社团",
+                                    icon: "gem",
+                                    color: "text-cyan-400",
+                                    list: ["八一军旅社", "IDV剧社", "Relax Cosplay 动漫协会", "无人机协会", "食安社", "大学生物流协会", "水族协会", "文源社", "大学生中华传统武术协会", "电子竞技社团", "大学生健身健美协会"]
+                                },
+                                {
+                                    level: 1,
+                                    label: "一星级社团",
+                                    icon: "sparkle",
+                                    color: "text-green-400",
+                                    list: ["会计协会", "DIY手艺社", "ALLAN推理社", "大学生台球协会", "M.E街舞艺术团", "T.O轮滑协会"]
+                                }
+                            ],
+                            organizations: {
+                                title: "团学组织",
+                                content: "团学组织是学生自我管理、自我服务、自我教育的重要载体，主要包括校级和院级的<strong>学生会各部门和团委</strong>等。加入这些组织，不仅可以锻炼自己的组织协调、沟通表达、活动策划等多方面能力，还能更深入地参与到学校和学院的管理服务工作中，为同学们发声，为校园建设贡献力量。团学组织的招新信息通常会在开学后通过官方公众号、班级群等渠道发布，有意向的同学可以多多关注。"
+                            }
+                        }
+                    }
                 }
             },
             "学习科研": {
@@ -533,11 +608,9 @@
                             details: [
                                 {
                                     building: 'A1-A4,A8-A10栋',
-                                    // --- 修改开始: 将单个 image 替换为 images 数组 ---
                                     images: [
                                         { src: 'images/苍梧校区/宿舍/A区/A1-A4,A8-A9栋楼/A1-A4,A8-A9宿舍内景.jpg', caption: '宿舍内景（上下铺）' },
                                     ],
-                                    // --- 修改结束 ---
                                     roomType: '四人间',
                                     layout: '上下铺',
                                     bathroom: '独立卫生间，澡堂在三食堂附近',
@@ -872,7 +945,7 @@
                                     laundry: '两层中有一层会有洗衣机',
                                     waterHeater: '两层中有一层会有热水炉',
                                     price: '700元/年',
-                                    notes: '部分水泥地部分地砖，开门使用钥匙。多出来的桌子是上床下桌，比其他桌子大一些'
+                                    notes: '部分水泥地部分有地砖，开门使用钥匙。多出来的桌子是上床下桌，比其他桌子大一些'
                                 }
                             ]
                         }
@@ -929,7 +1002,7 @@
                                     images: [
                                         { src: 'images/通灌校区/食堂/民族风味餐厅/通灌校区_民族风味餐厅_番茄鸡排饭.jpg', caption: '番茄鸡排饭' },
                                         { src: 'images/通灌校区/食堂/民族风味餐厅/通灌校区_民族风味餐厅_酸菜牛肉炒饭.jpg', caption: '酸菜牛肉炒饭' },
-                                        { src: 'images/通灌校区/食堂/民族风味餐厅/通灌校区_民族风味餐厅_鸡排烤冷面.jpg', caption: '鸡排烤冷面' }   
+                                        { src: 'images/通灌校区/食堂/民族风味餐厅/通灌校区_民族风味餐厅_鸡排烤冷面.jpg', caption: '鸡排烤冷面' }  
                                     ],
                                     specialty: ['黄焖鸡', '粉丝', '鸡排饭', ],
                                     priceRange: '待补充',
@@ -1177,6 +1250,9 @@
                         } else if (page.type === 'faq') {
                             section.innerHTML = this._createFaqHtml(page.items);
                             this._addFaqListeners(section);
+                        } else if (page.type === 'clubs') {
+                            section.innerHTML = this._createClubsHtml(page.data);
+                            this._addClubTabListeners(section);
                         } else {
                             section.innerHTML = page.content;
                         }
@@ -1212,6 +1288,113 @@
                                  ${cardHtml}
                              </div>
                          </div>`;
+            }
+
+            // ===================================================================================
+            // --- 修改: 修正并增强创建社团HTML的函数 ---
+            // ===================================================================================
+            _createClubsHtml(data) {
+                // "全部" 选项卡
+                const allTabHtml = `
+                    <button class="tab-button px-4 py-3 text-base md:text-lg text-gray-600 dark:text-gray-400" data-level="all">
+                        <i data-lucide="layout-grid" class="inline-block w-5 h-5 mr-2 text-blue-500"></i>
+                        全部
+                    </button>
+                `;
+
+                // 各星级选项卡
+                const tabsHtml = data.clubs.map((group, index) => `
+                    <button class="tab-button px-4 py-3 text-base md:text-lg text-gray-600 dark:text-gray-400 ${index === 0 ? 'active' : ''}" data-level="${group.level}">
+                        <i data-lucide="${group.icon}" class="inline-block w-5 h-5 mr-2 ${group.color}"></i>
+                        ${group.label}
+                    </button>
+                `).join('');
+
+                // "全部" 内容面板
+                let allClubsListHtml = '';
+                data.clubs.forEach(group => {
+                    allClubsListHtml += group.list.map(clubName => `
+                        <div class="bg-white dark:bg-gray-800/50 p-4 rounded-lg shadow-md flex items-center space-x-3 transform hover:scale-105 hover:shadow-xl transition-all duration-300">
+                            <i data-lucide="${group.icon}" class="w-6 h-6 ${group.color} flex-shrink-0"></i>
+                            <span class="text-gray-800 dark:text-gray-200 font-medium">${clubName}</span>
+                        </div>
+                    `).join('');
+                });
+                const allPaneHtml = `
+                    <div class="club-pane" data-level="all">
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            ${allClubsListHtml}
+                        </div>
+                    </div>
+                `;
+
+                // 各星级内容面板 (修正：将 grid 布局移到内层div)
+                const panesHtml = data.clubs.map((group, index) => {
+                    const clubListHtml = group.list.map(clubName => `
+                        <div class="bg-white dark:bg-gray-800/50 p-4 rounded-lg shadow-md flex items-center space-x-3 transform hover:scale-105 hover:shadow-xl transition-all duration-300">
+                            <i data-lucide="${group.icon}" class="w-6 h-6 ${group.color} flex-shrink-0"></i>
+                            <span class="text-gray-800 dark:text-gray-200 font-medium">${clubName}</span>
+                        </div>
+                    `).join('');
+
+                    return `
+                        <div class="club-pane ${index === 0 ? 'active' : ''}" data-level="${group.level}">
+                            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                ${clubListHtml}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="bg-white dark:bg-gray-800 p-6 md:p-8 rounded-xl shadow-lg w-full max-w-6xl mx-auto">
+                        <div class="w-full">
+                            <h3 class="text-2xl font-bold text-rose-800 dark:text-rose-400 mb-6 border-l-4 border-rose-700 dark:border-rose-500 pl-4">学生社团</h3>
+                            <p class="text-gray-700 dark:text-gray-300 mb-8">${data.introduction}</p>
+                            
+                            <div class="club-tabs border-b border-gray-200 dark:border-gray-700 mb-6 flex space-x-2 md:space-x-4 overflow-x-auto">
+                                ${allTabHtml}${tabsHtml}
+                            </div>
+                            <div class="club-panes-container">
+                                ${allPaneHtml}${panesHtml}
+                            </div>
+                        </div>
+                        <div class="w-full mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+                            <h3 class="text-2xl font-bold text-indigo-800 dark:text-indigo-400 mb-6 border-l-4 border-indigo-700 dark:border-indigo-500 pl-4">${data.organizations.title}</h3>
+                            <p class="text-gray-700 dark:text-gray-300">${data.organizations.content}</p>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // ===================================================================================
+            // --- 修改: 修正社团选项卡的事件监听逻辑 ---
+            // ===================================================================================
+            _addClubTabListeners(container) {
+                const tabContainer = container.querySelector('.club-tabs');
+                if (!tabContainer) return;
+
+                tabContainer.addEventListener('click', (e) => {
+                    const button = e.target.closest('.tab-button');
+                    if (!button) return;
+
+                    const level = button.dataset.level;
+                    
+                    // 更新按钮激活状态
+                    tabContainer.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+
+                    // 更新内容面板的激活状态
+                    const paneContainer = container.querySelector('.club-panes-container');
+                    paneContainer.querySelectorAll('.club-pane').forEach(pane => {
+                        pane.classList.remove('active');
+                    });
+                    
+                    const targetPane = paneContainer.querySelector(`.club-pane[data-level="${level}"]`);
+                    if(targetPane) {
+                        targetPane.classList.add('active');
+                    }
+                });
             }
 
 
@@ -1437,7 +1620,6 @@
                 this._showDetailView(type, key);
             }
 
-            // --- 新增: 生成图片轮播器的HTML ---
             _generateSliderHtml(images) {
                 if (!images || images.length === 0) {
                     return `<img src="https://placehold.co/800x450/cccccc/ffffff?text=无图片" alt="无图片" class="w-full h-auto object-cover rounded-lg mb-4">`;
@@ -1484,7 +1666,6 @@
 
             _generateDormitoryDetailsHtml(details) {
                 return details.map(dorm => {
-                    // --- 修改: 使用 _generateSliderHtml ---
                     const sliderHtml = this._generateSliderHtml(dorm.images);
                     return `
                     <div class="bg-white dark:bg-gray-800 p-6 rounded-lg mb-6 shadow-md border border-gray-200 dark:border-gray-700">
@@ -1508,7 +1689,6 @@
 
             _generateCanteenDetailsHtml(details) {
                  return details.map(canteen => {
-                    // --- 修改: 使用 _generateSliderHtml ---
                     const sliderHtml = this._generateSliderHtml(canteen.images);
                     return `
                     <div class="bg-white dark:bg-gray-800 p-6 rounded-lg mb-6 shadow-md border border-gray-200 dark:border-gray-700">
@@ -1558,11 +1738,9 @@
                     this.detailView.classList.remove('translate-x-full');
                 }, 10);
                 lucide.createIcons();
-                // --- 新增: 初始化详情页里的所有轮播器 ---
                 this._initAllSliders(this.detailContent);
             }
 
-            // --- 新增: 初始化所有轮播器 ---
             _initAllSliders(container) {
                 const sliders = container.querySelectorAll('.image-slider');
                 sliders.forEach(slider => {
@@ -1575,7 +1753,7 @@
                     
                     if (slides.length <= 1) return; // 如果只有一张图或没有图，则不初始化
 
-                    const imagesData = this.campusData[this.selectedCampus]; // 需要找到对应的数据源
+                    const imagesData = this.campusData[this.selectedCampus]; 
                     let currentIndex = 0;
                     const totalSlides = slides.length;
 
@@ -1583,12 +1761,6 @@
                         currentIndex = (index + totalSlides) % totalSlides;
                         wrapper.style.transform = `translateX(-${currentIndex * 100}%)`;
                         
-                        // 从数据源获取标题
-                        const detailItemElement = slider.closest('[data-building]');
-                        const detailItemBuilding = detailItemElement?.dataset.building;
-                        const detailType = slider.closest('.detail-card-container')?.dataset.type; // 假设有这个
-                        
-                        // This logic is complex, let's simplify and get caption from the image data directly
                         const slideElement = slides[currentIndex];
                         const imgElement = slideElement.querySelector('img');
                         captionEl.textContent = imgElement.alt;
@@ -1644,10 +1816,18 @@
                         const page = this.guideData[categoryKey].pages[pageKey];
                         
                         let searchableText = page.title;
-                        tempDiv.innerHTML = page.content || '';
-                        searchableText += ' ' + tempDiv.textContent;
-
-                        if (page.type === 'faq') {
+                        
+                        if (page.type === 'clubs') { 
+                            const clubData = page.data;
+                            searchableText += ' ' + clubData.introduction;
+                            clubData.clubs.forEach(group => {
+                                searchableText += ' ' + group.list.join(' ');
+                            });
+                            searchableText += ' ' + clubData.organizations.title + ' ' + clubData.organizations.content;
+                        } else if (page.content) {
+                            tempDiv.innerHTML = page.content;
+                            searchableText += ' ' + tempDiv.textContent;
+                        } else if (page.type === 'faq') {
                             page.items.forEach(item => {
                                 searchableText += ' ' + item.q + ' ' + item.a;
                             });
@@ -1656,7 +1836,7 @@
                         if (searchableText.toLowerCase().includes(queryLower)) {
                             results.push({
                                 title: page.title,
-                                text: tempDiv.textContent,
+                                text: searchableText,
                                 categoryKey,
                                 pageKey
                             });
