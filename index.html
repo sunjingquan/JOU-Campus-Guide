@@ -84,7 +84,7 @@
         }
         
         /* 视图过渡效果 */
-        #detail-view, #search-view {
+        #detail-view {
             transition: transform 0.3s ease-in-out;
         }
 
@@ -196,6 +196,14 @@
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- 实时搜索下拉框样式 (新增) --- */
+        #live-search-results {
+            top: 100%;
+            z-index: 100;
+            max-height: 400px;
+            overflow-y: auto;
         }
     </style>
 </head>
@@ -314,10 +322,16 @@
             <header class="bg-white dark:bg-gray-900 dark:border-b dark:border-gray-800 shadow-md p-3 flex justify-between items-center z-10 space-x-4">
                 <button id="menu-toggle" class="md:hidden text-gray-700 dark:text-gray-300 flex-shrink-0"><i data-lucide="menu"></i></button>
                 <h2 id="content-title" class="text-xl font-semibold text-gray-800 dark:text-gray-100 truncate hidden sm:block"></h2>
-                <form id="search-form" class="relative w-full max-w-xs ml-auto">
-                    <input type="search" id="search-input" placeholder="搜索指南..." class="w-full pl-10 pr-4 py-2 rounded-full border bg-gray-100 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 focus:bg-white dark:focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
-                    <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
-                </form>
+                <div class="relative w-full max-w-xs ml-auto">
+                    <form id="search-form" class="w-full">
+                        <input type="search" id="search-input" placeholder="实时搜索指南..." class="w-full pl-10 pr-4 py-2 rounded-full border bg-gray-100 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 focus:bg-white dark:focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
+                    </form>
+                    <!-- 新增: 实时搜索结果下拉框 -->
+                    <div id="live-search-results" class="absolute left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 hidden">
+                        <!-- 实时搜索结果将动态插入这里 -->
+                    </div>
+                </div>
                 <a href="#" id="home-button-top" class="text-gray-600 dark:text-gray-400 hover:text-blue-700 dark:hover:text-blue-400 transition-colors flex-shrink-0"><i data-lucide="home" class="w-5 h-5"></i></a>
             </header>
             <div id="content-area" class="flex-1 px-4 md:px-8 overflow-y-auto bg-gray-50 dark:bg-gray-950">
@@ -336,19 +350,6 @@
         </header>
         <div id="detail-content" class="flex-1 p-4 md:p-8 overflow-y-auto">
             <!-- 详细内容将加载到这里 -->
-        </div>
-    </div>
-
-    <!-- 搜索结果视图 -->
-    <div id="search-view" class="fixed inset-0 bg-gray-50 dark:bg-gray-950 z-40 flex-col transform translate-x-full hidden">
-        <header class="bg-white dark:bg-gray-900 dark:border-b dark:border-gray-800 shadow-md p-4 flex items-center z-10 flex-shrink-0">
-            <button id="back-to-main-from-search-btn" class="text-gray-600 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-400 transition-colors">
-                <i data-lucide="chevron-left" class="w-6 h-6"></i>
-            </button>
-            <h2 id="search-title" class="text-xl font-semibold text-gray-800 dark:text-gray-100 truncate ml-4">搜索结果</h2>
-        </header>
-        <div id="search-results-container" class="flex-1 p-4 md:p-8 overflow-y-auto">
-            <!-- 搜索结果将加载到这里 -->
         </div>
     </div>
 
@@ -1133,12 +1134,10 @@
                 this.detailContent = document.getElementById('detail-content');
                 this.backToMainBtn = document.getElementById('back-to-main-btn');
                 
-                // 搜索页元素
-                this.searchView = document.getElementById('search-view');
+                // 实时搜索元素 (新)
                 this.searchForm = document.getElementById('search-form');
                 this.searchInput = document.getElementById('search-input');
-                this.searchResultsContainer = document.getElementById('search-results-container');
-                this.backToMainFromSearchBtn = document.getElementById('back-to-main-from-search-btn');
+                this.liveSearchResultsContainer = document.getElementById('live-search-results');
 
                 // 新增功能元素
                 this.themeToggleBtn = document.getElementById('theme-toggle-btn');
@@ -1290,9 +1289,6 @@
                          </div>`;
             }
 
-            // ===================================================================================
-            // --- 修改: 修正并增强创建社团HTML的函数 ---
-            // ===================================================================================
             _createClubsHtml(data) {
                 // "全部" 选项卡
                 const allTabHtml = `
@@ -1328,7 +1324,7 @@
                     </div>
                 `;
 
-                // 各星级内容面板 (修正：将 grid 布局移到内层div)
+                // 各星级内容面板
                 const panesHtml = data.clubs.map((group, index) => {
                     const clubListHtml = group.list.map(clubName => `
                         <div class="bg-white dark:bg-gray-800/50 p-4 rounded-lg shadow-md flex items-center space-x-3 transform hover:scale-105 hover:shadow-xl transition-all duration-300">
@@ -1367,9 +1363,6 @@
                 `;
             }
             
-            // ===================================================================================
-            // --- 修改: 修正社团选项卡的事件监听逻辑 ---
-            // ===================================================================================
             _addClubTabListeners(container) {
                 const tabContainer = container.querySelector('.club-tabs');
                 if (!tabContainer) return;
@@ -1410,10 +1403,11 @@
                 this.contentArea.addEventListener('click', this._handleCardClick.bind(this));
                 this.backToMainBtn.addEventListener('click', this._hideDetailView.bind(this));
 
-                // 搜索事件
-                this.searchForm.addEventListener('submit', this._handleSearch.bind(this));
-                this.backToMainFromSearchBtn.addEventListener('click', this._hideSearchView.bind(this));
-                this.searchResultsContainer.addEventListener('click', this._handleSearchResultClick.bind(this));
+                // 实时搜索事件
+                this.searchForm.addEventListener('submit', e => e.preventDefault());
+                this.searchInput.addEventListener('input', this._handleLiveSearch.bind(this));
+                document.addEventListener('click', this._handleGlobalClick.bind(this));
+                this.liveSearchResultsContainer.addEventListener('click', this._handleSearchResultClick.bind(this));
 
                 // 新增功能事件
                 this.themeToggleBtn.addEventListener('click', this._handleThemeToggle.bind(this));
@@ -1607,7 +1601,6 @@
 
             _hideAllViews() {
                 this._hideDetailView();
-                this._hideSearchView();
             }
 
             // --- 详情页方法 ---
@@ -1795,16 +1788,68 @@
                 }
             }
             
-            // --- 搜索功能方法 ---
-            _handleSearch(e) {
-                e.preventDefault();
-                const query = this.searchInput.value.trim();
-                if (query) {
+            // ===================================================================================
+            // --- 实时搜索功能相关方法 ---
+            // ===================================================================================
+
+            /**
+             * 处理实时搜索输入事件
+             */
+            _handleLiveSearch(e) {
+                const query = e.target.value.trim();
+                if (query.length > 0) {
                     const results = this._performSearch(query);
-                    this._displaySearchResults(results, query);
+                    this._displayLiveSearchResults(results, query);
+                } else {
+                    this._hideLiveSearchResults();
                 }
             }
 
+            /**
+             * 显示实时搜索结果下拉框
+             */
+            _displayLiveSearchResults(results, query) {
+                if (results.length === 0) {
+                    this.liveSearchResultsContainer.innerHTML = `<p class="text-center text-gray-500 dark:text-gray-400 p-4">未能找到与“${this._escapeHtml(query)}”相关的内容。</p>`;
+                } else {
+                    this.liveSearchResultsContainer.innerHTML = results.map(result => {
+                        const snippet = this._createSnippet(result.text, query);
+                        const highlightedSnippet = snippet.replace(new RegExp(this._escapeRegExp(query), 'gi'), (match) => `<mark class="search-highlight">${this._escapeHtml(match)}</mark>`);
+                        
+                        const dataAttrs = result.isDetail
+                            ? `data-is-detail="true" data-detail-type="${result.detailType}" data-detail-key="${result.detailKey}"`
+                            : `data-category-key="${result.categoryKey}" data-page-key="${result.pageKey}"`;
+
+                        return `
+                            <a href="#" class="search-result-item block p-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700 last:border-b-0" ${dataAttrs} data-keyword="${this._escapeHtml(query)}">
+                                <h4 class="font-semibold text-sm text-blue-700 dark:text-blue-400 truncate">${this._escapeHtml(result.title)}</h4>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">...${highlightedSnippet}...</p>
+                            </a>
+                        `;
+                    }).join('');
+                }
+                this.liveSearchResultsContainer.classList.remove('hidden');
+            }
+
+            /**
+             * 隐藏实时搜索结果下拉框
+             */
+            _hideLiveSearchResults() {
+                this.liveSearchResultsContainer.classList.add('hidden');
+            }
+            
+            /**
+             * 处理全局点击，用于隐藏搜索下拉框
+             */
+            _handleGlobalClick(e) {
+                if (!this.searchForm.contains(e.target)) {
+                    this._hideLiveSearchResults();
+                }
+            }
+            
+            /**
+             * 核心搜索逻辑 (复用)
+             */
             _performSearch(query) {
                 const results = [];
                 const tempDiv = document.createElement('div');
@@ -1876,65 +1921,20 @@
                 return results;
             }
 
-            _displaySearchResults(results, query) {
-                if (results.length === 0) {
-                    this.searchResultsContainer.innerHTML = `<p class="text-center text-gray-500 dark:text-gray-400">未能找到与“${query}”相关的内容。</p>`;
-                } else {
-                    this.searchResultsContainer.innerHTML = results.map(result => {
-                        const snippet = this._createSnippet(result.text, query);
-                        const highlightedSnippet = snippet.replace(new RegExp(query, 'gi'), (match) => `<mark class="search-highlight">${match}</mark>`);
-                        
-                        const dataAttrs = result.isDetail
-                            ? `data-is-detail="true" data-detail-type="${result.detailType}" data-detail-key="${result.detailKey}"`
-                            : `data-category-key="${result.categoryKey}" data-page-key="${result.pageKey}"`;
-
-                        return `
-                            <a href="#" class="search-result-item block p-4 mb-4 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md dark:hover:bg-gray-700 transition-shadow" ${dataAttrs} data-keyword="${query}">
-                                <h4 class="font-bold text-blue-800 dark:text-blue-400">${result.title}</h4>
-                                <p class="text-sm text-gray-600 dark:text-gray-300 mt-2">...${highlightedSnippet}...</p>
-                            </a>
-                        `;
-                    }).join('');
-                }
-
-                this.mainView.classList.add('hidden');
-                this.searchView.classList.remove('hidden', 'translate-x-full');
-                this.searchView.classList.add('flex');
-                 setTimeout(() => {
-                     this.searchView.classList.remove('translate-x-full');
-                 }, 10);
-            }
-
-            _createSnippet(text, query) {
-                const index = text.toLowerCase().indexOf(query.toLowerCase());
-                if (index === -1) return text.substring(0, 100);
-
-                const start = Math.max(0, index - 30);
-                const end = Math.min(text.length, index + query.length + 70);
-                return text.substring(start, end);
-            }
-
-            _hideSearchView() {
-                if (!this.searchView.classList.contains('hidden')) {
-                    this.searchView.classList.add('translate-x-full');
-                    setTimeout(() => {
-                        this.searchView.classList.add('hidden');
-                        this.searchView.classList.remove('flex');
-                        this.mainView.classList.remove('hidden');
-                        this.searchInput.value = '';
-                    }, 300);
-                }
-            }
-
+            /**
+             * 处理搜索结果点击事件 (已适配实时搜索)
+             */
             _handleSearchResultClick(e) {
                 const item = e.target.closest('.search-result-item');
                 if (!item) return;
                 e.preventDefault();
 
-                this._hideSearchView();
+                this._hideLiveSearchResults(); // 隐藏下拉框
+                this.searchInput.value = ''; // 清空输入框
+                
                 const { isDetail, detailType, detailKey, categoryKey, pageKey, keyword } = item.dataset;
                 
-                if (isDetail) {
+                if (isDetail === 'true') {
                     this._showDetailView(detailType, detailKey);
                     // 在详情页高亮关键词
                     setTimeout(() => this._highlightKeywordInSection(this.detailContent, keyword), 500);
@@ -1947,8 +1947,17 @@
                 }
             }
 
+            _createSnippet(text, query) {
+                const index = text.toLowerCase().indexOf(query.toLowerCase());
+                if (index === -1) return this._escapeHtml(text.substring(0, 100));
+
+                const start = Math.max(0, index - 30);
+                const end = Math.min(text.length, index + query.length + 70);
+                return this._escapeHtml(text.substring(start, end));
+            }
+
             _highlightKeywordInSection(sectionElement, keyword) {
-                const regex = new RegExp(keyword, 'gi');
+                const regex = new RegExp(this._escapeRegExp(keyword), 'gi');
                 const walker = document.createTreeWalker(sectionElement, NodeFilter.SHOW_TEXT, null, false);
                 let node;
                 const nodesToReplace = [];
@@ -1961,7 +1970,7 @@
                 
                 nodesToReplace.forEach(textNode => {
                     const parent = textNode.parentNode;
-                    if (!parent || parent.nodeName === 'MARK') return; // 避免重复高亮
+                    if (!parent || parent.nodeName === 'MARK' || parent.nodeName === 'SCRIPT' || parent.nodeName === 'STYLE') return; // 避免重复高亮和修改脚本/样式
                     
                     const parts = textNode.textContent.split(regex);
                     const matches = textNode.textContent.match(regex);
@@ -1980,6 +1989,17 @@
                     });
                     parent.replaceChild(fragment, textNode);
                 });
+            }
+
+            // --- 新增: 辅助函数，用于防止XSS和RegExp注入 ---
+            _escapeHtml(str) {
+                const div = document.createElement('div');
+                div.appendChild(document.createTextNode(str));
+                return div.innerHTML;
+            }
+
+            _escapeRegExp(string) {
+                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
             }
 
             // --- 新增功能方法 ---
