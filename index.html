@@ -2,7 +2,8 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 修复: 添加 maximum-scale=1.0, user-scalable=no 来禁止用户缩放, 解决移动端缩放导致的界面异常问题 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>江苏海洋大学校园指南 (社团更新)</title>
     <!-- 引入Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -20,11 +21,17 @@
     <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
     <style>
         /* 自定义样式区 */
+        html, body {
+            /* 新增: 禁用滚动链和“橡皮筋”效果，防止在滚动到顶部或底部时页面出现晃动，使其更像原生应用 */
+            overscroll-behavior: none;
+        }
         html {
             scroll-behavior: smooth;
         }
         body {
             font-family: 'Inter', sans-serif;
+            /* 新增: 禁用双击缩放等非标准触摸行为，进一步提升原生体验 */
+            touch-action: manipulation;
         }
         /* 美化滚动条 */
         ::-webkit-scrollbar { width: 8px; }
@@ -198,25 +205,41 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* --- 实时搜索下拉框样式 (新增) --- */
+        /* --- 实时搜索下拉框样式 --- */
         #live-search-results {
             top: 100%;
             z-index: 100;
             max-height: 400px;
             overflow-y: auto;
         }
+
+        /* --- 移动端底部导航栏 --- */
+        #bottom-nav {
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+        #bottom-nav .nav-btn.active {
+            color: #2563eb; /* blue-600 */
+        }
+        html.dark #bottom-nav .nav-btn.active {
+            color: #3b82f6; /* blue-500 */
+        }
+
+        /* --- 移动端搜索遮罩层 --- */
+        #mobile-search-overlay {
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        }
     </style>
 </head>
-<body class="overflow-hidden">
+<body class="bg-gray-50 dark:bg-gray-950">
     <!-- 加载动画 -->
-    <div id="loading-overlay" class="fixed inset-0 bg-white dark:bg-gray-950 z-50 flex flex-col items-center justify-center transition-opacity duration-500">
+    <div id="loading-overlay" class="fixed inset-0 bg-white dark:bg-gray-950 z-[100] flex flex-col items-center justify-center transition-opacity duration-500">
         <div class="loader"></div>
         <p class="mt-4 text-lg font-semibold text-gray-700 dark:text-gray-300">江苏海洋大学校园指南</p>
         <p class="text-sm text-gray-500">正在加载...</p>
     </div>
 
     <!-- 校区选择器模态窗口 -->
-    <div id="campus-selector-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4 hidden">
+    <div id="campus-selector-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-[100] p-4 hidden">
         <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-3xl transform transition-all scale-95 opacity-0 flex flex-col max-h-full" id="campus-selector-dialog">
             <div class="p-6 md:p-8 text-center flex-shrink-0">
                 <h2 class="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">欢迎来到江苏海洋大学！</h2>
@@ -286,10 +309,12 @@
     <!-- 主视图 -->
     <div id="main-view" class="flex h-screen relative">
         <!-- 移动端遮罩层 -->
-        <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden md:hidden"></div>
+        <!-- 修复: 调整 z-index 层级 -->
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden md:hidden"></div>
 
         <!-- 侧边栏导航 -->
-        <aside id="sidebar" class="w-72 bg-blue-900 dark:bg-gray-900 text-white p-5 overflow-y-auto transition-transform transform -translate-x-full md:translate-x-0 fixed md:relative h-full z-30 shadow-lg flex flex-col">
+        <!-- 修复: 调整 z-index 层级, 确保在底部导航栏之上 -->
+        <aside id="sidebar" class="w-72 bg-blue-900 dark:bg-gray-900 text-white p-5 overflow-y-auto transition-transform transform -translate-x-full md:translate-x-0 fixed md:relative h-full z-50 shadow-lg flex flex-col">
             <div class="text-center mb-10">
                 <h1 class="text-3xl font-bold tracking-wider">江苏海洋大学</h1>
                 <p class="text-sm text-blue-200 dark:text-gray-400 mt-1">校园指南</p>
@@ -318,23 +343,23 @@
         </aside>
 
         <!-- 主内容区域 -->
-        <main class="flex-1 flex flex-col h-screen">
-            <header class="bg-white dark:bg-gray-900 dark:border-b dark:border-gray-800 shadow-md p-3 flex justify-between items-center z-10 space-x-4">
+        <main class="flex-1 flex flex-col overflow-hidden">
+            <header class="bg-white dark:bg-gray-900 dark:border-b dark:border-gray-800 shadow-md p-3 flex justify-between items-center z-10 space-x-4 flex-shrink-0">
                 <button id="menu-toggle" class="md:hidden text-gray-700 dark:text-gray-300 flex-shrink-0"><i data-lucide="menu"></i></button>
                 <h2 id="content-title" class="text-xl font-semibold text-gray-800 dark:text-gray-100 truncate hidden sm:block"></h2>
-                <div class="relative w-full max-w-xs ml-auto">
+                <!-- 桌面端搜索栏 -->
+                <div class="relative w-full max-w-xs ml-auto hidden md:block">
                     <form id="search-form" class="w-full">
                         <input type="search" id="search-input" placeholder="实时搜索指南..." class="w-full pl-10 pr-4 py-2 rounded-full border bg-gray-100 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 focus:bg-white dark:focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
                         <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
                     </form>
-                    <!-- 新增: 实时搜索结果下拉框 -->
                     <div id="live-search-results" class="absolute left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 hidden">
                         <!-- 实时搜索结果将动态插入这里 -->
                     </div>
                 </div>
                 <a href="#" id="home-button-top" class="text-gray-600 dark:text-gray-400 hover:text-blue-700 dark:hover:text-blue-400 transition-colors flex-shrink-0"><i data-lucide="home" class="w-5 h-5"></i></a>
             </header>
-            <div id="content-area" class="flex-1 px-4 md:px-8 overflow-y-auto bg-gray-50 dark:bg-gray-950">
+            <div id="content-area" class="flex-1 px-4 md:px-8 overflow-y-auto bg-gray-50 dark:bg-gray-950 pb-16 md:pb-0">
                 <!-- 内容将通过JS动态加载到这里 -->
             </div>
         </main>
@@ -353,8 +378,44 @@
         </div>
     </div>
 
+    <!-- 移动端底部导航栏 -->
+    <!-- 修复: 调整 z-index 层级 -->
+    <footer id="bottom-nav" class="fixed bottom-0 left-0 right-0 h-16 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex justify-around items-center z-30 md:hidden">
+        <button id="bottom-nav-home" class="nav-btn flex flex-col items-center text-gray-600 dark:text-gray-400 transition-colors">
+            <i data-lucide="home" class="w-6 h-6"></i>
+            <span class="text-xs mt-1">主页</span>
+        </button>
+        <button id="bottom-nav-menu" class="nav-btn flex flex-col items-center text-gray-600 dark:text-gray-400 transition-colors">
+            <i data-lucide="menu" class="w-6 h-6"></i>
+            <span class="text-xs mt-1">菜单</span>
+        </button>
+        <button id="bottom-nav-search" class="nav-btn flex flex-col items-center text-gray-600 dark:text-gray-400 transition-colors">
+            <i data-lucide="search" class="w-6 h-6"></i>
+            <span class="text-xs mt-1">搜索</span>
+        </button>
+        <button id="bottom-nav-campus" class="nav-btn flex flex-col items-center text-gray-600 dark:text-gray-400 transition-colors">
+            <i data-lucide="map-pin" class="w-6 h-6"></i>
+            <span class="text-xs mt-1">校区</span>
+        </button>
+    </footer>
+
+    <!-- 移动端搜索遮罩层 -->
+    <div id="mobile-search-overlay" class="fixed inset-0 bg-gray-50 dark:bg-gray-950 z-[100] flex-col hidden transform translate-y-full">
+        <header class="p-4 flex items-center border-b dark:border-gray-800 flex-shrink-0">
+            <div class="relative flex-1">
+                <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
+                <input type="search" id="mobile-search-input" placeholder="搜索指南..." class="w-full pl-10 pr-4 py-2 rounded-full border bg-gray-100 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <button id="close-mobile-search-btn" class="ml-4 text-blue-600 dark:text-blue-400 font-semibold">取消</button>
+        </header>
+        <div id="mobile-search-results-container" class="flex-1 p-4 overflow-y-auto">
+             <!-- 移动端搜索结果将加载到这里 -->
+        </div>
+    </div>
+
+
     <!-- 反馈模态窗口 -->
-    <div id="feedback-modal" class="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 hidden">
+    <div id="feedback-modal" class="fixed inset-0 bg-black bg-opacity-60 z-[100] flex items-center justify-center p-4 hidden">
         <div id="feedback-dialog" class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6 transform transition-all scale-95 opacity-0">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100">信息反馈</h3>
@@ -666,7 +727,7 @@
                                     [
                                         { src: 'images/苍梧校区/宿舍/B区/B5-B6/B5-B6宿舍内景.jpg', caption: '宿舍内景（上床下桌）' },
                                         { src: 'images/苍梧校区/宿舍/B区/B5-B6/宿舍内详景.jpg', caption: '宿舍内详景' },
-                                        { src: 'image/苍梧校区/宿舍/B区/B5-B6/公共卫生间.jpg', caption: '公共卫生间' },
+                                        { src: 'images/苍梧校区/宿舍/B区/B5-B6/公共卫生间.jpg', caption: '公共卫生间' },
                                         { src: 'images/苍梧校区/宿舍/B区/B5-B6/公共卫生间洗手池.jpg', caption: '公共卫生间洗手池' }
                                      ], 
                                     roomType: '四人间',
@@ -835,7 +896,7 @@
                                 {
                                     area: 'D区食堂',
                                     images: [
-                                        { src: 'image/苍梧校区/食堂/东区食堂/苍梧校区_东区食堂_麻辣香锅.jpg', caption: '麻辣香锅' },
+                                        { src: 'images/苍梧校区/食堂/东区食堂/苍梧校区_东区食堂_麻辣香锅.jpg', caption: '麻辣香锅' },
                                         { src: 'images/苍梧校区/食堂/东区食堂/苍梧校区_东区食堂_石锅菜.jpg', caption: '石锅菜' },
                                         { src: 'images/苍梧校区/食堂/东区食堂/苍梧校区_东区食堂_鸡肉拌面.jpg', caption: '鸡肉拌面' },
                                         { src: 'images/苍梧校区/食堂/东区食堂/苍梧校区_东区食堂_烤肉饭.jpg', caption: '烤肉饭' },
@@ -1134,10 +1195,22 @@
                 this.detailContent = document.getElementById('detail-content');
                 this.backToMainBtn = document.getElementById('back-to-main-btn');
                 
-                // 实时搜索元素 (新)
+                // 桌面端搜索元素
                 this.searchForm = document.getElementById('search-form');
                 this.searchInput = document.getElementById('search-input');
                 this.liveSearchResultsContainer = document.getElementById('live-search-results');
+                
+                // 移动端优化元素
+                this.bottomNav = document.getElementById('bottom-nav');
+                this.bottomNavHome = document.getElementById('bottom-nav-home');
+                this.bottomNavMenu = document.getElementById('bottom-nav-menu');
+                this.bottomNavSearch = document.getElementById('bottom-nav-search');
+                this.bottomNavCampus = document.getElementById('bottom-nav-campus');
+                this.mobileSearchOverlay = document.getElementById('mobile-search-overlay');
+                this.mobileSearchInput = document.getElementById('mobile-search-input');
+                this.mobileSearchResultsContainer = document.getElementById('mobile-search-results-container');
+                this.closeMobileSearchBtn = document.getElementById('close-mobile-search-btn');
+
 
                 // 新增功能元素
                 this.themeToggleBtn = document.getElementById('theme-toggle-btn');
@@ -1403,11 +1476,22 @@
                 this.contentArea.addEventListener('click', this._handleCardClick.bind(this));
                 this.backToMainBtn.addEventListener('click', this._hideDetailView.bind(this));
 
-                // 实时搜索事件
+                // 桌面端实时搜索事件
                 this.searchForm.addEventListener('submit', e => e.preventDefault());
                 this.searchInput.addEventListener('input', this._handleLiveSearch.bind(this));
                 document.addEventListener('click', this._handleGlobalClick.bind(this));
                 this.liveSearchResultsContainer.addEventListener('click', this._handleSearchResultClick.bind(this));
+                
+                // 移动端底部导航事件
+                this.bottomNavHome.addEventListener('click', this._handleHomeClick.bind(this));
+                this.bottomNavMenu.addEventListener('click', this._toggleSidebar.bind(this));
+                this.bottomNavSearch.addEventListener('click', this._showMobileSearch.bind(this));
+                this.bottomNavCampus.addEventListener('click', this._showCampusSelector.bind(this));
+
+                // 移动端搜索遮罩层事件
+                this.closeMobileSearchBtn.addEventListener('click', this._hideMobileSearch.bind(this));
+                this.mobileSearchInput.addEventListener('input', this._handleMobileLiveSearch.bind(this));
+                this.mobileSearchResultsContainer.addEventListener('click', this._handleSearchResultClick.bind(this));
 
                 // 新增功能事件
                 this.themeToggleBtn.addEventListener('click', this._handleThemeToggle.bind(this));
@@ -1417,6 +1501,13 @@
                     if (e.target === this.feedbackModal) this._hideFeedbackModal();
                 });
                 this.feedbackForm.addEventListener('submit', this._handleFeedbackSubmit.bind(this));
+                
+                // 新增: 阻止多点触控缩放
+                document.addEventListener('touchmove', (e) => {
+                    if (e.touches.length > 1) {
+                        e.preventDefault();
+                    }
+                }, { passive: false });
             }
 
             _showCampusSelector() {
@@ -1501,6 +1592,11 @@
                         submenu.previousElementSibling.classList.add('open');
                     }
                 }
+                // Update bottom nav active state
+                this.bottomNav.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+                if(categoryKey === '主页') {
+                    this.bottomNavHome.classList.add('active');
+                }
             }
             
             _handleNavClick(e) {
@@ -1538,6 +1634,7 @@
                 const isHidden = this.sidebar.classList.contains('-translate-x-full');
                 this.sidebar.classList.toggle('-translate-x-full');
                 this.sidebarOverlay.classList.toggle('hidden', !isHidden);
+                this.bottomNavMenu.classList.toggle('active', !isHidden);
             }
             
             _scrollToElement(targetElement, keyword = null) {
@@ -1601,6 +1698,7 @@
 
             _hideAllViews() {
                 this._hideDetailView();
+                this._hideMobileSearch();
             }
 
             // --- 详情页方法 ---
@@ -1788,31 +1886,32 @@
                 }
             }
             
-            // ===================================================================================
-            // --- 实时搜索功能相关方法 ---
-            // ===================================================================================
-
-            /**
-             * 处理实时搜索输入事件
-             */
+            // --- 搜索功能 ---
             _handleLiveSearch(e) {
                 const query = e.target.value.trim();
                 if (query.length > 0) {
                     const results = this._performSearch(query);
-                    this._displayLiveSearchResults(results, query);
+                    this._displayLiveSearchResults(results, query, this.liveSearchResultsContainer);
                 } else {
                     this._hideLiveSearchResults();
                 }
             }
-
-            /**
-             * 显示实时搜索结果下拉框
-             */
-            _displayLiveSearchResults(results, query) {
-                if (results.length === 0) {
-                    this.liveSearchResultsContainer.innerHTML = `<p class="text-center text-gray-500 dark:text-gray-400 p-4">未能找到与“${this._escapeHtml(query)}”相关的内容。</p>`;
+            
+            _handleMobileLiveSearch(e) {
+                const query = e.target.value.trim();
+                if (query.length > 0) {
+                    const results = this._performSearch(query);
+                    this._displayLiveSearchResults(results, query, this.mobileSearchResultsContainer);
                 } else {
-                    this.liveSearchResultsContainer.innerHTML = results.map(result => {
+                    this.mobileSearchResultsContainer.innerHTML = '';
+                }
+            }
+
+            _displayLiveSearchResults(results, query, container) {
+                if (results.length === 0) {
+                    container.innerHTML = `<p class="text-center text-gray-500 dark:text-gray-400 p-4">未能找到与“${this._escapeHtml(query)}”相关的内容。</p>`;
+                } else {
+                    container.innerHTML = results.map(result => {
                         const snippet = this._createSnippet(result.text, query);
                         const highlightedSnippet = snippet.replace(new RegExp(this._escapeRegExp(query), 'gi'), (match) => `<mark class="search-highlight">${this._escapeHtml(match)}</mark>`);
                         
@@ -1821,35 +1920,28 @@
                             : `data-category-key="${result.categoryKey}" data-page-key="${result.pageKey}"`;
 
                         return `
-                            <a href="#" class="search-result-item block p-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700 last:border-b-0" ${dataAttrs} data-keyword="${this._escapeHtml(query)}">
-                                <h4 class="font-semibold text-sm text-blue-700 dark:text-blue-400 truncate">${this._escapeHtml(result.title)}</h4>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">...${highlightedSnippet}...</p>
+                            <a href="#" class="search-result-item block p-4 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700 last:border-b-0" ${dataAttrs} data-keyword="${this._escapeHtml(query)}">
+                                <h4 class="font-semibold text-base text-blue-700 dark:text-blue-400 truncate">${this._escapeHtml(result.title)}</h4>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">...${highlightedSnippet}...</p>
                             </a>
                         `;
                     }).join('');
                 }
-                this.liveSearchResultsContainer.classList.remove('hidden');
+                if(container === this.liveSearchResultsContainer) {
+                    container.classList.remove('hidden');
+                }
             }
 
-            /**
-             * 隐藏实时搜索结果下拉框
-             */
             _hideLiveSearchResults() {
                 this.liveSearchResultsContainer.classList.add('hidden');
             }
             
-            /**
-             * 处理全局点击，用于隐藏搜索下拉框
-             */
             _handleGlobalClick(e) {
                 if (!this.searchForm.contains(e.target)) {
                     this._hideLiveSearchResults();
                 }
             }
             
-            /**
-             * 核心搜索逻辑 (复用)
-             */
             _performSearch(query) {
                 const results = [];
                 const tempDiv = document.createElement('div');
@@ -1921,22 +2013,20 @@
                 return results;
             }
 
-            /**
-             * 处理搜索结果点击事件 (已适配实时搜索)
-             */
             _handleSearchResultClick(e) {
                 const item = e.target.closest('.search-result-item');
                 if (!item) return;
                 e.preventDefault();
 
-                this._hideLiveSearchResults(); // 隐藏下拉框
-                this.searchInput.value = ''; // 清空输入框
+                this._hideLiveSearchResults();
+                this._hideMobileSearch();
+                this.searchInput.value = '';
+                this.mobileSearchInput.value = '';
                 
                 const { isDetail, detailType, detailKey, categoryKey, pageKey, keyword } = item.dataset;
                 
                 if (isDetail === 'true') {
                     this._showDetailView(detailType, detailKey);
-                    // 在详情页高亮关键词
                     setTimeout(() => this._highlightKeywordInSection(this.detailContent, keyword), 500);
                 } else {
                     const targetElement = document.getElementById(`page-${categoryKey}-${pageKey}`);
@@ -1970,7 +2060,7 @@
                 
                 nodesToReplace.forEach(textNode => {
                     const parent = textNode.parentNode;
-                    if (!parent || parent.nodeName === 'MARK' || parent.nodeName === 'SCRIPT' || parent.nodeName === 'STYLE') return; // 避免重复高亮和修改脚本/样式
+                    if (!parent || parent.nodeName === 'MARK' || parent.nodeName === 'SCRIPT' || parent.nodeName === 'STYLE') return;
                     
                     const parts = textNode.textContent.split(regex);
                     const matches = textNode.textContent.match(regex);
@@ -1990,8 +2080,24 @@
                     parent.replaceChild(fragment, textNode);
                 });
             }
+            
+            _showMobileSearch() {
+                this.mobileSearchOverlay.classList.remove('hidden');
+                setTimeout(() => {
+                    this.mobileSearchOverlay.classList.remove('translate-y-full');
+                    this.mobileSearchInput.focus();
+                }, 10);
+            }
 
-            // --- 新增: 辅助函数，用于防止XSS和RegExp注入 ---
+            _hideMobileSearch() {
+                this.mobileSearchOverlay.classList.add('translate-y-full');
+                setTimeout(() => {
+                    this.mobileSearchOverlay.classList.add('hidden');
+                    this.mobileSearchInput.value = '';
+                    this.mobileSearchResultsContainer.innerHTML = '';
+                }, 300);
+            }
+
             _escapeHtml(str) {
                 const div = document.createElement('div');
                 div.appendChild(document.createTextNode(str));
@@ -1999,15 +2105,13 @@
             }
 
             _escapeRegExp(string) {
-                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             }
 
-            // --- 新增功能方法 ---
             _determineAndApplyInitialTheme() {
                 const savedTheme = localStorage.getItem('theme');
                 const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
                 
-                // 优先级: localStorage > 系统设置
                 if (savedTheme) {
                     this._applyTheme(savedTheme);
                 } else {
@@ -2021,7 +2125,6 @@
                 } else {
                     document.documentElement.classList.remove('dark');
                 }
-                // 不论来源如何，都将最终确定的主题存入localStorage
                 localStorage.setItem('theme', theme);
                 
                 const isDark = theme === 'dark';
@@ -2031,7 +2134,6 @@
 
             _handleThemeToggle() {
                 const currentIsDark = document.documentElement.classList.contains('dark');
-                // 切换主题并保存到localStorage
                 this._applyTheme(currentIsDark ? 'light' : 'dark');
             }
 
@@ -2050,7 +2152,6 @@
                 this.feedbackDialog.style.opacity = '0';
                 setTimeout(() => {
                     this.feedbackModal.classList.add('hidden');
-                    // 重置表单
                     this.feedbackForm.classList.remove('hidden');
                     this.feedbackSuccessMsg.classList.add('hidden');
                     this.feedbackForm.reset();
@@ -2062,14 +2163,12 @@
                 const form = e.target;
                 const formData = new FormData(form);
 
-                // 使用 fetch 将数据异步提交到Netlify
                 fetch("/", {
                     method: "POST",
                     headers: { "Content-Type": "application/x-www-form-urlencoded" },
                     body: new URLSearchParams(formData).toString()
                 })
                 .then(() => {
-                    // 提交成功后显示成功信息
                     this.feedbackForm.classList.add('hidden');
                     this.feedbackSuccessMsg.classList.remove('hidden');
                     setTimeout(() => {
@@ -2077,7 +2176,6 @@
                     }, 2000);
                 })
                 .catch((error) => {
-                    // 处理错误情况
                     console.error(error);
                     const submitButton = form.querySelector('button[type="submit"]');
                     submitButton.textContent = '提交失败!';
