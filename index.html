@@ -228,6 +228,18 @@
         #mobile-search-overlay {
             transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
         }
+
+        /* 新增: 校区查询工具的自定义下拉菜单样式 */
+        .custom-select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-950">
@@ -493,6 +505,12 @@
             "入学准备": {
                 icon: "package-check",
                 pages: {
+                    // 新增: 大一校区查询页面
+                    "大一校区查询": { 
+                        title: "大一校区查询", 
+                        type: "campus-query-tool", // 特殊类型，用于触发JS初始化
+                        content: `` // 内容将在JS中生成，但我们先定义页面
+                    },
                     "开学必备清单": { title: "开学必备清单", content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto">
     <div class="p-6 rounded-xl w-full">
         <h3 class="text-2xl font-bold text-blue-800 dark:text-blue-400 mb-6 border-l-4 border-blue-700 dark:border-blue-500 pl-4">证件及文件类 (最重要！)</h3>
@@ -1325,6 +1343,9 @@
                         } else if (page.type === 'clubs') {
                             section.innerHTML = this._createClubsHtml(page.data);
                             this._addClubTabListeners(section);
+                        } else if (page.type === 'campus-query-tool') { // 新增: 处理校区查询工具
+                            section.innerHTML = this._createCampusQueryToolHtml();
+                            this._initCampusQueryTool(section); // 初始化其JS逻辑
                         } else {
                             section.innerHTML = page.content;
                         }
@@ -2182,6 +2203,173 @@
                     submitButton.classList.add('bg-red-600');
                 });
             }
+
+            // --- 新增: 校区查询工具相关方法 ---
+            _createCampusQueryToolHtml() {
+                // 返回查询工具的HTML结构
+                return `
+                    <div class="campus-query-tool-container w-full max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 md:p-8 mx-auto" style="font-family: 'Inter', sans-serif;">
+                        <div class="text-center mb-8">
+                            <h1 class="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100">大一新生校区查询</h1>
+                            <p class="text-gray-500 dark:text-gray-400 mt-2">请选择你的学院和专业，查询你所在的校区。</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            <div>
+                                <label for="college-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">选择学院</label>
+                                <select id="college-select" class="custom-select w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200">
+                                    <option value="">-- 请选择 --</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="major-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">选择专业</label>
+                                <select id="major-select" class="custom-select w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200" disabled>
+                                    <option value="">-- 请先选择学院 --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="result-display" class="bg-gray-100 dark:bg-gray-900/50 p-6 rounded-xl border border-gray-200 dark:border-gray-700 text-center min-h-[150px] flex items-center justify-center transition-all duration-300 ease-in-out">
+                            <p class="text-gray-500 dark:text-gray-400">查询结果将在此处显示</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            _initCampusQueryTool(container) {
+                // 数据源
+                const campusInfoData = {
+                    "苍梧校区": [
+                        { college: "海洋科学与水产学院", majors: ["海洋资源与环境", "海洋科学", "生物技术", "水产养殖学"] },
+                        { college: "电子工程学院", majors: ["电子信息工程", "通信工程", "自动化", "电气工程及其自动化"] },
+                        { college: "环境与化学工程学院", majors: ["环境工程", "化学工程与工艺", "高分子材料与工程", "安全工程"] },
+                        { college: "计算机工程学院", majors: ["计算机科学与技术", "软件工程", "数据科学与大数据技术", "网络工程"] },
+                        { college: "药学院", majors: ["制药工程", "药物制剂", "药物分析"] },
+                        { college: "体育学院", majors: ["休闲体育"] },
+                        { college: "马可夫洛夫海洋工程学院", majors: ["机器人工程", "船舶与海洋工程"] }
+                    ],
+                    "通灌校区": [
+                        { college: "海洋食品与生物工程学", majors: ["食品科学与工程", "生物工程"] },
+                        { college: "海洋工程学院", majors: ["船舶与海洋工程", "海洋资源开发技术"] },
+                        { college: "机械工程学院", majors: ["机械设计制造及其自动化", "机械电子工程", "机器人工程"] },
+                        { college: "土木与港海工程学院", majors: ["土木工程", "建筑学", "港口航道与海岸工程", "工程管理"] },
+                        { college: "海洋技术与测绘学院", majors: ["测绘工程", "海洋技术", "地理信息科学", "遥感科学与技术"] },
+                        { college: "理学院", majors: ["信息与计算科学", "光电信息科学与工程", "新能源科学与工程", "数学与应用数学"] },
+                        { college: "商学院", majors: ["金融学", "国际经济与贸易", "工商管理", "会计学", "财务管理", "物流管理"] },
+                        { college: "文法学院", majors: ["汉语言文学", "新闻学", "法学", "行政管理"] },
+                        { college: "外国语学院", majors: ["英语", "日语", "俄语"] },
+                        { college: "艺术设计学院", majors: ["视觉传达设计", "环境设计", "产品设计", "数字媒体艺术"] }
+                    ]
+                };
+
+                // 在传入的容器内查找元素，实现逻辑隔离
+                const collegeSelect = container.querySelector('#college-select');
+                const majorSelect = container.querySelector('#major-select');
+                const resultDisplay = container.querySelector('#result-display');
+
+                if (!collegeSelect || !majorSelect || !resultDisplay) return;
+
+                // 填充学院下拉菜单
+                const allColleges = [];
+                for (const campus in campusInfoData) {
+                    campusInfoData[campus].forEach(item => allColleges.push(item.college));
+                }
+                allColleges.sort((a, b) => a.localeCompare(b, 'zh-CN'));
+                
+                allColleges.forEach(college => {
+                    const option = document.createElement('option');
+                    option.value = college;
+                    option.textContent = college;
+                    collegeSelect.appendChild(option);
+                });
+
+                // 事件处理函数
+                const handleCollegeChange = () => {
+                    const selectedCollege = collegeSelect.value;
+                    majorSelect.innerHTML = '<option value="">-- 请选择 --</option>';
+                    majorSelect.disabled = true;
+                    resetResult();
+
+                    if (selectedCollege) {
+                        let collegeInfo = null;
+                        for (const campus in campusInfoData) {
+                            const found = campusInfoData[campus].find(c => c.college === selectedCollege);
+                            if (found) {
+                                collegeInfo = found;
+                                break;
+                            }
+                        }
+
+                        if (collegeInfo) {
+                            collegeInfo.majors.forEach(major => {
+                                const option = document.createElement('option');
+                                option.value = major;
+                                option.textContent = major;
+                                majorSelect.appendChild(option);
+                            });
+                            majorSelect.disabled = false;
+
+                            if (collegeInfo.majors.length === 1) {
+                                majorSelect.value = collegeInfo.majors[0];
+                                handleMajorChange();
+                            }
+                        }
+                    }
+                };
+
+                const handleMajorChange = () => {
+                    const selectedCollege = collegeSelect.value;
+                    const selectedMajor = majorSelect.value;
+
+                    if (selectedCollege && selectedMajor) {
+                        let campusResult = '';
+                        for (const campus in campusInfoData) {
+                            const found = campusInfoData[campus].some(c => 
+                                c.college === selectedCollege && c.majors.includes(selectedMajor)
+                            );
+                            if (found) {
+                                campusResult = campus;
+                                break;
+                            }
+                        }
+                        displayResult(campusResult);
+                    } else {
+                        resetResult();
+                    }
+                };
+
+                const displayResult = (campus) => {
+                    if (!campus) {
+                        resetResult();
+                        return;
+                    }
+
+                    let specialNote = '';
+                    if (campus === '通灌校区') {
+                        specialNote = `
+                            <div class="mt-4 bg-blue-100 dark:bg-blue-900/30 border-l-4 border-blue-500 text-blue-800 dark:text-blue-300 p-4 rounded-md" role="alert">
+                                <p class="font-bold">特别提醒</p>
+                                <p>到大二通灌校区的同学会搬到本部，具体搬家事宜请留意学院的统一安排。</p>
+                            </div>
+                        `;
+                    }
+
+                    resultDisplay.innerHTML = `
+                        <div class="w-full">
+                            <p class="text-lg text-gray-600 dark:text-gray-300">你所在的校区是：</p>
+                            <p class="text-3xl md:text-4xl font-bold text-indigo-600 dark:text-indigo-400 mt-2">${campus}</p>
+                            ${specialNote}
+                        </div>
+                    `;
+                };
+
+                const resetResult = () => {
+                    resultDisplay.innerHTML = '<p class="text-gray-500 dark:text-gray-400">查询结果将在此处显示</p>';
+                };
+
+                // 绑定事件
+                collegeSelect.addEventListener('change', handleCollegeChange);
+                majorSelect.addEventListener('change', handleMajorChange);
+            }
+
         }
 
         // --- 应用入口点 ---
