@@ -245,7 +245,68 @@
             border-color: #6366f1; /* indigo-500 */
             color: #818cf8; /* indigo-400 */
         }
+        
+        /* 新增: 用户中心头像选择 */
+        .avatar-option {
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s ease-in-out;
+            border-radius: 50%;
+        }
+        .avatar-option:hover {
+            transform: scale(1.1);
+            border-color: #6366f1;
+        }
+        .avatar-option.selected {
+            border-color: #4338ca; /* indigo-700 */
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.5);
+        }
+        
+        /* [已修复] 删除不再使用的样式 */
+        .loader-small {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #4f46e5;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 8px;
+        }
 
+        /* --- 新增: Toast 消息提示框样式 --- */
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+        }
+        .toast-notification {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            color: white;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.4s ease-in-out;
+            min-width: 250px;
+        }
+        .toast-notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        .toast-notification.info { background-color: #3b82f6; } /* blue-500 */
+        .toast-notification.success { background-color: #22c55e; } /* green-500 */
+        .toast-notification.error { background-color: #ef4444; } /* red-500 */
+        .toast-notification .toast-icon {
+            margin-right: 12px;
+        }
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-950">
@@ -340,13 +401,20 @@
             <div class="mt-auto pt-4 border-t border-blue-800 dark:border-gray-700 space-y-2">
                 <!-- 登录/用户状态 -->
                 <div id="auth-container">
-                    <button id="auth-btn" class="w-full flex items-center justify-center px-4 py-2 text-sm text-blue-200 dark:text-gray-300 rounded-md hover:bg-blue-800 dark:hover:bg-gray-700 transition-colors">
-                        <i data-lucide="user-circle" class="w-4 h-4 mr-2"></i>
+                    <!-- 未登录状态 -->
+                    <button id="login-prompt-btn" class="w-full flex items-center justify-center px-4 py-3 text-sm text-blue-200 dark:text-gray-300 rounded-md hover:bg-blue-800 dark:hover:bg-gray-700 transition-colors">
+                        <i data-lucide="user-circle" class="w-5 h-5 mr-3"></i>
                         <span>登录 / 注册</span>
                     </button>
-                    <div id="user-dashboard" class="hidden p-2 text-center">
-                        <p class="text-sm text-blue-200 dark:text-gray-300 truncate" id="user-email-display">欢迎, user@jou.edu.cn</p>
-                        <button id="logout-button" class="mt-2 w-full text-xs text-red-300 hover:text-red-200 bg-blue-800 hover:bg-red-800/50 py-1 rounded-md transition-colors">退出登录</button>
+                    <!-- 已登录状态 -->
+                    <div id="user-profile-btn" class="hidden w-full p-2 rounded-lg hover:bg-blue-800 dark:hover:bg-gray-700 transition-colors cursor-pointer">
+                        <div class="flex items-center">
+                            <img id="sidebar-avatar" src="" alt="[用户头像]" class="w-10 h-10 rounded-full bg-blue-700 object-cover border-2 border-blue-400">
+                            <div class="ml-3 text-left">
+                                <p class="font-semibold text-base text-white truncate" id="sidebar-nickname">昵称</p>
+                                <p class="text-xs text-blue-200 dark:text-gray-400">查看个人中心</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <button id="feedback-btn" class="w-full flex items-center justify-center px-4 py-2 text-sm text-blue-200 dark:text-gray-300 rounded-md hover:bg-blue-800 dark:hover:bg-gray-700 transition-colors">
@@ -371,20 +439,29 @@
 
         <!-- 主内容区域 -->
         <main class="flex-1 flex flex-col overflow-hidden">
-            <header class="bg-white dark:bg-gray-900 dark:border-b dark:border-gray-800 shadow-md p-3 flex justify-between items-center z-10 space-x-4 flex-shrink-0">
-                <button id="menu-toggle" class="md:hidden text-gray-700 dark:text-gray-300 flex-shrink-0"><i data-lucide="menu"></i></button>
-                <h2 id="content-title" class="text-xl font-semibold text-gray-800 dark:text-gray-100 truncate hidden sm:block"></h2>
+            <header
+                class="bg-white dark:bg-gray-900 dark:border-b dark:border-gray-800 shadow-md p-3 flex justify-between items-center z-10 space-x-4 flex-shrink-0">
+                <button id="menu-toggle" class="md:hidden text-gray-700 dark:text-gray-300 flex-shrink-0"><i
+                        data-lucide="menu"></i></button>
+                <div class="flex items-center min-w-0">
+                    <h2 id="content-title" class="text-xl font-semibold text-gray-800 dark:text-gray-100 truncate hidden sm:block">
+                    </h2>
+                </div>
                 <!-- 桌面端搜索栏 -->
                 <div class="relative w-full max-w-xs ml-auto hidden md:block">
                     <form id="search-form" class="w-full">
-                        <input type="search" id="search-input" placeholder="实时搜索指南..." class="w-full pl-10 pr-4 py-2 rounded-full border bg-gray-100 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 focus:bg-white dark:focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                        <input type="search" id="search-input" placeholder="实时搜索指南..."
+                            class="w-full pl-10 pr-4 py-2 rounded-full border bg-gray-100 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 focus:bg-white dark:focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
                         <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
                     </form>
-                    <div id="live-search-results" class="absolute left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 hidden">
+                    <div id="live-search-results"
+                        class="absolute left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 hidden">
                         <!-- 实时搜索结果将动态插入这里 -->
                     </div>
                 </div>
-                <a href="#" id="home-button-top" class="text-gray-600 dark:text-gray-400 hover:text-blue-700 dark:hover:text-blue-400 transition-colors flex-shrink-0"><i data-lucide="home" class="w-5 h-5"></i></a>
+                <a href="#" id="home-button-top"
+                    class="text-gray-600 dark:text-gray-400 hover:text-blue-700 dark:hover:text-blue-400 transition-colors flex-shrink-0"><i
+                        data-lucide="home" class="w-5 h-5"></i></a>
             </header>
             <div id="content-area" class="flex-1 px-4 md:px-8 overflow-y-auto bg-gray-50 dark:bg-gray-950 pb-16 md:pb-0">
                 <!-- 内容将通过JS动态加载到这里 -->
@@ -568,6 +645,83 @@
         </div>
     </div>
 
+    <!-- 新增: 用户中心模态窗口 -->
+    <div id="profile-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-[100] p-4 hidden">
+    <div id="profile-dialog" class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl transform transition-all scale-95 opacity-0 flex flex-col max-h-[90vh]">
+        <div class="p-4 border-b dark:border-gray-700 flex justify-between items-center flex-shrink-0">
+            <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">个人中心</h3>
+            <button id="close-profile-btn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+        
+        <!-- 内容区 -->
+        <div class="flex-grow overflow-y-auto">
+            <!-- 查看视图 -->
+            <div id="profile-view-container" class="p-6 md:p-8">
+                 <div class="text-center">
+                    <img id="profile-avatar-large" src="" class="w-28 h-28 rounded-full mx-auto mb-4 border-4 border-indigo-200 dark:border-indigo-600 shadow-lg">
+                    <h2 id="profile-nickname" class="text-3xl font-bold text-gray-900 dark:text-gray-100"></h2>
+                    <p id="profile-email" class="text-sm text-gray-500 dark:text-gray-400 mt-1"></p>
+                    <div class="mt-2 flex justify-center items-center space-x-4 text-sm text-gray-600 dark:text-gray-300">
+                        <span id="profile-major-year" class="flex items-center"><i data-lucide="graduation-cap" class="w-4 h-4 mr-1.5"></i><span></span></span>
+                    </div>
+                </div>
+                <div class="mt-8 text-center">
+                    <p id="profile-bio" class="text-gray-700 dark:text-gray-300 italic max-w-lg mx-auto"></p>
+                </div>
+                <div class="mt-8 pt-6 border-t dark:border-gray-700 flex justify-center space-x-4">
+                    <button id="edit-profile-btn" class="flex items-center justify-center px-6 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors">
+                        <i data-lucide="edit-3" class="w-4 h-4 mr-2"></i>
+                        <span>编辑资料</span>
+                    </button>
+                     <button id="logout-button" class="flex items-center justify-center px-6 py-2 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors">
+                        <i data-lucide="log-out" class="w-4 h-4 mr-2"></i>
+                        <span>退出登录</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 编辑视图 -->
+            <form id="profile-edit-container" class="hidden p-6 md:p-8 space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">选择头像</label>
+                    <div id="avatar-selection-grid" class="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 gap-3">
+                        <!-- Avatars will be injected by JS -->
+                    </div>
+                </div>
+                <div>
+                    <label for="edit-nickname" class="block text-sm font-medium text-gray-700 dark:text-gray-300">昵称</label>
+                    <input type="text" id="edit-nickname" class="mt-1 w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none" maxlength="15">
+                </div>
+                <div>
+                    <label for="edit-bio" class="block text-sm font-medium text-gray-700 dark:text-gray-300">个性签名</label>
+                    <textarea id="edit-bio" rows="3" class="mt-1 w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="介绍一下自己吧~" maxlength="100"></textarea>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="edit-enrollment-year" class="block text-sm font-medium text-gray-700 dark:text-gray-300">入学年份</label>
+                        <select id="edit-enrollment-year" class="custom-select mt-1 w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            <!-- Years will be injected by JS -->
+                        </select>
+                    </div>
+                    <div>
+                        <label for="edit-major" class="block text-sm font-medium text-gray-700 dark:text-gray-300">专业</label>
+                        <select id="edit-major" class="custom-select mt-1 w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            <!-- Majors will be injected by JS -->
+                        </select>
+                    </div>
+                </div>
+                <div class="pt-4 flex justify-end space-x-3">
+                    <button type="button" id="cancel-edit-btn" class="px-5 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">取消</button>
+                    <button type="submit" id="save-profile-btn" class="px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700">保存更改</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
 
     <script type="module">
         // ===================================================================================
@@ -583,17 +737,21 @@
             signInWithEmailAndPassword,
             onAuthStateChanged,
             signOut,
-            sendPasswordResetEmail // 新增: 引入密码重置函数
+            sendPasswordResetEmail
         } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
         import {
             getFirestore,
             doc,
-            setDoc
+            setDoc,
+            getDoc,
+            updateDoc,
+            onSnapshot,
+            Timestamp
         } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
         // 2. 粘贴你的 Firebase 项目配置信息
         // 重要: 请将下面的占位符替换为你自己项目中的 firebaseConfig 对象！
-        const firebaseConfig = {
+            const firebaseConfig = {
                 apiKey: "FIREBASE_API_KEY",
                 authDomain: "FIREBASE_AUTH_DOMAIN",
                 projectId: "FIREBASE_PROJECT_ID",
@@ -602,12 +760,19 @@
                 appId: "FIREBASE_APP_ID",
                 measurementId: "FIREBASE_MEASUREMENT_ID"
             };
+            
 
         // 3. 初始化 Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        // ===================================================================================
+        // --- 新增: 个性化数据 ---
+        // ===================================================================================
+        const AVATARS = Array.from({length: 1}, (_, i) => `avatar_${String(i + 1).padStart(2, '0')}`);
+        const getAvatarUrl = (id) => id ? `images/默认头像/${id}.png` : 'images/默认头像/avatar_01.png';
+        
         // ===================================================================================
         // --- 数据中心 (Data Center) ---
         // ===================================================================================
@@ -1327,6 +1492,31 @@
                 }
             }
         };
+        
+        // 新增: 用于填充专业和年份下拉菜单的数据
+        const campusInfoData = {
+            "苍梧校区": [
+                { college: "海洋科学与水产学院", majors: ["海洋资源与环境", "海洋科学", "生物技术", "水产养殖学"] },
+                { college: "电子工程学院", majors: ["电子信息工程", "通信工程", "自动化", "电气工程及其自动化"] },
+                { college: "环境与化学工程学院", majors: ["环境工程", "化学工程与工艺", "高分子材料与工程", "安全工程"] },
+                { college: "计算机工程学院", majors: ["计算机科学与技术", "软件工程", "数据科学与大数据技术", "网络工程"] },
+                { college: "药学院", majors: ["制药工程", "药物制剂", "药物分析"] },
+                { college: "体育学院", majors: ["休闲体育"] },
+                { college: "马可夫洛夫海洋工程学院", majors: ["机器人工程", "船舶与海洋工程"] }
+            ],
+            "通灌校区": [
+                { college: "海洋食品与生物工程学", majors: ["食品科学与工程", "生物工程"] },
+                { college: "海洋工程学院", majors: ["船舶与海洋工程", "海洋资源开发技术"] },
+                { college: "机械工程学院", majors: ["机械设计制造及其自动化", "机械电子工程", "机器人工程"] },
+                { college: "土木与港海工程学院", majors: ["土木工程", "建筑学", "港口航道与海岸工程", "工程管理"] },
+                { college: "海洋技术与测绘学院", majors: ["测绘工程", "海洋技术", "地理信息科学", "遥感科学与技术"] },
+                { college: "理学院", majors: ["信息与计算科学", "光电信息科学与工程", "新能源科学与工程", "数学与应用数学"] },
+                { college: "商学院", majors: ["金融学", "国际经济与贸易", "工商管理", "会计学", "财务管理", "物流管理"] },
+                { college: "文法学院", majors: ["汉语言文学", "新闻学", "法学", "行政管理"] },
+                { college: "外国语学院", majors: ["英语", "日语", "俄语"] },
+                { college: "艺术设计学院", majors: ["视觉传达设计", "环境设计", "产品设计", "数字媒体艺术"] }
+            ]
+        };
 
         /**
          * 指南应用类
@@ -1339,6 +1529,8 @@
                 this.observer = null;
                 this.isScrollingProgrammatically = false;
                 this.scrollTimeout = null;
+                this.currentUserData = null; // 新增: 存储当前用户的完整数据
+                this.unsubscribeUserDoc = null; // 新增: 用于取消文档监听
 
                 // 缓存DOM元素
                 this.loadingOverlay = document.getElementById('loading-overlay');
@@ -1390,7 +1582,8 @@
                 // 认证相关UI元素
                 this.authModal = document.getElementById('auth-modal');
                 this.authDialog = document.getElementById('auth-dialog');
-                this.authBtn = document.getElementById('auth-btn');
+                this.loginPromptBtn = document.getElementById('login-prompt-btn');
+                this.userProfileBtn = document.getElementById('user-profile-btn');
                 this.closeAuthBtn = document.getElementById('close-auth-btn');
                 this.authTitle = document.getElementById('auth-title');
                 
@@ -1402,20 +1595,72 @@
                 this.registerForm = document.getElementById('register-form');
                 this.resetPasswordForm = document.getElementById('reset-password-form');
                 
-                this.userDashboard = document.getElementById('user-dashboard');
-                this.userEmailDisplay = document.getElementById('user-email-display');
-                this.logoutButton = document.getElementById('logout-button');
-                
                 this.forgotPasswordLink = document.getElementById('forgot-password-link');
                 this.goToRegisterLink = document.getElementById('go-to-register');
                 this.goToLoginFromRegisterLink = document.getElementById('go-to-login-from-register');
                 this.goToLoginFromResetLink = document.getElementById('go-to-login-from-reset');
+                
+                // 新增: 用户中心UI元素
+                this.profileModal = document.getElementById('profile-modal');
+                this.profileDialog = document.getElementById('profile-dialog');
+                this.closeProfileBtn = document.getElementById('close-profile-btn');
+                this.logoutButton = document.getElementById('logout-button');
+                this.editProfileBtn = document.getElementById('edit-profile-btn');
+                this.cancelEditBtn = document.getElementById('cancel-edit-btn');
+                this.saveProfileBtn = document.getElementById('save-profile-btn');
+                
+                this.profileViewContainer = document.getElementById('profile-view-container');
+                this.profileEditContainer = document.getElementById('profile-edit-container');
+
+                this.sidebarAvatar = document.getElementById('sidebar-avatar');
+                this.sidebarNickname = document.getElementById('sidebar-nickname');
+                this.profileAvatarLarge = document.getElementById('profile-avatar-large');
+                this.profileNickname = document.getElementById('profile-nickname');
+                this.profileEmail = document.getElementById('profile-email');
+                this.profileMajorYear = document.getElementById('profile-major-year').querySelector('span');
+                this.profileBio = document.getElementById('profile-bio');
+                
+                this.avatarSelectionGrid = document.getElementById('avatar-selection-grid');
+                this.editNickname = document.getElementById('edit-nickname');
+                this.editBio = document.getElementById('edit-bio');
+                this.editEnrollmentYear = document.getElementById('edit-enrollment-year');
+                this.editMajor = document.getElementById('edit-major');
+
+            }
+            _showToast(message, type = 'info') {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = `toast-notification ${type}`;
+                
+                let iconName = 'info';
+                if (type === 'success') iconName = 'check-circle';
+                if (type === 'error') iconName = 'alert-circle';
+
+                toast.innerHTML = `
+                    <div class="toast-icon"><i data-lucide="${iconName}"></i></div>
+                    <span>${message}</span>
+                `;
+                
+                container.appendChild(toast);
+                lucide.createIcons({ nodes: [toast.querySelector('.toast-icon')] });
+
+                // Animate in
+                setTimeout(() => {
+                    toast.classList.add('show');
+                }, 100);
+
+                // Animate out and remove
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    toast.addEventListener('transitionend', () => toast.remove());
+                }, 4000); // 4秒后自动消失
             }
 
             init() {
                 this._determineAndApplyInitialTheme();
                 this._setupEventListeners();
                 this._listenForAuthStateChanges(); // 启动认证状态监听
+                this._populateProfileEditDropdowns(); // 新增: 填充编辑资料的下拉菜单
                 this.selectedCampus = localStorage.getItem('selectedCampus');
 
                 if (this.selectedCampus) {
@@ -1436,6 +1681,7 @@
                 this._renderAllContent();
                 this._updateCampusDisplay();
                 this._setupIntersectionObserver();
+                this._updateActiveState("主页", "home");
             }
 
             _createNav() {
@@ -1666,28 +1912,23 @@
                 this.campusModal.addEventListener('click', this._handleCampusSelection.bind(this));
                 this.changeCampusBtn.addEventListener('click', this._showCampusSelector.bind(this));
                 
-                // 详情页事件
                 this.contentArea.addEventListener('click', this._handleCardClick.bind(this));
                 this.backToMainBtn.addEventListener('click', this._hideDetailView.bind(this));
 
-                // 桌面端实时搜索事件
                 this.searchForm.addEventListener('submit', e => e.preventDefault());
                 this.searchInput.addEventListener('input', this._handleLiveSearch.bind(this));
                 document.addEventListener('click', this._handleGlobalClick.bind(this));
                 this.liveSearchResultsContainer.addEventListener('click', this._handleSearchResultClick.bind(this));
                 
-                // 移动端底部导航事件
                 this.bottomNavHome.addEventListener('click', this._handleHomeClick.bind(this));
                 this.bottomNavMenu.addEventListener('click', this._toggleSidebar.bind(this));
                 this.bottomNavSearch.addEventListener('click', this._showMobileSearch.bind(this));
                 this.bottomNavCampus.addEventListener('click', this._showCampusSelector.bind(this));
 
-                // 移动端搜索遮罩层事件
                 this.closeMobileSearchBtn.addEventListener('click', this._hideMobileSearch.bind(this));
                 this.mobileSearchInput.addEventListener('input', this._handleMobileLiveSearch.bind(this));
                 this.mobileSearchResultsContainer.addEventListener('click', this._handleSearchResultClick.bind(this));
 
-                // 功能事件
                 this.themeToggleBtn.addEventListener('click', this._handleThemeToggle.bind(this));
                 this.feedbackBtn.addEventListener('click', this._showFeedbackModal.bind(this));
                 this.closeFeedbackBtn.addEventListener('click', this._hideFeedbackModal.bind(this));
@@ -1696,8 +1937,7 @@
                 });
                 this.feedbackForm.addEventListener('submit', this._handleFeedbackSubmit.bind(this));
                 
-                // 认证相关事件
-                this.authBtn.addEventListener('click', this._showAuthModal.bind(this));
+                this.loginPromptBtn.addEventListener('click', this._showAuthModal.bind(this));
                 this.closeAuthBtn.addEventListener('click', this._hideAuthModal.bind(this));
                 this.authModal.addEventListener('click', (e) => {
                     if (e.target === this.authModal) this._hideAuthModal();
@@ -1706,16 +1946,31 @@
                 this.registerForm.addEventListener('submit', this._handleRegisterSubmit.bind(this));
                 this.loginForm.addEventListener('submit', this._handleLoginSubmit.bind(this));
                 this.resetPasswordForm.addEventListener('submit', this._handlePasswordResetSubmit.bind(this));
-                this.logoutButton.addEventListener('click', this._handleLogout.bind(this));
-
-                // 认证表单内部导航
+                
                 this.forgotPasswordLink.addEventListener('click', (e) => { e.preventDefault(); this._handleAuthViewChange('reset'); });
                 this.goToRegisterLink.addEventListener('click', (e) => { e.preventDefault(); this._handleAuthViewChange('register'); });
                 this.goToLoginFromRegisterLink.addEventListener('click', (e) => { e.preventDefault(); this._handleAuthViewChange('login'); });
                 this.goToLoginFromResetLink.addEventListener('click', (e) => { e.preventDefault(); this._handleAuthViewChange('login'); });
 
+                this.userProfileBtn.addEventListener('click', this._showProfileModal.bind(this));
+                this.closeProfileBtn.addEventListener('click', this._hideProfileModal.bind(this));
+                this.profileModal.addEventListener('click', (e) => {
+                    if (e.target === this.profileModal) this._hideProfileModal();
+                });
+                this.logoutButton.addEventListener('click', this._handleLogout.bind(this));
+                this.editProfileBtn.addEventListener('click', () => this._handleProfileViewChange('edit'));
+                this.cancelEditBtn.addEventListener('click', () => this._handleProfileViewChange('view'));
+                this.saveProfileBtn.addEventListener('click', this._handleProfileSave.bind(this));
+                
+                // [已修复] 移除对不存在的 .profile-tab 元素的事件监听
 
-                // 阻止多点触控缩放
+                this.avatarSelectionGrid.addEventListener('click', e => {
+                    const target = e.target.closest('.avatar-option');
+                    if (!target) return;
+                    this.avatarSelectionGrid.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
+                    target.classList.add('selected');
+                });
+
                 document.addEventListener('touchmove', (e) => {
                     if (e.touches.length > 1) {
                         e.preventDefault();
@@ -1791,6 +2046,7 @@
                         this.contentTitle.textContent = pageData.title;
                     }
                 }
+
                 document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
                 const activeLink = document.querySelector(`.sidebar-link[data-category="${categoryKey}"][data-page="${pageKey}"]`);
                 if (activeLink) {
@@ -1805,9 +2061,8 @@
                         submenu.previousElementSibling.classList.add('open');
                     }
                 }
-                // Update bottom nav active state
                 this.bottomNav.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-                if(categoryKey === '主页') {
+                if (categoryKey === '主页') {
                     this.bottomNavHome.classList.add('active');
                 }
             }
@@ -2436,19 +2691,19 @@
             }
 
             // --- Firebase 认证核心逻辑 ---
-            async _handleRegisterSubmit(e) {
+             async _handleRegisterSubmit(e) {
                 e.preventDefault();
                 const emailPrefix = this.registerForm.email_prefix.value;
                 const password = this.registerForm.password.value;
 
                 if (!emailPrefix) {
-                    alert("请输入你的学号！");
+                    this._showToast("请输入你的学号！", "error");
                     return;
                 }
                 const email = emailPrefix + '@jou.edu.cn';
                 
                 if (password.length < 8) {
-                    alert("密码长度不能少于8位！");
+                    this._showToast("密码长度不能少于8位！", "error");
                     return;
                 }
 
@@ -2456,21 +2711,26 @@
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     const user = userCredential.user;
                     
-                    await setDoc(doc(db, "users", user.uid), {
+                    const newUserDoc = {
                         email: user.email,
-                        nickname: "萌新" + emailPrefix.slice(-4), // 用学号后四位生成默认昵称
-                        joinDate: new Date()
-                    });
+                        nickname: "萌新" + emailPrefix.slice(-4),
+                        bio: "这位同学很酷，什么都还没留下~",
+                        avatarId: AVATARS[Math.floor(Math.random() * AVATARS.length)],
+                        major: "",
+                        enrollmentYear: new Date().getFullYear(),
+                        joinDate: Timestamp.fromDate(new Date())
+                    };
+                    await setDoc(doc(db, "users", user.uid), newUserDoc);
 
                     await sendEmailVerification(user);
-                    alert("注册成功！验证邮件已发送至你的校园邮箱，请点击邮件中的链接完成验证后即可登录。");
+                    this._showToast("注册成功！验证邮件已发送，请查收。", "success");
                     this._hideAuthModal();
 
                 } catch (error) {
                     if (error.code === 'auth/email-already-in-use') {
-                        alert("该邮箱已被注册！");
+                        this._showToast("该邮箱已被注册！", "error");
                     } else {
-                        alert("注册失败：" + error.message);
+                        this._showToast("注册失败：" + error.message, "error");
                     }
                 }
             }
@@ -2481,7 +2741,7 @@
                 const password = this.loginForm.password.value;
                 
                 if (!emailPrefix) {
-                    alert("请输入你的学号！");
+                    this._showToast("请输入你的学号！", "error");
                     return;
                 }
                 const email = emailPrefix + '@jou.edu.cn';
@@ -2491,35 +2751,35 @@
                     const user = userCredential.user;
 
                     if (user.emailVerified) {
-                        alert("登录成功！");
+                        this._showToast("登录成功！", "success");
                         this._hideAuthModal();
                     } else {
-                        alert("请先前往你的校园邮箱，点击验证链接后再登录。");
+                        this._showToast("请先前往邮箱完成验证再登录。", "info");
                         await signOut(auth);
                     }
                 } catch (error) {
-                    alert("登录失败：学号或密码错误。");
+                    this._showToast("登录失败：学号或密码错误。", "error");
                 }
             }
             
-            async _handlePasswordResetSubmit(e) {
+             async _handlePasswordResetSubmit(e) {
                 e.preventDefault();
                 const emailPrefix = this.resetPasswordForm.email_prefix.value;
                 if (!emailPrefix) {
-                    alert("请输入你的学号！");
+                    this._showToast("请输入你的学号！", "error");
                     return;
                 }
                 const email = emailPrefix + '@jou.edu.cn';
 
                 try {
                     await sendPasswordResetEmail(auth, email);
-                    alert("密码重置邮件已发送至你的校园邮箱，请查收并按提示操作。");
-                    this._handleAuthViewChange('login'); // 发送后自动跳回登录页
+                    this._showToast("密码重置邮件已发送，请查收。", "success");
+                    this._handleAuthViewChange('login');
                 } catch (error) {
                     if (error.code === 'auth/user-not-found') {
-                        alert("发送失败：该邮箱尚未注册。");
+                        this._showToast("发送失败：该邮箱尚未注册。", "error");
                     } else {
-                        alert("发送失败：" + error.message);
+                        this._showToast("发送失败：" + error.message, "error");
                     }
                 }
             }
@@ -2527,24 +2787,174 @@
             async _handleLogout() {
                 try {
                     await signOut(auth);
-                    alert("已成功退出登录。");
+                    this._hideProfileModal();
+                    this._showToast("已成功退出登录。", "info");
                 } catch (error) {
-                    alert("退出失败：" + error.message);
+                    this._showToast("退出失败：" + error.message, "error");
                 }
             }
 
             _listenForAuthStateChanges() {
                 onAuthStateChanged(auth, (user) => {
+                    if (this.unsubscribeUserDoc) {
+                        this.unsubscribeUserDoc(); // 取消上一个用户的文档监听
+                        this.unsubscribeUserDoc = null;
+                    }
+
                     if (user && user.emailVerified) {
-                        this.authBtn.classList.add('hidden');
-                        this.userDashboard.classList.remove('hidden');
-                        this.userEmailDisplay.textContent = `欢迎, ${user.email}`;
+                        // 用户已登录且邮箱已验证
+                        this.loginPromptBtn.classList.add('hidden');
+                        this.userProfileBtn.classList.remove('hidden');
+                        
+                        // 实时监听用户文档
+                        const userDocRef = doc(db, "users", user.uid);
+                        this.unsubscribeUserDoc = onSnapshot(userDocRef, (docSnap) => {
+                            if (docSnap.exists()) {
+                                this.currentUserData = docSnap.data();
+                                this._updateUIWithUserData();
+                            } else {
+                                console.log("No such user document!");
+                                // 可以考虑创建一个默认文档
+                            }
+                        }, (error) => {
+                            console.error("Error listening to user doc:", error);
+                        });
+
                     } else {
-                        this.authBtn.classList.remove('hidden');
-                        this.userDashboard.classList.add('hidden');
+                        // 用户未登录或未验证
+                        this.currentUserData = null;
+                        this.loginPromptBtn.classList.remove('hidden');
+                        this.userProfileBtn.classList.add('hidden');
                     }
                 });
             }
+            
+            _updateUIWithUserData() {
+                if (!this.currentUserData) return;
+
+                const avatarUrl = getAvatarUrl(this.currentUserData.avatarId);
+                this.sidebarAvatar.src = avatarUrl;
+                this.sidebarNickname.textContent = this.currentUserData.nickname || '未设置昵称';
+
+                this.profileAvatarLarge.src = avatarUrl;
+                this.profileNickname.textContent = this.currentUserData.nickname || '未设置昵称';
+                this.profileEmail.textContent = this.currentUserData.email || '';
+                this.profileMajorYear.textContent = `${this.currentUserData.enrollmentYear || '未知年份'}级 ${this.currentUserData.major || '未设置专业'}`;
+                this.profileBio.textContent = this.currentUserData.bio || '这位同学很酷，什么都还没留下~';
+
+            }
+
+            // --- 新增: 用户中心方法 ---
+            _showProfileModal() {
+                this._handleProfileViewChange('view'); // 默认显示查看视图
+                this.profileModal.classList.remove('hidden');
+                setTimeout(() => {
+                    this.profileModal.style.opacity = '1';
+                    this.profileDialog.style.transform = 'scale(1)';
+                    this.profileDialog.style.opacity = '1';
+                }, 10);
+            }
+
+            _hideProfileModal() {
+                this.profileModal.style.opacity = '0';
+                this.profileDialog.style.transform = 'scale(0.95)';
+                this.profileDialog.style.opacity = '0';
+                setTimeout(() => {
+                    this.profileModal.classList.add('hidden');
+                }, 300);
+            }
+            
+            _handleProfileViewChange(viewName) {
+                // 更新Tab激活状态
+                this.profileDialog.querySelectorAll('.profile-tab').forEach(tab => {
+                    tab.classList.toggle('active', tab.dataset.view === viewName);
+                });
+                
+                // 切换视图
+                this.profileViewContainer.classList.add('hidden');
+                this.profileEditContainer.classList.add('hidden');
+                
+                if (viewName === 'view') {
+                    this.profileViewContainer.classList.remove('hidden');
+                } else if (viewName === 'edit') {
+                    this._populateProfileEditForm();
+                    this.profileEditContainer.classList.remove('hidden');
+                }
+            }
+
+            _populateProfileEditForm() {
+                if (!this.currentUserData) return;
+
+                this.avatarSelectionGrid.innerHTML = AVATARS.map(id => `
+        <img src="${getAvatarUrl(id)}" data-avatar-id="${id}" class="avatar-option w-12 h-12" alt="[头像${id}]">
+    `).join('');
+
+                const currentAvatar = this.avatarSelectionGrid.querySelector(`[data-avatar-id="${this.currentUserData.avatarId}"]`);
+                if (currentAvatar) {
+                    currentAvatar.classList.add('selected');
+                }
+
+                this.editNickname.value = this.currentUserData.nickname || '';
+                this.editBio.value = this.currentUserData.bio || '';
+                this.editEnrollmentYear.value = this.currentUserData.enrollmentYear || new Date().getFullYear();
+                this.editMajor.value = this.currentUserData.major || '';
+            }
+            
+            _populateProfileEditDropdowns() {
+                // 填充年份
+                const currentYear = new Date().getFullYear();
+                for (let i = currentYear; i >= currentYear - 5; i--) {
+                    const option = new Option(i + '级', i);
+                    this.editEnrollmentYear.add(option);
+                }
+                
+                // 填充专业
+                const allMajors = [];
+                Object.values(campusInfoData).forEach(campus => {
+                    campus.forEach(college => {
+                        allMajors.push(...college.majors);
+                    });
+                });
+                const uniqueMajors = [...new Set(allMajors)].sort((a,b) => a.localeCompare(b, 'zh-CN'));
+                
+                uniqueMajors.forEach(major => {
+                    const option = new Option(major, major);
+                    this.editMajor.add(option);
+                });
+            }
+
+            async _handleProfileSave(e) {
+                e.preventDefault();
+                if (!auth.currentUser) return;
+
+                // 增加加载状态，防止重复点击
+                this.saveProfileBtn.disabled = true;
+                this.saveProfileBtn.innerHTML = `<span class="loader-small"></span> 保存中...`;
+
+                const selectedAvatar = this.avatarSelectionGrid.querySelector('.selected');
+                const updatedData = {
+                    nickname: this.editNickname.value.trim(),
+                    bio: this.editBio.value.trim(),
+                    avatarId: selectedAvatar ? selectedAvatar.dataset.avatarId : this.currentUserData.avatarId,
+                    enrollmentYear: parseInt(this.editEnrollmentYear.value),
+                    major: this.editMajor.value
+                };
+
+                try {
+                    const userDocRef = doc(db, "users", auth.currentUser.uid);
+                    await updateDoc(userDocRef, updatedData);
+                    this._showToast("资料更新成功！", "success");
+                    this._handleProfileViewChange('view');
+                } catch (error) {
+                    console.error("Error updating profile:", error);
+                    this._showToast("资料更新失败，请稍后再试。", "error");
+                } finally {
+                    // 恢复按钮状态
+                    this.saveProfileBtn.disabled = false;
+                    this.saveProfileBtn.innerHTML = `保存更改`;
+                }
+            }
+            
 
 
             // --- 校区查询工具相关方法 ---
@@ -2578,31 +2988,6 @@
             }
 
             _initCampusQueryTool(container) {
-                // 数据源
-                const campusInfoData = {
-                    "苍梧校区": [
-                        { college: "海洋科学与水产学院", majors: ["海洋资源与环境", "海洋科学", "生物技术", "水产养殖学"] },
-                        { college: "电子工程学院", majors: ["电子信息工程", "通信工程", "自动化", "电气工程及其自动化"] },
-                        { college: "环境与化学工程学院", majors: ["环境工程", "化学工程与工艺", "高分子材料与工程", "安全工程"] },
-                        { college: "计算机工程学院", majors: ["计算机科学与技术", "软件工程", "数据科学与大数据技术", "网络工程"] },
-                        { college: "药学院", majors: ["制药工程", "药物制剂", "药物分析"] },
-                        { college: "体育学院", majors: ["休闲体育"] },
-                        { college: "马可夫洛夫海洋工程学院", majors: ["机器人工程", "船舶与海洋工程"] }
-                    ],
-                    "通灌校区": [
-                        { college: "海洋食品与生物工程学", majors: ["食品科学与工程", "生物工程"] },
-                        { college: "海洋工程学院", majors: ["船舶与海洋工程", "海洋资源开发技术"] },
-                        { college: "机械工程学院", majors: ["机械设计制造及其自动化", "机械电子工程", "机器人工程"] },
-                        { college: "土木与港海工程学院", majors: ["土木工程", "建筑学", "港口航道与海岸工程", "工程管理"] },
-                        { college: "海洋技术与测绘学院", majors: ["测绘工程", "海洋技术", "地理信息科学", "遥感科学与技术"] },
-                        { college: "理学院", majors: ["信息与计算科学", "光电信息科学与工程", "新能源科学与工程", "数学与应用数学"] },
-                        { college: "商学院", majors: ["金融学", "国际经济与贸易", "工商管理", "会计学", "财务管理", "物流管理"] },
-                        { college: "文法学院", majors: ["汉语言文学", "新闻学", "法学", "行政管理"] },
-                        { college: "外国语学院", majors: ["英语", "日语", "俄语"] },
-                        { college: "艺术设计学院", majors: ["视觉传达设计", "环境设计", "产品设计", "数字媒体艺术"] }
-                    ]
-                };
-
                 // 在传入的容器内查找元素，实现逻辑隔离
                 const collegeSelect = container.querySelector('#college-select');
                 const majorSelect = container.querySelector('#major-select');
@@ -2615,9 +3000,9 @@
                 for (const campus in campusInfoData) {
                     campusInfoData[campus].forEach(item => allColleges.push(item.college));
                 }
-                allColleges.sort((a, b) => a.localeCompare(b, 'zh-CN'));
+                const uniqueColleges = [...new Set(allColleges)].sort((a, b) => a.localeCompare(b, 'zh-CN'));
                 
-                allColleges.forEach(college => {
+                uniqueColleges.forEach(college => {
                     const option = document.createElement('option');
                     option.value = college;
                     option.textContent = college;
@@ -2720,6 +3105,8 @@
             const app = new GuideApp(guideData, campusData);
             app.init();
         });
+        
     </script>
+    <div id="toast-container"></div>
 </body>
 </html>
