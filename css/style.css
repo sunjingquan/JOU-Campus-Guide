@@ -1,0 +1,384 @@
+/* 自定义样式区 */
+html,
+body {
+    overscroll-behavior: none;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    touch-action: manipulation;
+}
+
+/* 美化滚动条 */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #e2e8f0;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #94a3b8;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+}
+
+html.dark ::-webkit-scrollbar-track {
+    background: #1f2937;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+    background: #4b5563;
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+}
+
+/* 激活的导航链接 */
+.sidebar-link.active {
+    background-color: #1e40af;
+    color: white;
+    font-weight: 600;
+}
+
+html.dark .sidebar-link.active {
+    background-color: #3b82f6;
+}
+
+/* 主页大图背景 */
+.hero-bg {
+    background-image: linear-gradient(to right, rgba(30, 58, 138, 0.8), rgba(67, 56, 202, 0.7)), url('https://placehold.co/1200x600/e0e7ff/3730a3?text=JOU+Campus');
+    background-size: cover;
+    background-position: center;
+}
+
+/* 内容区块 */
+.content-section {
+    padding-top: 4rem;
+    padding-bottom: 4rem;
+    border-bottom: 1px dashed #e2e8f0;
+}
+
+html.dark .content-section {
+    border-bottom-color: #374151;
+}
+
+.content-section:last-child {
+    border-bottom: none;
+}
+
+/* 可折叠导航菜单 */
+.submenu {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease-in-out, opacity 0.3s ease-in-out;
+    opacity: 0;
+}
+
+.submenu.open {
+    max-height: 1000px;
+    opacity: 1;
+}
+
+.category-header .accordion-icon {
+    transition: transform 0.3s ease-in-out;
+}
+
+.category-header.open .accordion-icon {
+    transform: rotate(180deg);
+}
+
+/* 视图过渡效果 */
+#detail-view {
+    transition: transform 0.3s ease-in-out;
+}
+
+/* 搜索结果高亮 */
+.search-highlight {
+    background-color: #fef9c3;
+    /* yellow-100 */
+    color: #713f12;
+    /* amber-800 */
+    border-radius: 3px;
+}
+
+/* 临时高亮动画 */
+@keyframes highlight-fade {
+    from {
+        background-color: #fde047;
+    }
+
+    /* yellow-400 */
+    to {
+        background-color: transparent;
+    }
+}
+
+.temp-highlight {
+    animation: highlight-fade 2s ease-in-out;
+}
+
+/* 加载动画 */
+.loader {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+
+html.dark .loader {
+    border-color: #4b5563;
+    border-top-color: #3b82f6;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* --- 图片轮播器样式 --- */
+.image-slider .slider-wrapper {
+    transition: transform 0.5s ease-in-out;
+}
+
+.image-slider .slider-slide {
+    flex-shrink: 0;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    /* 保持图片比例 */
+}
+
+.image-slider .slider-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.image-slider .slider-nav {
+    background-color: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(4px);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.image-slider .slider-nav:hover {
+    background-color: rgba(0, 0, 0, 0.6);
+    transform: scale(1.1);
+}
+
+.image-slider .slider-dots .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.image-slider .slider-dots .dot.active {
+    background-color: white;
+    transform: scale(1.2);
+}
+
+.slider-caption {
+    transition: opacity 0.5s ease-in-out;
+}
+
+/* --- 社团选项卡样式 --- */
+.club-tabs .tab-button {
+    transition: all 0.3s ease-in-out;
+    border-bottom: 3px solid transparent;
+}
+
+.club-tabs .tab-button.active {
+    font-weight: 600;
+    color: #2563eb;
+    /* blue-600 */
+    border-bottom-color: #2563eb;
+}
+
+html.dark .club-tabs .tab-button.active {
+    color: #3b82f6;
+    /* blue-500 */
+    border-bottom-color: #3b82f6;
+}
+
+.club-pane {
+    display: none;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+.club-pane.active {
+    display: block;
+    /* 修改：从 grid 改为 block */
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* --- 实时搜索下拉框样式 --- */
+#live-search-results {
+    top: 100%;
+    z-index: 100;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* --- 移动端底部导航栏 --- */
+#bottom-nav {
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+}
+
+#bottom-nav .nav-btn.active {
+    color: #2563eb;
+    /* blue-600 */
+}
+
+html.dark #bottom-nav .nav-btn.active {
+    color: #3b82f6;
+    /* blue-500 */
+}
+
+/* --- 移动端搜索遮罩层 --- */
+#mobile-search-overlay {
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+/* 新增: 校区查询工具的自定义下拉菜单样式 */
+.custom-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+/* 新增: 登录/注册 模态框的选项卡样式 */
+.auth-tab.active {
+    border-color: #4f46e5;
+    /* indigo-600 */
+    color: #4f46e5;
+    /* indigo-600 */
+}
+
+html.dark .auth-tab.active {
+    border-color: #6366f1;
+    /* indigo-500 */
+    color: #818cf8;
+    /* indigo-400 */
+}
+
+/* 新增: 用户中心头像选择 */
+.avatar-option {
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s ease-in-out;
+    border-radius: 50%;
+}
+
+.avatar-option:hover {
+    transform: scale(1.1);
+    border-color: #6366f1;
+}
+
+.avatar-option.selected {
+    border-color: #4338ca;
+    /* indigo-700 */
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.5);
+}
+
+/* [已修复] 删除不再使用的样式 */
+.loader-small {
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #4f46e5;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+/* --- 新增: Toast 消息提示框样式 --- */
+#toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+.toast-notification {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    color: white;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.4s ease-in-out;
+    min-width: 250px;
+}
+
+.toast-notification.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.toast-notification.info {
+    background-color: #3b82f6;
+}
+
+/* blue-500 */
+.toast-notification.success {
+    background-color: #22c55e;
+}
+
+/* green-500 */
+.toast-notification.error {
+    background-color: #ef4444;
+}
+
+/* red-500 */
+.toast-notification .toast-icon {
+    margin-right: 12px;
+}

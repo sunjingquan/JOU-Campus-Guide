@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -8,318 +9,33 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Tailwind CSS 配置 -->
     <script>
-      tailwind.config = {
-        darkMode: 'class',
-      }
+        tailwind.config = {
+            darkMode: 'class',
+        }
     </script>
     <!-- 引入Lucide图标库 -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- 引入Inter字体 -->
     <link rel="preconnect" href="https://rsms.me/">
     <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
-    <style>
-        /* 自定义样式区 */
-        html, body {
-            overscroll-behavior: none;
-        }
-        html {
-            scroll-behavior: smooth;
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-            touch-action: manipulation;
-        }
-        /* 美化滚动条 */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #e2e8f0; }
-        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
-        html.dark ::-webkit-scrollbar-track { background: #1f2937; }
-        html.dark ::-webkit-scrollbar-thumb { background: #4b5563; }
-        html.dark ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
-
-        /* 激活的导航链接 */
-        .sidebar-link.active {
-            background-color: #1e40af;
-            color: white;
-            font-weight: 600;
-        }
-        html.dark .sidebar-link.active {
-            background-color: #3b82f6;
-        }
-        
-        /* 主页大图背景 */
-        .hero-bg {
-            background-image: linear-gradient(to right, rgba(30, 58, 138, 0.8), rgba(67, 56, 202, 0.7)), url('https://placehold.co/1200x600/e0e7ff/3730a3?text=JOU+Campus');
-            background-size: cover;
-            background-position: center;
-        }
-
-        /* 内容区块 */
-        .content-section {
-            padding-top: 4rem;
-            padding-bottom: 4rem;
-            border-bottom: 1px dashed #e2e8f0;
-        }
-        html.dark .content-section {
-            border-bottom-color: #374151;
-        }
-        .content-section:last-child {
-            border-bottom: none;
-        }
-
-        /* 可折叠导航菜单 */
-        .submenu {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.5s ease-in-out, opacity 0.3s ease-in-out;
-            opacity: 0;
-        }
-        .submenu.open {
-            max-height: 1000px;
-            opacity: 1;
-        }
-        .category-header .accordion-icon {
-            transition: transform 0.3s ease-in-out;
-        }
-        .category-header.open .accordion-icon {
-            transform: rotate(180deg);
-        }
-        
-        /* 视图过渡效果 */
-        #detail-view {
-            transition: transform 0.3s ease-in-out;
-        }
-
-        /* 搜索结果高亮 */
-        .search-highlight {
-            background-color: #fef9c3; /* yellow-100 */
-            color: #713f12; /* amber-800 */
-            border-radius: 3px;
-        }
-        
-        /* 临时高亮动画 */
-        @keyframes highlight-fade {
-            from { background-color: #fde047; } /* yellow-400 */
-            to { background-color: transparent; }
-        }
-        .temp-highlight {
-            animation: highlight-fade 2s ease-in-out;
-        }
-
-        /* 加载动画 */
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-        }
-        html.dark .loader {
-            border-color: #4b5563;
-            border-top-color: #3b82f6;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* --- 图片轮播器样式 --- */
-        .image-slider .slider-wrapper {
-            transition: transform 0.5s ease-in-out;
-        }
-        .image-slider .slider-slide {
-            flex-shrink: 0;
-            width: 100%;
-            aspect-ratio: 16 / 9; /* 保持图片比例 */
-        }
-        .image-slider .slider-slide img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .image-slider .slider-nav {
-            background-color: rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(4px);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: background-color 0.3s, transform 0.2s;
-        }
-        .image-slider .slider-nav:hover {
-            background-color: rgba(0, 0, 0, 0.6);
-            transform: scale(1.1);
-        }
-        .image-slider .slider-dots .dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background-color: rgba(255, 255, 255, 0.5);
-            cursor: pointer;
-            transition: background-color 0.3s, transform 0.2s;
-        }
-        .image-slider .slider-dots .dot.active {
-            background-color: white;
-            transform: scale(1.2);
-        }
-        .slider-caption {
-            transition: opacity 0.5s ease-in-out;
-        }
-
-        /* --- 社团选项卡样式 --- */
-        .club-tabs .tab-button {
-            transition: all 0.3s ease-in-out;
-            border-bottom: 3px solid transparent;
-        }
-        .club-tabs .tab-button.active {
-            font-weight: 600;
-            color: #2563eb; /* blue-600 */
-            border-bottom-color: #2563eb;
-        }
-        html.dark .club-tabs .tab-button.active {
-            color: #3b82f6; /* blue-500 */
-            border-bottom-color: #3b82f6;
-        }
-        
-        .club-pane {
-            display: none;
-            animation: fadeIn 0.5s ease-in-out;
-        }
-        .club-pane.active {
-            display: block; /* 修改：从 grid 改为 block */
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* --- 实时搜索下拉框样式 --- */
-        #live-search-results {
-            top: 100%;
-            z-index: 100;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        /* --- 移动端底部导航栏 --- */
-        #bottom-nav {
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-        }
-        #bottom-nav .nav-btn.active {
-            color: #2563eb; /* blue-600 */
-        }
-        html.dark #bottom-nav .nav-btn.active {
-            color: #3b82f6; /* blue-500 */
-        }
-
-        /* --- 移动端搜索遮罩层 --- */
-        #mobile-search-overlay {
-            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
-        }
-
-        /* 新增: 校区查询工具的自定义下拉菜单样式 */
-        .custom-select {
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-            background-position: right 0.5rem center;
-            background-repeat: no-repeat;
-            background-size: 1.5em 1.5em;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-        }
-
-        /* 新增: 登录/注册 模态框的选项卡样式 */
-        .auth-tab.active {
-            border-color: #4f46e5; /* indigo-600 */
-            color: #4f46e5; /* indigo-600 */
-        }
-        html.dark .auth-tab.active {
-            border-color: #6366f1; /* indigo-500 */
-            color: #818cf8; /* indigo-400 */
-        }
-        
-        /* 新增: 用户中心头像选择 */
-        .avatar-option {
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: all 0.2s ease-in-out;
-            border-radius: 50%;
-        }
-        .avatar-option:hover {
-            transform: scale(1.1);
-            border-color: #6366f1;
-        }
-        .avatar-option.selected {
-            border-color: #4338ca; /* indigo-700 */
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.5);
-        }
-        
-        /* [已修复] 删除不再使用的样式 */
-        .loader-small {
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #4f46e5;
-            border-radius: 50%;
-            width: 16px;
-            height: 16px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            margin-right: 8px;
-        }
-
-        /* --- 新增: Toast 消息提示框样式 --- */
-        #toast-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 10px;
-        }
-        .toast-notification {
-            display: flex;
-            align-items: center;
-            padding: 12px 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            color: white;
-            opacity: 0;
-            transform: translateX(100%);
-            transition: all 0.4s ease-in-out;
-            min-width: 250px;
-        }
-        .toast-notification.show {
-            opacity: 1;
-            transform: translateX(0);
-        }
-        .toast-notification.info { background-color: #3b82f6; } /* blue-500 */
-        .toast-notification.success { background-color: #22c55e; } /* green-500 */
-        .toast-notification.error { background-color: #ef4444; } /* red-500 */
-        .toast-notification .toast-icon {
-            margin-right: 12px;
-        }
-    </style>
+    <!-- 引入自定义样式表 -->
+    <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body class="bg-gray-50 dark:bg-gray-950">
     <!-- 加载动画 -->
-    <div id="loading-overlay" class="fixed inset-0 bg-white dark:bg-gray-950 z-[100] flex flex-col items-center justify-center transition-opacity duration-500">
+    <div id="loading-overlay"
+        class="fixed inset-0 bg-white dark:bg-gray-950 z-[100] flex flex-col items-center justify-center transition-opacity duration-500">
         <div class="loader"></div>
         <p class="mt-4 text-lg font-semibold text-gray-700 dark:text-gray-300">江苏海洋大学校园指南</p>
         <p class="text-sm text-gray-500">正在加载...</p>
     </div>
 
     <!-- 校区选择器模态窗口 -->
-    <div id="campus-selector-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-[100] p-4 hidden">
-        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-3xl transform transition-all scale-95 opacity-0 flex flex-col max-h-full" id="campus-selector-dialog">
+    <div id="campus-selector-modal"
+        class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-[100] p-4 hidden">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-3xl transform transition-all scale-95 opacity-0 flex flex-col max-h-full"
+            id="campus-selector-dialog">
             <div class="p-6 md:p-8 text-center flex-shrink-0">
                 <h2 class="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">欢迎来到江苏海洋大学！</h2>
                 <p class="text-gray-600 dark:text-gray-400">请选择你的校区，以便我们为你提供更精准的指南。</p>
@@ -327,17 +43,20 @@
             <div class="overflow-y-auto px-6 md:px-8 pb-6 md:pb-8">
                 <div class="space-y-4 md:space-y-0 md:grid md:grid-cols-3 md:gap-6">
                     <!-- 苍梧校区卡片 -->
-                    <button data-campus="cangwu" class="campus-select-btn w-full text-left rounded-xl shadow-lg group transform hover:scale-105 transition-transform duration-300 overflow-hidden bg-gray-100 dark:bg-gray-800">
+                    <button data-campus="cangwu"
+                        class="campus-select-btn w-full text-left rounded-xl shadow-lg group transform hover:scale-105 transition-transform duration-300 overflow-hidden bg-gray-100 dark:bg-gray-800">
                         <div class="md:hidden flex items-center p-2">
                             <div class="w-24 h-16 rounded-lg bg-gray-200 dark:bg-gray-700 flex-shrink-0">
-                                <img src="images/苍梧校区.jpg?nf_resize=fit&w=200" alt="[苍梧校区的图片]" class="w-full h-full object-contain">
+                                <img src="images/苍梧校区.jpg?nf_resize=fit&w=200" alt="[苍梧校区的图片]"
+                                    class="w-full h-full object-contain">
                             </div>
                             <div class="ml-4">
                                 <h3 class="text-gray-800 dark:text-gray-100 text-lg font-bold">苍梧校区</h3>
                             </div>
                         </div>
                         <div class="hidden md:block relative h-56">
-                            <img src="images/苍梧校区.jpg?nf_resize=fit&w=800&fm=webp" alt="[苍梧校区的图片]" class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110">
+                            <img src="images/苍梧校区.jpg?nf_resize=fit&w=800&fm=webp" alt="[苍梧校区的图片]"
+                                class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110">
                             <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                             <div class="absolute bottom-0 left-0 p-4">
                                 <h3 class="text-white text-2xl font-bold drop-shadow-lg">苍梧校区</h3>
@@ -345,17 +64,20 @@
                         </div>
                     </button>
                     <!-- 通灌校区卡片 -->
-                     <button data-campus="tongguan" class="campus-select-btn w-full text-left rounded-xl shadow-lg group transform hover:scale-105 transition-transform duration-300 overflow-hidden bg-gray-100 dark:bg-gray-800">
+                    <button data-campus="tongguan"
+                        class="campus-select-btn w-full text-left rounded-xl shadow-lg group transform hover:scale-105 transition-transform duration-300 overflow-hidden bg-gray-100 dark:bg-gray-800">
                         <div class="flex items-center p-2 md:hidden">
-                           <div class="w-24 h-16 rounded-lg bg-gray-200 dark:bg-gray-700 flex-shrink-0">
-                                <img src="images/通灌校区.jpg?nf_resize=fit&w=200" alt="[通灌校区的图片]" class="w-full h-full object-contain">
+                            <div class="w-24 h-16 rounded-lg bg-gray-200 dark:bg-gray-700 flex-shrink-0">
+                                <img src="images/通灌校区.jpg?nf_resize=fit&w=200" alt="[通灌校区的图片]"
+                                    class="w-full h-full object-contain">
                             </div>
                             <div class="ml-4">
                                 <h3 class="text-gray-800 dark:text-gray-100 text-lg font-bold">通灌校区</h3>
                             </div>
                         </div>
                         <div class="hidden md:block relative h-56">
-                            <img src="images/通灌校区.jpg?nf_resize=fit&w=800&fm=webp" alt="[通灌校区的图片]" class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110">
+                            <img src="images/通灌校区.jpg?nf_resize=fit&w=800&fm=webp" alt="[通灌校区的图片]"
+                                class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110">
                             <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                             <div class="absolute bottom-0 left-0 p-4">
                                 <h3 class="text-white text-2xl font-bold drop-shadow-lg">通灌校区</h3>
@@ -363,17 +85,20 @@
                         </div>
                     </button>
                     <!-- 宋跳校区卡片 -->
-                    <button data-campus="songtiao" class="campus-select-btn w-full text-left rounded-xl shadow-lg group transform hover:scale-105 transition-transform duration-300 overflow-hidden bg-gray-100 dark:bg-gray-800">
+                    <button data-campus="songtiao"
+                        class="campus-select-btn w-full text-left rounded-xl shadow-lg group transform hover:scale-105 transition-transform duration-300 overflow-hidden bg-gray-100 dark:bg-gray-800">
                         <div class="flex items-center p-2 md:hidden">
                             <div class="w-24 h-16 rounded-lg bg-gray-200 dark:bg-gray-700 flex-shrink-0">
-                                <img src="images/宋跳校区.jpg?nf_resize=fit&w=200" alt="[宋跳校区的图片]" class="w-full h-full object-contain">
+                                <img src="images/宋跳校区.jpg?nf_resize=fit&w=200" alt="[宋跳校区的图片]"
+                                    class="w-full h-full object-contain">
                             </div>
                             <div class="ml-4">
                                 <h3 class="text-gray-800 dark:text-gray-100 text-lg font-bold">宋跳校区</h3>
                             </div>
                         </div>
                         <div class="hidden md:block relative h-56">
-                            <img src="images/宋跳校区.jpg?nf_resize=fit&w=800&fm=webp" alt="[宋跳校区的图片]" class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110">
+                            <img src="images/宋跳校区.jpg?nf_resize=fit&w=800&fm=webp" alt="[宋跳校区的图片]"
+                                class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110">
                             <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                             <div class="absolute bottom-0 left-0 p-4">
                                 <h3 class="text-white text-2xl font-bold drop-shadow-lg">宋跳校区</h3>
@@ -391,7 +116,8 @@
         <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden md:hidden"></div>
 
         <!-- 侧边栏导航 -->
-        <aside id="sidebar" class="w-72 bg-blue-900 dark:bg-gray-900 text-white p-5 overflow-y-auto transition-transform transform -translate-x-full md:translate-x-0 fixed md:relative h-full z-50 shadow-lg flex flex-col">
+        <aside id="sidebar"
+            class="w-72 bg-blue-900 dark:bg-gray-900 text-white p-5 overflow-y-auto transition-transform transform -translate-x-full md:translate-x-0 fixed md:relative h-full z-50 shadow-lg flex flex-col">
             <div class="text-center mb-10">
                 <h1 class="text-3xl font-bold tracking-wider">江苏海洋大学</h1>
                 <p class="text-sm text-blue-200 dark:text-gray-400 mt-1">校园指南</p>
@@ -402,14 +128,17 @@
                 <!-- 登录/用户状态 -->
                 <div id="auth-container">
                     <!-- 未登录状态 -->
-                    <button id="login-prompt-btn" class="w-full flex items-center justify-center px-4 py-3 text-sm text-blue-200 dark:text-gray-300 rounded-md hover:bg-blue-800 dark:hover:bg-gray-700 transition-colors">
+                    <button id="login-prompt-btn"
+                        class="w-full flex items-center justify-center px-4 py-3 text-sm text-blue-200 dark:text-gray-300 rounded-md hover:bg-blue-800 dark:hover:bg-gray-700 transition-colors">
                         <i data-lucide="user-circle" class="w-5 h-5 mr-3"></i>
                         <span>登录 / 注册</span>
                     </button>
                     <!-- 已登录状态 -->
-                    <div id="user-profile-btn" class="hidden w-full p-2 rounded-lg hover:bg-blue-800 dark:hover:bg-gray-700 transition-colors cursor-pointer">
+                    <div id="user-profile-btn"
+                        class="hidden w-full p-2 rounded-lg hover:bg-blue-800 dark:hover:bg-gray-700 transition-colors cursor-pointer">
                         <div class="flex items-center">
-                            <img id="sidebar-avatar" src="" alt="[用户头像]" class="w-10 h-10 rounded-full bg-blue-700 object-cover border-2 border-blue-400">
+                            <img id="sidebar-avatar" src="" alt="[用户头像]"
+                                class="w-10 h-10 rounded-full bg-blue-700 object-cover border-2 border-blue-400">
                             <div class="ml-3 text-left">
                                 <p class="font-semibold text-base text-white truncate" id="sidebar-nickname">昵称</p>
                                 <p class="text-xs text-blue-200 dark:text-gray-400">查看个人中心</p>
@@ -417,11 +146,13 @@
                         </div>
                     </div>
                 </div>
-                <button id="feedback-btn" class="w-full flex items-center justify-center px-4 py-2 text-sm text-blue-200 dark:text-gray-300 rounded-md hover:bg-blue-800 dark:hover:bg-gray-700 transition-colors">
+                <button id="feedback-btn"
+                    class="w-full flex items-center justify-center px-4 py-2 text-sm text-blue-200 dark:text-gray-300 rounded-md hover:bg-blue-800 dark:hover:bg-gray-700 transition-colors">
                     <i data-lucide="message-square-plus" class="w-4 h-4 mr-2"></i>
                     <span>信息反馈</span>
                 </button>
-                <button id="theme-toggle-btn" class="w-full flex items-center justify-center px-4 py-2 text-sm text-blue-200 dark:text-gray-300 rounded-md hover:bg-blue-800 dark:hover:bg-gray-700 transition-colors">
+                <button id="theme-toggle-btn"
+                    class="w-full flex items-center justify-center px-4 py-2 text-sm text-blue-200 dark:text-gray-300 rounded-md hover:bg-blue-800 dark:hover:bg-gray-700 transition-colors">
                     <span id="theme-icon-sun" class="mr-2">
                         <i data-lucide="sun" class="w-4 h-4"></i>
                     </span>
@@ -430,7 +161,8 @@
                     </span>
                     <span id="theme-text">切换模式</span>
                 </button>
-                 <button id="change-campus-btn" class="w-full flex items-center justify-center px-4 py-2 text-sm text-blue-200 dark:text-gray-300 rounded-md hover:bg-blue-800 dark:hover:bg-gray-700 transition-colors">
+                <button id="change-campus-btn"
+                    class="w-full flex items-center justify-center px-4 py-2 text-sm text-blue-200 dark:text-gray-300 rounded-md hover:bg-blue-800 dark:hover:bg-gray-700 transition-colors">
                     <i data-lucide="map-pin" class="w-4 h-4 mr-2"></i>
                     <span id="current-campus-display"></span>
                 </button>
@@ -444,7 +176,8 @@
                 <button id="menu-toggle" class="md:hidden text-gray-700 dark:text-gray-300 flex-shrink-0"><i
                         data-lucide="menu"></i></button>
                 <div class="flex items-center min-w-0">
-                    <h2 id="content-title" class="text-xl font-semibold text-gray-800 dark:text-gray-100 truncate hidden sm:block">
+                    <h2 id="content-title"
+                        class="text-xl font-semibold text-gray-800 dark:text-gray-100 truncate hidden sm:block">
                     </h2>
                 </div>
                 <!-- 桌面端搜索栏 -->
@@ -452,7 +185,8 @@
                     <form id="search-form" class="w-full">
                         <input type="search" id="search-input" placeholder="实时搜索指南..."
                             class="w-full pl-10 pr-4 py-2 rounded-full border bg-gray-100 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 focus:bg-white dark:focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
-                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
+                        <i data-lucide="search"
+                            class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
                     </form>
                     <div id="live-search-results"
                         class="absolute left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 hidden">
@@ -463,16 +197,20 @@
                     class="text-gray-600 dark:text-gray-400 hover:text-blue-700 dark:hover:text-blue-400 transition-colors flex-shrink-0"><i
                         data-lucide="home" class="w-5 h-5"></i></a>
             </header>
-            <div id="content-area" class="flex-1 px-4 md:px-8 overflow-y-auto bg-gray-50 dark:bg-gray-950 pb-16 md:pb-0">
+            <div id="content-area"
+                class="flex-1 px-4 md:px-8 overflow-y-auto bg-gray-50 dark:bg-gray-950 pb-16 md:pb-0">
                 <!-- 内容将通过JS动态加载到这里 -->
             </div>
         </main>
     </div>
 
     <!-- 详情视图 -->
-    <div id="detail-view" class="fixed inset-0 bg-gray-50 dark:bg-gray-950 z-40 flex-col transform translate-x-full hidden">
-        <header class="bg-white dark:bg-gray-900 dark:border-b dark:border-gray-800 shadow-md p-4 flex items-center z-10 flex-shrink-0">
-            <button id="back-to-main-btn" class="text-gray-600 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-400 transition-colors">
+    <div id="detail-view"
+        class="fixed inset-0 bg-gray-50 dark:bg-gray-950 z-40 flex-col transform translate-x-full hidden">
+        <header
+            class="bg-white dark:bg-gray-900 dark:border-b dark:border-gray-800 shadow-md p-4 flex items-center z-10 flex-shrink-0">
+            <button id="back-to-main-btn"
+                class="text-gray-600 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-400 transition-colors">
                 <i data-lucide="chevron-left" class="w-6 h-6"></i>
             </button>
             <h2 id="detail-title" class="text-xl font-semibold text-gray-800 dark:text-gray-100 truncate ml-4">详情</h2>
@@ -483,43 +221,52 @@
     </div>
 
     <!-- 移动端底部导航栏 -->
-    <footer id="bottom-nav" class="fixed bottom-0 left-0 right-0 h-16 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex justify-around items-center z-30 md:hidden">
-        <button id="bottom-nav-home" class="nav-btn flex flex-col items-center text-gray-600 dark:text-gray-400 transition-colors">
+    <footer id="bottom-nav"
+        class="fixed bottom-0 left-0 right-0 h-16 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex justify-around items-center z-30 md:hidden">
+        <button id="bottom-nav-home"
+            class="nav-btn flex flex-col items-center text-gray-600 dark:text-gray-400 transition-colors">
             <i data-lucide="home" class="w-6 h-6"></i>
             <span class="text-xs mt-1">主页</span>
         </button>
-        <button id="bottom-nav-menu" class="nav-btn flex flex-col items-center text-gray-600 dark:text-gray-400 transition-colors">
+        <button id="bottom-nav-menu"
+            class="nav-btn flex flex-col items-center text-gray-600 dark:text-gray-400 transition-colors">
             <i data-lucide="menu" class="w-6 h-6"></i>
             <span class="text-xs mt-1">菜单</span>
         </button>
-        <button id="bottom-nav-search" class="nav-btn flex flex-col items-center text-gray-600 dark:text-gray-400 transition-colors">
+        <button id="bottom-nav-search"
+            class="nav-btn flex flex-col items-center text-gray-600 dark:text-gray-400 transition-colors">
             <i data-lucide="search" class="w-6 h-6"></i>
             <span class="text-xs mt-1">搜索</span>
         </button>
-        <button id="bottom-nav-campus" class="nav-btn flex flex-col items-center text-gray-600 dark:text-gray-400 transition-colors">
+        <button id="bottom-nav-campus"
+            class="nav-btn flex flex-col items-center text-gray-600 dark:text-gray-400 transition-colors">
             <i data-lucide="map-pin" class="w-6 h-6"></i>
             <span class="text-xs mt-1">校区</span>
         </button>
     </footer>
 
     <!-- 移动端搜索遮罩层 -->
-    <div id="mobile-search-overlay" class="fixed inset-0 bg-gray-50 dark:bg-gray-950 z-[100] flex-col hidden transform translate-y-full">
+    <div id="mobile-search-overlay"
+        class="fixed inset-0 bg-gray-50 dark:bg-gray-950 z-[100] flex-col hidden transform translate-y-full">
         <header class="p-4 flex items-center border-b dark:border-gray-800 flex-shrink-0">
             <div class="relative flex-1">
                 <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
-                <input type="search" id="mobile-search-input" placeholder="搜索指南..." class="w-full pl-10 pr-4 py-2 rounded-full border bg-gray-100 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="search" id="mobile-search-input" placeholder="搜索指南..."
+                    class="w-full pl-10 pr-4 py-2 rounded-full border bg-gray-100 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
             <button id="close-mobile-search-btn" class="ml-4 text-blue-600 dark:text-blue-400 font-semibold">取消</button>
         </header>
         <div id="mobile-search-results-container" class="flex-1 p-4 overflow-y-auto">
-             <!-- 移动端搜索结果将加载到这里 -->
+            <!-- 移动端搜索结果将加载到这里 -->
         </div>
     </div>
 
 
     <!-- 反馈模态窗口 -->
-    <div id="feedback-modal" class="fixed inset-0 bg-black bg-opacity-60 z-[100] flex items-center justify-center p-4 hidden">
-        <div id="feedback-dialog" class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6 transform transition-all scale-95 opacity-0">
+    <div id="feedback-modal"
+        class="fixed inset-0 bg-black bg-opacity-60 z-[100] flex items-center justify-center p-4 hidden">
+        <div id="feedback-dialog"
+            class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6 transform transition-all scale-95 opacity-0">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100">信息反馈</h3>
                 <button id="close-feedback-btn" class="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">
@@ -529,16 +276,23 @@
             <form id="feedback-form" name="feedback" data-netlify="true">
                 <div class="space-y-4">
                     <div>
-                        <label for="feedback-content" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">反馈内容</label>
-                        <textarea id="feedback-content" name="content" rows="4" required class="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="请详细描述您发现的问题或建议..."></textarea>
+                        <label for="feedback-content"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">反馈内容</label>
+                        <textarea id="feedback-content" name="content" rows="4" required
+                            class="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            placeholder="请详细描述您发现的问题或建议..."></textarea>
                     </div>
                     <div>
-                        <label for="feedback-contact" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">联系方式 (可选)</label>
-                        <input type="text" id="feedback-contact" name="contact" class="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="QQ / 微信 / 邮箱">
+                        <label for="feedback-contact"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">联系方式 (可选)</label>
+                        <input type="text" id="feedback-contact" name="contact"
+                            class="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            placeholder="QQ / 微信 / 邮箱">
                     </div>
                 </div>
                 <div class="mt-6 text-right">
-                    <button type="submit" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">提交</button>
+                    <button type="submit"
+                        class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">提交</button>
                 </div>
             </form>
             <div id="feedback-success-msg" class="hidden text-center py-8">
@@ -550,11 +304,14 @@
     </div>
 
     <!-- 登录/注册/重置密码 模态窗口 -->
-    <div id="auth-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-[100] p-4 hidden">
-        <div id="auth-dialog" class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md transform transition-all scale-95 opacity-0 overflow-hidden">
+    <div id="auth-modal"
+        class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-[100] p-4 hidden">
+        <div id="auth-dialog"
+            class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md transform transition-all scale-95 opacity-0 overflow-hidden">
             <div class="relative">
                 <!-- 关闭按钮 -->
-                <button id="close-auth-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors z-10">
+                <button id="close-auth-btn"
+                    class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors z-10">
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
 
@@ -567,76 +324,103 @@
                     <div id="login-form-container">
                         <form id="login-form" class="space-y-6">
                             <div>
-                                <label for="login-email-prefix" class="block text-sm font-medium text-gray-700 dark:text-gray-300">校园邮箱</label>
+                                <label for="login-email-prefix"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">校园邮箱</label>
                                 <div class="mt-1 flex">
-                                    <input id="login-email-prefix" name="email_prefix" type="text" required class="w-full px-3 py-2 rounded-l-md border-t border-b border-l bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 focus:bg-white dark:focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 z-10" placeholder="请输入学号">
-                                    <span class="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-100 text-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400 text-sm">@jou.edu.cn</span>
+                                    <input id="login-email-prefix" name="email_prefix" type="text" required
+                                        class="w-full px-3 py-2 rounded-l-md border-t border-b border-l bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 focus:bg-white dark:focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 z-10"
+                                        placeholder="请输入学号">
+                                    <span
+                                        class="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-100 text-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400 text-sm">@jou.edu.cn</span>
                                 </div>
                             </div>
                             <div>
-                                <label for="login-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">密码</label>
+                                <label for="login-password"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">密码</label>
                                 <div class="mt-1 relative">
-                                    <i data-lucide="lock" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none"></i>
-                                    <input id="login-password" name="password" type="password" autocomplete="current-password" required class="w-full pl-10 pr-4 py-2 rounded-md border bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 focus:bg-white dark:focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors">
+                                    <i data-lucide="lock"
+                                        class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none"></i>
+                                    <input id="login-password" name="password" type="password"
+                                        autocomplete="current-password" required
+                                        class="w-full pl-10 pr-4 py-2 rounded-md border bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 focus:bg-white dark:focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors">
                                 </div>
                                 <div class="text-right mt-2">
-                                    <a href="#" id="forgot-password-link" class="text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">忘记密码?</a>
+                                    <a href="#" id="forgot-password-link"
+                                        class="text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">忘记密码?</a>
                                 </div>
                             </div>
                             <div>
-                                <button type="submit" id="login-button" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">
+                                <button type="submit" id="login-button"
+                                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">
                                     登 录
                                 </button>
                             </div>
                             <p class="text-center text-sm text-gray-600 dark:text-gray-400">
-                                还没有账户? <a href="#" id="go-to-register" class="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">立即注册</a>
+                                还没有账户? <a href="#" id="go-to-register"
+                                    class="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">立即注册</a>
                             </p>
                         </form>
                     </div>
                     <!-- 注册表单 -->
                     <div id="register-form-container" class="hidden">
                         <form id="register-form" class="space-y-6">
-                           <div>
-                                <label for="register-email-prefix" class="block text-sm font-medium text-gray-700 dark:text-gray-300">校园邮箱</label>
+                            <div>
+                                <label for="register-email-prefix"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">校园邮箱</label>
                                 <div class="mt-1 flex">
-                                    <input id="register-email-prefix" name="email_prefix" type="text" required class="w-full px-3 py-2 rounded-l-md border-t border-b border-l bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 focus:bg-white dark:focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 z-10" placeholder="请输入学号">
-                                    <span class="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-100 text-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400 text-sm">@jou.edu.cn</span>
+                                    <input id="register-email-prefix" name="email_prefix" type="text" required
+                                        class="w-full px-3 py-2 rounded-l-md border-t border-b border-l bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 focus:bg-white dark:focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 z-10"
+                                        placeholder="请输入学号">
+                                    <span
+                                        class="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-100 text-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400 text-sm">@jou.edu.cn</span>
                                 </div>
                             </div>
                             <div>
-                                <label for="register-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">设置密码</label>
+                                <label for="register-password"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">设置密码</label>
                                 <div class="mt-1 relative">
-                                    <i data-lucide="lock" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none"></i>
-                                    <input id="register-password" name="password" type="password" required class="w-full pl-10 pr-4 py-2 rounded-md border bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 focus:bg-white dark:focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors" placeholder="至少8位">
+                                    <i data-lucide="lock"
+                                        class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none"></i>
+                                    <input id="register-password" name="password" type="password" required
+                                        class="w-full pl-10 pr-4 py-2 rounded-md border bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 focus:bg-white dark:focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                                        placeholder="至少8位">
                                 </div>
                             </div>
                             <div>
-                                <button type="submit" id="register-button" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">
+                                <button type="submit" id="register-button"
+                                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">
                                     注 册
                                 </button>
                             </div>
-                             <p class="text-center text-sm text-gray-600 dark:text-gray-400">
-                                已有账户? <a href="#" id="go-to-login-from-register" class="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">返回登录</a>
+                            <p class="text-center text-sm text-gray-600 dark:text-gray-400">
+                                已有账户? <a href="#" id="go-to-login-from-register"
+                                    class="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">返回登录</a>
                             </p>
                         </form>
                     </div>
                     <!-- 密码重置表单 -->
                     <div id="reset-password-form-container" class="hidden">
                         <form id="reset-password-form" class="space-y-6">
-                           <div>
-                                <label for="reset-email-prefix" class="block text-sm font-medium text-gray-700 dark:text-gray-300">校园邮箱</label>
+                            <div>
+                                <label for="reset-email-prefix"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">校园邮箱</label>
                                 <div class="mt-1 flex">
-                                    <input id="reset-email-prefix" name="email_prefix" type="text" required class="w-full px-3 py-2 rounded-l-md border-t border-b border-l bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 focus:bg-white dark:focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 z-10" placeholder="请输入你的学号">
-                                    <span class="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-100 text-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400 text-sm">@jou.edu.cn</span>
+                                    <input id="reset-email-prefix" name="email_prefix" type="text" required
+                                        class="w-full px-3 py-2 rounded-l-md border-t border-b border-l bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 focus:bg-white dark:focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 z-10"
+                                        placeholder="请输入你的学号">
+                                    <span
+                                        class="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-100 text-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400 text-sm">@jou.edu.cn</span>
                                 </div>
                             </div>
                             <div>
-                                <button type="submit" id="reset-password-button" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">
+                                <button type="submit" id="reset-password-button"
+                                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">
                                     发送重置邮件
                                 </button>
                             </div>
-                             <p class="text-center text-sm text-gray-600 dark:text-gray-400">
-                                想起来了? <a href="#" id="go-to-login-from-reset" class="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">返回登录</a>
+                            <p class="text-center text-sm text-gray-600 dark:text-gray-400">
+                                想起来了? <a href="#" id="go-to-login-from-reset"
+                                    class="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">返回登录</a>
                             </p>
                         </form>
                     </div>
@@ -646,88 +430,108 @@
     </div>
 
     <!-- 新增: 用户中心模态窗口 -->
-    <div id="profile-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-[100] p-4 hidden">
-    <div id="profile-dialog" class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl transform transition-all scale-95 opacity-0 flex flex-col max-h-[90vh]">
-        <div class="p-4 border-b dark:border-gray-700 flex justify-between items-center flex-shrink-0">
-            <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">个人中心</h3>
-            <button id="close-profile-btn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
-                <i data-lucide="x" class="w-6 h-6"></i>
-            </button>
-        </div>
-        
-        <!-- 内容区 -->
-        <div class="flex-grow overflow-y-auto">
-            <!-- 查看视图 -->
-            <div id="profile-view-container" class="p-6 md:p-8">
-                 <div class="text-center">
-                    <img id="profile-avatar-large" src="" class="w-28 h-28 rounded-full mx-auto mb-4 border-4 border-indigo-200 dark:border-indigo-600 shadow-lg">
-                    <h2 id="profile-nickname" class="text-3xl font-bold text-gray-900 dark:text-gray-100"></h2>
-                    <p id="profile-email" class="text-sm text-gray-500 dark:text-gray-400 mt-1"></p>
-                    <div class="mt-2 flex justify-center items-center space-x-4 text-sm text-gray-600 dark:text-gray-300">
-                        <span id="profile-major-year" class="flex items-center"><i data-lucide="graduation-cap" class="w-4 h-4 mr-1.5"></i><span></span></span>
-                    </div>
-                </div>
-                <div class="mt-8 text-center">
-                    <p id="profile-bio" class="text-gray-700 dark:text-gray-300 italic max-w-lg mx-auto"></p>
-                </div>
-                <div class="mt-8 pt-6 border-t dark:border-gray-700 flex justify-center space-x-4">
-                    <button id="edit-profile-btn" class="flex items-center justify-center px-6 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors">
-                        <i data-lucide="edit-3" class="w-4 h-4 mr-2"></i>
-                        <span>编辑资料</span>
-                    </button>
-                     <button id="logout-button" class="flex items-center justify-center px-6 py-2 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors">
-                        <i data-lucide="log-out" class="w-4 h-4 mr-2"></i>
-                        <span>退出登录</span>
-                    </button>
-                </div>
+    <div id="profile-modal"
+        class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-[100] p-4 hidden">
+        <div id="profile-dialog"
+            class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl transform transition-all scale-95 opacity-0 flex flex-col max-h-[90vh]">
+            <div class="p-4 border-b dark:border-gray-700 flex justify-between items-center flex-shrink-0">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">个人中心</h3>
+                <button id="close-profile-btn"
+                    class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
             </div>
 
-            <!-- 编辑视图 -->
-            <form id="profile-edit-container" class="hidden p-6 md:p-8 space-y-6">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">选择头像</label>
-                    <div id="avatar-selection-grid" class="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 gap-3">
-                        <!-- Avatars will be injected by JS -->
+            <!-- 内容区 -->
+            <div class="flex-grow overflow-y-auto">
+                <!-- 查看视图 -->
+                <div id="profile-view-container" class="p-6 md:p-8">
+                    <div class="text-center">
+                        <img id="profile-avatar-large" src=""
+                            class="w-28 h-28 rounded-full mx-auto mb-4 border-4 border-indigo-200 dark:border-indigo-600 shadow-lg">
+                        <h2 id="profile-nickname" class="text-3xl font-bold text-gray-900 dark:text-gray-100"></h2>
+                        <p id="profile-email" class="text-sm text-gray-500 dark:text-gray-400 mt-1"></p>
+                        <div
+                            class="mt-2 flex justify-center items-center space-x-4 text-sm text-gray-600 dark:text-gray-300">
+                            <span id="profile-major-year" class="flex items-center"><i data-lucide="graduation-cap"
+                                    class="w-4 h-4 mr-1.5"></i><span></span></span>
+                        </div>
+                    </div>
+                    <div class="mt-8 text-center">
+                        <p id="profile-bio" class="text-gray-700 dark:text-gray-300 italic max-w-lg mx-auto"></p>
+                    </div>
+                    <div class="mt-8 pt-6 border-t dark:border-gray-700 flex justify-center space-x-4">
+                        <button id="edit-profile-btn"
+                            class="flex items-center justify-center px-6 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors">
+                            <i data-lucide="edit-3" class="w-4 h-4 mr-2"></i>
+                            <span>编辑资料</span>
+                        </button>
+                        <button id="logout-button"
+                            class="flex items-center justify-center px-6 py-2 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors">
+                            <i data-lucide="log-out" class="w-4 h-4 mr-2"></i>
+                            <span>退出登录</span>
+                        </button>
                     </div>
                 </div>
-                <div>
-                    <label for="edit-nickname" class="block text-sm font-medium text-gray-700 dark:text-gray-300">昵称</label>
-                    <input type="text" id="edit-nickname" class="mt-1 w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none" maxlength="15">
-                </div>
-                <div>
-                    <label for="edit-bio" class="block text-sm font-medium text-gray-700 dark:text-gray-300">个性签名</label>
-                    <textarea id="edit-bio" rows="3" class="mt-1 w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="介绍一下自己吧~" maxlength="100"></textarea>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label for="edit-enrollment-year" class="block text-sm font-medium text-gray-700 dark:text-gray-300">入学年份</label>
-                        <select id="edit-enrollment-year" class="custom-select mt-1 w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                            <!-- Years will be injected by JS -->
-                        </select>
-                    </div>
-                    <div>
-                        <label for="edit-major" class="block text-sm font-medium text-gray-700 dark:text-gray-300">专业</label>
-                        <select id="edit-major" class="custom-select mt-1 w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                            <!-- Majors will be injected by JS -->
-                        </select>
-                    </div>
-                </div>
-                <div class="pt-4 flex justify-end space-x-3">
-                    <button type="button" id="cancel-edit-btn" class="px-5 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">取消</button>
-                    <button type="submit" id="save-profile-btn" class="px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700">保存更改</button>
-                </div>
-            </form>
 
+                <!-- 编辑视图 -->
+                <form id="profile-edit-container" class="hidden p-6 md:p-8 space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">选择头像</label>
+                        <div id="avatar-selection-grid" class="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 gap-3">
+                            <!-- Avatars will be injected by JS -->
+                        </div>
+                    </div>
+                    <div>
+                        <label for="edit-nickname"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">昵称</label>
+                        <input type="text" id="edit-nickname"
+                            class="mt-1 w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                            maxlength="15">
+                    </div>
+                    <div>
+                        <label for="edit-bio"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">个性签名</label>
+                        <textarea id="edit-bio" rows="3"
+                            class="mt-1 w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                            placeholder="介绍一下自己吧~" maxlength="100"></textarea>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="edit-enrollment-year"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">入学年份</label>
+                            <select id="edit-enrollment-year"
+                                class="custom-select mt-1 w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                <!-- Years will be injected by JS -->
+                            </select>
+                        </div>
+                        <div>
+                            <label for="edit-major"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">专业</label>
+                            <select id="edit-major"
+                                class="custom-select mt-1 w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                <!-- Majors will be injected by JS -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="pt-4 flex justify-end space-x-3">
+                        <button type="button" id="cancel-edit-btn"
+                            class="px-5 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">取消</button>
+                        <button type="submit" id="save-profile-btn"
+                            class="px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700">保存更改</button>
+                    </div>
+                </form>
+
+            </div>
         </div>
     </div>
-</div>
 
 
     <script type="module">
         // ===================================================================================
         // --- Firebase 初始化 ---
         // ===================================================================================
-        
+
         // 1. 引入 Firebase 服务模块
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
         import {
@@ -751,16 +555,16 @@
 
         // 2. 粘贴你的 Firebase 项目配置信息
         // 重要: 请将下面的占位符替换为你自己项目中的 firebaseConfig 对象！
-            const firebaseConfig = {
-                apiKey: "FIREBASE_API_KEY",
-                authDomain: "FIREBASE_AUTH_DOMAIN",
-                projectId: "FIREBASE_PROJECT_ID",
-                storageBucket: "FIREBASE_STORAGE_BUCKET",
-                messagingSenderId: "FIREBASE_MESSAGING_SENDER_ID",
-                appId: "FIREBASE_APP_ID",
-                measurementId: "FIREBASE_MEASUREMENT_ID"
-            };
-            
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-vmphXiQG0zs3iXHCrr-TIuLhko8zp1I",
+            authDomain: "jou-campus-guide.firebaseapp.com",
+            projectId: "jou-campus-guide",
+            storageBucket: "jou-campus-guide.firebasestorage.app",
+            messagingSenderId: "704524934917",
+            appId: "1:704524934917:web:55ca8af542803a50cca16c",
+            measurementId: "G-47QZBR81RC"
+        };
+
 
         // 3. 初始化 Firebase
         const app = initializeApp(firebaseConfig);
@@ -770,9 +574,9 @@
         // ===================================================================================
         // --- 新增: 个性化数据 ---
         // ===================================================================================
-        const AVATARS = Array.from({length: 1}, (_, i) => `avatar_${String(i + 1).padStart(2, '0')}`);
+        const AVATARS = Array.from({ length: 1 }, (_, i) => `avatar_${String(i + 1).padStart(2, '0')}`);
         const getAvatarUrl = (id) => id ? `images/默认头像/${id}.png` : 'images/默认头像/avatar_01.png';
-        
+
         // ===================================================================================
         // --- 数据中心 (Data Center) ---
         // ===================================================================================
@@ -780,7 +584,9 @@
             "主页": {
                 icon: "home",
                 isHomePage: true,
-                pages: { "home": { title: "欢迎来到江苏海洋大学", content: `
+                pages: {
+                    "home": {
+                        title: "欢迎来到江苏海洋大学", content: `
                                         <div class="flex flex-col justify-center items-center h-full">
                                             <div class="hero-bg text-white p-12 rounded-2xl text-center flex flex-col items-center justify-center shadow-xl mb-12">
                                                 <h1 class="text-5xl font-extrabold mb-4 drop-shadow-lg">开启你的大学新篇章</h1>
@@ -812,19 +618,21 @@
                                                     </a>
                                                 </div>
                                             </div>
-                                        </div>` 
-                } }
+                                        </div>`
+                    }
+                }
             },
             "入学准备": {
                 icon: "package-check",
                 pages: {
                     // 新增: 大一校区查询页面
-                    "大一校区查询": { 
-                        title: "大一校区查询", 
+                    "大一校区查询": {
+                        title: "大一校区查询",
                         type: "campus-query-tool", // 特殊类型，用于触发JS初始化
                         content: `` // 内容将在JS中生成，但我们先定义页面
                     },
-                    "开学必备清单": { title: "开学必备清单", content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto">
+                    "开学必备清单": {
+                        title: "开学必备清单", content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto">
     <div class="p-6 rounded-xl w-full">
         <h3 class="text-2xl font-bold text-blue-800 dark:text-blue-400 mb-6 border-l-4 border-blue-700 dark:border-blue-500 pl-4">证件及文件类 (最重要！)</h3>
         <ul class="list-none space-y-4 text-gray-700 dark:text-gray-300">
@@ -896,9 +704,18 @@
         </div>
     </div>
 </div>` },
-                    "新生入学流程": { title: "新生入学流程", content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><div class="relative border-l-4 border-blue-500 pl-10 space-y-16 py-6 w-full"><div class="absolute w-4 h-4 bg-blue-600 rounded-full -left-2 top-6 ring-8 ring-white dark:ring-gray-800"></div><div class="relative"><h3 class="text-xl font-bold text-blue-800 dark:text-blue-400">第一步：报到注册</h3><p class="text-gray-600 dark:text-gray-300 mt-2">在指定日期（通常在9月4号到8号，每年不固定），在红马甲志愿者（都是学长学姐门）的引导下，前往所在学院的迎新点->找到自己对应的班级->在有电脑的地方刷身份证进行登记->找到坐在帐篷里的班助->提交身份证复印件+录取通知书原件并登记面前的登记表->领取①校园手提袋②海大蓝T恤③军训服装领取卡④入学体检单⑤学生手册⑥宿舍床上用品领取单（选购）等材料。班助，辅导员和迎新学长学姐会在此等候。</p></div><div class="absolute w-4 h-4 bg-blue-600 rounded-full -left-2" style="top: 33.33%"></div><div class="relative"><h3 class="text-xl font-bold text-blue-800 dark:text-blue-400">第二步：入住寝室</h3><p class="text-gray-600 dark:text-gray-300 mt-2">在负责运送行李的红马甲志愿者的带领下前往自己的宿舍楼和房间，在宿管阿姨处办理入住手续，注册完美校园，领取房卡（部分地区用校园卡就可以刷开门）。整理个人物品，打扫卫生，与新室友见面，熟悉环境。</p></div><div class="absolute w-4 h-4 bg-blue-600 rounded-full -left-2" style="top: 66.66%"></div><div class="relative"><h3 class="text-xl font-bold text-blue-800 dark:text-blue-400">第三步：办理各项手续</h3><p class="text-gray-600 dark:text-gray-300 mt-2">缴纳学费、住宿费（请关注江苏海洋大学财务平台微信公众号）；根据需要办理户口迁移；参加学校统一组织的入学体检，会在报道的第二天开始进行，通常在第二人民医院，在集合点坐车去。</p></div><div class="absolute w-4 h-4 bg-blue-600 rounded-full -left-2 bottom-6 ring-8 ring-white dark:ring-gray-800"></div><div class="relative"><h3 class="text-xl font-bold text-blue-800 dark:text-blue-400">第四步：开启新生活</h3><p class="text-gray-600 dark:text-gray-300 mt-2">参加开学典礼、军训动员大会、班级会议。之后将开始军训和正式的课程学习，正式开启大学生活！</p></div></div></div>` },
-                    "开学须知": { title: "开学须知", content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><div class="space-y-6"><div class="border-b dark:border-gray-700 pb-4"><h4 class="font-bold text-xl text-gray-800 dark:text-gray-100 flex items-center"><i data-lucide="calendar-days" class="text-indigo-500 mr-3"></i>报到时间与地点</h4><p class="text-gray-600 dark:text-gray-300 mt-2 pl-8">请严格按照录取通知书上的时间和地点报到，不要过早或过晚。如有特殊情况（如因病、交通问题等）无法按时报到，务必提前联系班助、学院辅导员说明情况，办理请假手续。</p></div><div class="border-b dark:border-gray-700 pb-4"><h4 class="font-bold text-xl text-gray-800 dark:text-gray-100 flex items-center"><i data-lucide="shield-check" class="text-red-500 mr-3"></i>安全问题</h4><p class="text-gray-600 dark:text-gray-300 mt-2 pl-8">注意人身和财产安全，保管好个人贵重物品。警惕陌生人的过度热情和推销，特别是上门推销电话卡、文具等。不要轻易相信任何要求转账汇款的信息，谨防电信诈骗和校园贷陷阱。</p></div><div><h4 class="font-bold text-xl text-gray-800 dark:text-gray-100 flex items-center"><i data-lucide="file-archive" class="text-yellow-500 mr-3"></i>档案转移</h4><p class="text-gray-600 dark:text-gray-300 mt-2 pl-8">确认自己的党/团组织关系和学生档案是否已按要求转至学校。自带档案的同学，报到后应立即将档案上交至指定部门，切勿私自拆封。</p></div></div></div>` },
-                    "军训攻略": { title: "军训攻略", content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-6xl mx-auto"><div class="grid md:grid-cols-2 gap-8"><div class="p-6 rounded-xl"><h3 class="text-2xl font-bold text-teal-800 dark:text-teal-400 mb-6 border-l-4 border-teal-700 dark:border-teal-500 pl-4">军训攻略</h3><ul class="list-disc list-inside space-y-3 text-gray-700 dark:text-gray-300"><li><strong>待开发</strong></li></ul></div></div></div>` }
+                    "新生入学流程": {
+                        title: "新生入学流程",
+                        content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><div class="relative border-l-4 border-blue-500 pl-10 space-y-16 py-6 w-full"><div class="absolute w-4 h-4 bg-blue-600 rounded-full -left-2 top-6 ring-8 ring-white dark:ring-gray-800"></div><div class="relative"><h3 class="text-xl font-bold text-blue-800 dark:text-blue-400">第一步：报到注册</h3><p class="text-gray-600 dark:text-gray-300 mt-2">在指定日期（通常在9月4号到8号，每年不固定），在红马甲志愿者（都是学长学姐门）的引导下，前往所在学院的迎新点->找到自己对应的班级->在有电脑的地方刷身份证进行登记->找到坐在帐篷里的班助->提交身份证复印件+录取通知书原件并登记面前的登记表->领取①校园手提袋②海大蓝T恤③军训服装领取卡④入学体检单⑤学生手册⑥宿舍床上用品领取单（选购）等材料。班助，辅导员和迎新学长学姐会在此等候。</p></div><div class="absolute w-4 h-4 bg-blue-600 rounded-full -left-2" style="top: 33.33%"></div><div class="relative"><h3 class="text-xl font-bold text-blue-800 dark:text-blue-400">第二步：入住寝室</h3><p class="text-gray-600 dark:text-gray-300 mt-2">在负责运送行李的红马甲志愿者的带领下前往自己的宿舍楼和房间，在宿管阿姨处办理入住手续，注册完美校园，领取房卡（部分地区用校园卡就可以刷开门）。整理个人物品，打扫卫生，与新室友见面，熟悉环境。</p></div><div class="absolute w-4 h-4 bg-blue-600 rounded-full -left-2" style="top: 66.66%"></div><div class="relative"><h3 class="text-xl font-bold text-blue-800 dark:text-blue-400">第三步：办理各项手续</h3><p class="text-gray-600 dark:text-gray-300 mt-2">缴纳学费、住宿费（请关注江苏海洋大学财务平台微信公众号）；根据需要办理户口迁移；参加学校统一组织的入学体检，会在报道的第二天开始进行，通常在第二人民医院，在集合点坐车去。</p></div><div class="absolute w-4 h-4 bg-blue-600 rounded-full -left-2 bottom-6 ring-8 ring-white dark:ring-gray-800"></div><div class="relative"><h3 class="text-xl font-bold text-blue-800 dark:text-blue-400">第四步：开启新生活</h3><p class="text-gray-600 dark:text-gray-300 mt-2">参加开学典礼、军训动员大会、班级会议。之后将开始军训和正式的课程学习，正式开启大学生活！</p></div></div></div>`
+                    },
+                    "开学须知": {
+                        title: "开学须知",
+                        content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><div class="space-y-6"><div class="border-b dark:border-gray-700 pb-4"><h4 class="font-bold text-xl text-gray-800 dark:text-gray-100 flex items-center"><i data-lucide="calendar-days" class="text-indigo-500 mr-3"></i>报到时间与地点</h4><p class="text-gray-600 dark:text-gray-300 mt-2 pl-8">请严格按照录取通知书上的时间和地点报到，不要过早或过晚。如有特殊情况（如因病、交通问题等）无法按时报到，务必提前联系班助、学院辅导员说明情况，办理请假手续。</p></div><div class="border-b dark:border-gray-700 pb-4"><h4 class="font-bold text-xl text-gray-800 dark:text-gray-100 flex items-center"><i data-lucide="shield-check" class="text-red-500 mr-3"></i>安全问题</h4><p class="text-gray-600 dark:text-gray-300 mt-2 pl-8">注意人身和财产安全，保管好个人贵重物品。警惕陌生人的过度热情和推销，特别是上门推销电话卡、文具等。不要轻易相信任何要求转账汇款的信息，谨防电信诈骗和校园贷陷阱。</p></div><div><h4 class="font-bold text-xl text-gray-800 dark:text-gray-100 flex items-center"><i data-lucide="file-archive" class="text-yellow-500 mr-3"></i>档案转移</h4><p class="text-gray-600 dark:text-gray-300 mt-2 pl-8">确认自己的党/团组织关系和学生档案是否已按要求转至学校。自带档案的同学，报到后应立即将档案上交至指定部门，切勿私自拆封。</p></div></div></div>`
+                    },
+                    "军训攻略": {
+                        title: "军训攻略",
+                        content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-6xl mx-auto"><div class="grid md:grid-cols-2 gap-8"><div class="p-6 rounded-xl"><h3 class="text-2xl font-bold text-teal-800 dark:text-teal-400 mb-6 border-l-4 border-teal-700 dark:border-teal-500 pl-4">军训攻略</h3><ul class="list-disc list-inside space-y-3 text-gray-700 dark:text-gray-300"><li><strong>待开发</strong></li></ul></div></div></div>`
+                    }
                 }
             },
             "校园生活": {
@@ -906,9 +723,12 @@
                 pages: {
                     "食堂介绍": { title: "食堂介绍", isCampusSpecific: true },
                     "宿舍介绍": { title: "宿舍介绍", isCampusSpecific: true },
-                    "校园超市与共享单车": { title: "校园超市与共享单车", content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><div class="p-6 rounded-xl w-full"><h3 class="text-2xl font-bold text-purple-800 dark:text-purple-400 mb-4 border-l-4 border-purple-700 dark:border-purple-500 pl-4">校园超市</h3><p class="text-gray-700 dark:text-gray-300">校内设有多个超市，苍梧校区在三食堂旁、顺丰快递旁有超市。支持使用校园卡、微信、支付宝等多种支付方式。</p></div><div class="p-6 rounded-xl w-full mt-8"><h3 class="text-2xl font-bold text-sky-800 dark:text-sky-400 mb-4 border-l-4 border-sky-700 dark:border-sky-500 pl-4">校园共享单车</h3><p class="text-gray-700 dark:text-gray-300">由于校园面积较大，各功能区之间有一定距离，共享单车是校内非常便捷的代步工具。校园内有7MA”小蓝车“，用微信扫码即可开锁使用。请大家注意遵守交通规则，并将车辆停放在指定的划线区域内，共同维护校园环境。</p></div></div>` },
-                    "社团与组织": { 
-                        title: "社团与组织", 
+                    "校园超市与共享单车": {
+                        title: "校园超市与共享单车",
+                        content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><div class="p-6 rounded-xl w-full"><h3 class="text-2xl font-bold text-purple-800 dark:text-purple-400 mb-4 border-l-4 border-purple-700 dark:border-purple-500 pl-4">校园超市</h3><p class="text-gray-700 dark:text-gray-300">校内设有多个超市，苍梧校区在三食堂旁、顺丰快递旁有超市。支持使用校园卡、微信、支付宝等多种支付方式。</p></div><div class="p-6 rounded-xl w-full mt-8"><h3 class="text-2xl font-bold text-sky-800 dark:text-sky-400 mb-4 border-l-4 border-sky-700 dark:border-sky-500 pl-4">校园共享单车</h3><p class="text-gray-700 dark:text-gray-300">由于校园面积较大，各功能区之间有一定距离，共享单车是校内非常便捷的代步工具。校园内有7MA”小蓝车“，用微信扫码即可开锁使用。请大家注意遵守交通规则，并将车辆停放在指定的划线区域内，共同维护校园环境。</p></div></div>`
+                    },
+                    "社团与组织": {
+                        title: "社团与组织",
                         type: "clubs",
                         data: {
                             introduction: "大学生活不只有学习，丰富多彩的社团活动是结交朋友、培养兴趣、提升能力的重要平台。我校拥有上百个学生社团，百花齐放。每年开学季，学校都会举办盛大的“百团大战”社团招新活动，届时所有社团都会集中展示自己，是了解和加入社团的最佳时机！",
@@ -960,29 +780,52 @@
             "学习科研": {
                 icon: "graduation-cap",
                 pages: {
-                    "关于绩点和学分": { title: "关于绩点和学分", content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><div class="space-y-8"><div><h4 class="font-bold text-2xl text-gray-800 dark:text-gray-100 flex items-center mb-4"><i data-lucide="star" class="text-yellow-500 mr-3"></i>学分 (Credit)</h4><p class="text-gray-600 dark:text-gray-300 text-lg">学分是衡量你学习量的单位。每门课程都有固定的学分，例如“高等数学”可能是4个学分，“大学体育”可能是1个学分。你必须在大学期间修满培养方案规定的<strong>总学分</strong>和<strong>各类课程（如必修课、选修课）的最低学分要求</strong>，才能顺利毕业。所以，请务必认真对待每一门课程。</p></div><div class="border-t my-6 dark:border-gray-700"></div><div><h4 class="font-bold text-2xl text-gray-800 dark:text-gray-100 flex items-center mb-4"><i data-lucide="trending-up" class="text-green-500 mr-3"></i>绩点 (GPA)</h4><p class="text-gray-600 dark:text-gray-300 text-lg">绩点（Grade Point Average）是衡量你学习质量的核心指标，它由你的课程成绩按照特定公式换算而来（通常分数越高，绩点越高）。绩点非常重要，它直接影响到你的<strong>奖学金评定、评优评先</strong>等方方面面。一个高的绩点是你大学学习成果的最直观体现，请从大一开始就努力保持良好的成绩！</p></div></div></div>` },
-                    "关于转专业": { title: "关于转专业", content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">转专业政策简介</h3><p class="text-gray-600 dark:text-gray-300">学校为给学生提供更多自主选择和发展的机会，设立了转专业制度。通常在大一学年结束后，符合条件的学生可以申请转入其他专业学习。具体政策请关注教务处通知。</p></div>` },
-                    "竞赛与证书": { title: "竞赛与证书", content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">积极参与，提升自我</h3><p class="text-gray-600 dark:text-gray-300 mb-6">参加学科竞赛和考取有含金量的证书是提升个人综合能力、增加未来竞争力的重要途径。</p></div>` }
+                    "关于绩点和学分": {
+                        title: "关于绩点和学分",
+                        content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><div class="space-y-8"><div><h4 class="font-bold text-2xl text-gray-800 dark:text-gray-100 flex items-center mb-4"><i data-lucide="star" class="text-yellow-500 mr-3"></i>学分 (Credit)</h4><p class="text-gray-600 dark:text-gray-300 text-lg">学分是衡量你学习量的单位。每门课程都有固定的学分，例如“高等数学”可能是4个学分，“大学体育”可能是1个学分。你必须在大学期间修满培养方案规定的<strong>总学分</strong>和<strong>各类课程（如必修课、选修课）的最低学分要求</strong>，才能顺利毕业。所以，请务必认真对待每一门课程。</p></div><div class="border-t my-6 dark:border-gray-700"></div><div><h4 class="font-bold text-2xl text-gray-800 dark:text-gray-100 flex items-center mb-4"><i data-lucide="trending-up" class="text-green-500 mr-3"></i>绩点 (GPA)</h4><p class="text-gray-600 dark:text-gray-300 text-lg">绩点（Grade Point Average）是衡量你学习质量的核心指标，它由你的课程成绩按照特定公式换算而来（通常分数越高，绩点越高）。绩点非常重要，它直接影响到你的<strong>奖学金评定、评优评先</strong>等方方面面。一个高的绩点是你大学学习成果的最直观体现，请从大一开始就努力保持良好的成绩！</p></div></div></div>`
+                    },
+                    "关于转专业": {
+                        title: "关于转专业",
+                        content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">转专业政策简介</h3><p class="text-gray-600 dark:text-gray-300">学校为给学生提供更多自主选择和发展的机会，设立了转专业制度。通常在大一学年结束后，符合条件的学生可以申请转入其他专业学习。具体政策请关注教务处通知。</p></div>`
+                    },
+                    "竞赛与证书": {
+                        title: "竞赛与证书",
+                        content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">积极参与，提升自我</h3><p class="text-gray-600 dark:text-gray-300 mb-6">参加学科竞赛和考取有含金量的证书是提升个人综合能力、增加未来竞争力的重要途径。</p></div>`
+                    }
                 }
             },
             "数字化校园": {
                 icon: "smartphone",
                 pages: {
-                    "校园卡与APP": { title: "校园卡与完美校园APP", content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">校园一卡通与APP</h3><p class="text-gray-600 dark:text-gray-300">校园卡是校内身份识别和消费的重要凭证。配合“完美校园”APP可以进行充值、查询消费记录、缴纳网费电费等。</p></div>` },
-                    "宽带与电费": { title: "宿舍宽带与电费缴纳", content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><div class="w-full"><h3 class="text-2xl font-bold text-cyan-800 dark:text-cyan-400 mb-6 border-l-4 border-cyan-700 dark:border-cyan-500 pl-4">宿舍宽带使用教程</h3><p class="text-gray-700 dark:text-gray-300 mb-4">宿舍上网需要自行办理。一般流程如下：</p><ol class="list-decimal list-inside space-y-2 text-gray-600 dark:text-gray-400"><li><strong>选择运营商：</strong>开学时，中国移动、联通、电信三大运营商都会在校内设点，提供不同价格和速率的校园套餐，可根据需求自行选择。</li><li><strong>连接与认证：</strong>将网线连接到宿舍墙上的网络端口和你的电脑（或路由器）连接并拨号。以Win11系统举例，拨号界面在设置->网络和Internet->拨号，第一次使用时候设置新连接，移动的账号是学号@cmcc，电信是学号@telecom，联通是学号@unicom，密码都为身份证后八位。</li></ol></div><div class="w-full mt-8"><h3 class="text-2xl font-bold text-amber-800 dark:text-amber-400 mb-6 border-l-4 border-amber-700 dark:border-amber-500 pl-4">电费查询及缴纳</h3><p class="text-gray-700 dark:text-gray-300">请关注”江苏海洋大学微后勤”微信公众号，可以查询宿舍的电费信息并缴纳电费。每个宿舍每学期有少量免费用电额度。</p></div></div>` },
-                    "WebVPN系统": { title: "江苏海洋大学WebVPN系统", content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">什么是WebVPN？</h3><p class="text-gray-600 dark:text-gray-300">WebVPN是一个神奇的工具，它能让你在校外也能像在校园网内一样，访问学校内部的各种网络资源，如图书馆数据库、教务系统等。</p><h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">我该如何使用WebVPN</h3> WebVPN网站：http://webvpn.jou.edu.cn:58888/login ，账号是学号，密码默认是身份证后8位，登陆后点击“统一门户”，在校需要的功能基本上都能在里面找到。</div>` }
+                    "校园卡与APP": {
+                        title: "校园卡与完美校园APP",
+                        content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">校园一卡通与APP</h3><p class="text-gray-600 dark:text-gray-300">校园卡是校内身份识别和消费的重要凭证。配合“完美校园”APP可以进行充值、查询消费记录、缴纳网费电费等。</p></div>`
+                    },
+                    "宽带与电费": {
+                        title: "宿舍宽带与电费缴纳",
+                        content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><div class="w-full"><h3 class="text-2xl font-bold text-cyan-800 dark:text-cyan-400 mb-6 border-l-4 border-cyan-700 dark:border-cyan-500 pl-4">宿舍宽带使用教程</h3><p class="text-gray-700 dark:text-gray-300 mb-4">宿舍上网需要自行办理。一般流程如下：</p><ol class="list-decimal list-inside space-y-2 text-gray-600 dark:text-gray-400"><li><strong>选择运营商：</strong>开学时，中国移动、联通、电信三大运营商都会在校内设点，提供不同价格和速率的校园套餐，可根据需求自行选择。</li><li><strong>连接与认证：</strong>将网线连接到宿舍墙上的网络端口和你的电脑（或路由器）连接并拨号。以Win11系统举例，拨号界面在设置->网络和Internet->拨号，第一次使用时候设置新连接，移动的账号是学号@cmcc，电信是学号@telecom，联通是学号@unicom，密码都为身份证后八位。</li></ol></div><div class="w-full mt-8"><h3 class="text-2xl font-bold text-amber-800 dark:text-amber-400 mb-6 border-l-4 border-amber-700 dark:border-amber-500 pl-4">电费查询及缴纳</h3><p class="text-gray-700 dark:text-gray-300">请关注”江苏海洋大学微后勤”微信公众号，可以查询宿舍的电费信息并缴纳电费。每个宿舍每学期有少量免费用电额度。</p></div></div>`
+                    },
+                    "WebVPN系统": {
+                        title: "江苏海洋大学WebVPN系统",
+                        content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">什么是WebVPN？</h3><p class="text-gray-600 dark:text-gray-300">WebVPN是一个神奇的工具，它能让你在校外也能像在校园网内一样，访问学校内部的各种网络资源，如图书馆数据库、教务系统等。</p><h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">我该如何使用WebVPN</h3> WebVPN网站：http://webvpn.jou.edu.cn:58888/login ，账号是学号，密码默认是身份证后8位，登陆后点击“统一门户”，在校需要的功能基本上都能在里面找到。</div>`
+                    }
                 }
             },
             "答疑与支持": {
                 icon: "life-buoy",
                 pages: {
-                    "常见问题汇总": { title: "常见问题汇总 (FAQ)", type: "faq", items: [
-                        { q: "学校的快递点在哪里？怎么收发快递？", a: "校内设有菜鸟驿站。你的快递会被送到驿站，凭取件码即可领取。寄快递也可以在驿站操作，非常方便。" },
-                        { q: "生病了要去哪里看病？医保怎么用？", a: "校内设有校医院，可以处理常见的头疼感冒、小外伤等。凭校园卡挂号看病，可享受学生医保报销。如果病情较重，校医院医生会建议并协助转诊至校外的大型医院。" },
-                        { q: "如何查询课程表和成绩？", a: "可以通过学校的教务系统网站查询个人课程表、考试安排和各科成绩。" },
-                        { q: "校园网经常掉线或者速度慢怎么办？", a: "首先可以尝试重启路由器或电脑。如果问题依然存在，可以联系你所办理的运营商客服报修。" }
-                    ] },
-                    "重要部门联系方式": { title: "重要部门联系方式", content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">学校官网链接：</h3><div class="overflow-x-auto"><table class="w-full text-left"><thead><p style="color: rgb(0, 0, 255);"><a href="https://www.jou.edu.cn/bgdhcx.htm">https://www.jou.edu.cn/bgdhcx.htm</a></p>` }
+                    "常见问题汇总": {
+                        title: "常见问题汇总 (FAQ)", type: "faq", items: [
+                            { q: "学校的快递点在哪里？怎么收发快递？", a: "校内设有菜鸟驿站。你的快递会被送到驿站，凭取件码即可领取。寄快递也可以在驿站操作，非常方便。" },
+                            { q: "生病了要去哪里看病？医保怎么用？", a: "校内设有校医院，可以处理常见的头疼感冒、小外伤等。凭校园卡挂号看病，可享受学生医保报销。如果病情较重，校医院医生会建议并协助转诊至校外的大型医院。" },
+                            { q: "如何查询课程表和成绩？", a: "可以通过学校的教务系统网站查询个人课程表、考试安排和各科成绩。" },
+                            { q: "校园网经常掉线或者速度慢怎么办？", a: "首先可以尝试重启路由器或电脑。如果问题依然存在，可以联系你所办理的运营商客服报修。" }
+                        ]
+                    },
+                    "重要部门联系方式": {
+                        title: "重要部门联系方式",
+                        content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">学校官网链接：</h3><div class="overflow-x-auto"><table class="w-full text-left"><thead><p style="color: rgb(0, 0, 255);"><a href="https://www.jou.edu.cn/bgdhcx.htm">https://www.jou.edu.cn/bgdhcx.htm</a></p>`
+                    }
                 }
             }
         };
@@ -1033,10 +876,10 @@
                                 },
                             ]
                         },
-                        'b_dorm': { 
-                            name: 'B区宿舍 (男生)', 
-                            image: 'images/苍梧校区/宿舍/B区宿舍.jpg', 
-                            summary: '主要为男生宿舍，楼栋数量多，覆盖多个学院。', 
+                        'b_dorm': {
+                            name: 'B区宿舍 (男生)',
+                            image: 'images/苍梧校区/宿舍/B区宿舍.jpg',
+                            summary: '主要为男生宿舍，楼栋数量多，覆盖多个学院。',
                             details: [
                                 {
                                     building: 'B1-B4栋',
@@ -1054,13 +897,13 @@
                                 },
                                 {
                                     building: 'B5-B6栋',
-                                    images: 
-                                    [
-                                        { src: 'images/苍梧校区/宿舍/B区/B5-B6/B5-B6宿舍内景.jpg', caption: '宿舍内景（上床下桌）' },
-                                        { src: 'images/苍梧校区/宿舍/B区/B5-B6/宿舍内详景.jpg', caption: '宿舍内详景' },
-                                        { src: 'images/苍梧校区/宿舍/B区/B5-B6/公共卫生间.jpg', caption: '公共卫生间' },
-                                        { src: 'images/苍梧校区/宿舍/B区/B5-B6/公共卫生间洗手池.jpg', caption: '公共卫生间洗手池' }
-                                     ], 
+                                    images:
+                                        [
+                                            { src: 'images/苍梧校区/宿舍/B区/B5-B6/B5-B6宿舍内景.jpg', caption: '宿舍内景（上床下桌）' },
+                                            { src: 'images/苍梧校区/宿舍/B区/B5-B6/宿舍内详景.jpg', caption: '宿舍内详景' },
+                                            { src: 'images/苍梧校区/宿舍/B区/B5-B6/公共卫生间.jpg', caption: '公共卫生间' },
+                                            { src: 'images/苍梧校区/宿舍/B区/B5-B6/公共卫生间洗手池.jpg', caption: '公共卫生间洗手池' }
+                                        ],
                                     roomType: '四人间',
                                     layout: '上床下桌',
                                     bathroom: '公共卫生间，公共浴室在三食堂西边',
@@ -1074,7 +917,7 @@
                                 },
                                 {
                                     building: 'B7-B12栋',
-                                    images: [{ src: 'images/苍梧校区/宿舍/B区/B7-B12/B7-B12宿舍内景.jpg', caption: '六人间宿舍内景' }], 
+                                    images: [{ src: 'images/苍梧校区/宿舍/B区/B7-B12/B7-B12宿舍内景.jpg', caption: '六人间宿舍内景' }],
                                     roomType: '六人间',
                                     layout: '上下铺',
                                     bathroom: '有独立卫生间',
@@ -1088,10 +931,10 @@
                                 },
                             ]
                         },
-                        'd_dorm': { 
-                            name: 'D区宿舍 (东区)', 
-                            image: 'images/苍梧校区/宿舍/D区宿舍.jpg', 
-                            summary: '男女生宿舍都有，四人间独立卫浴，条件优越。', 
+                        'd_dorm': {
+                            name: 'D区宿舍 (东区)',
+                            image: 'images/苍梧校区/宿舍/D区宿舍.jpg',
+                            summary: '男女生宿舍都有，四人间独立卫浴，条件优越。',
                             details: [
                                 {
                                     building: 'D5-6，D9-10栋',
@@ -1128,39 +971,39 @@
                 canteen: {
                     title: "苍梧校区食堂介绍(未完成，内容仅仅是占位用的，未核实，待开发)",
                     items: {
-                        'canteen1': { 
-                            name: '第一食堂', 
-                            image: 'images/苍梧校区/食堂/第一食堂.jpg', 
-                            summary: '位于大学生活动中心旁，上下课必经之路。', 
+                        'canteen1': {
+                            name: '第一食堂',
+                            image: 'images/苍梧校区/食堂/第一食堂.jpg',
+                            summary: '位于大学生活动中心旁，上下课必经之路。',
                             details: [
                                 {
-                                    area: '第一食堂', 
+                                    area: '第一食堂',
                                     images: [
                                         { src: 'images/苍梧校区/食堂/第一食堂/苍梧校区_第一食堂_麻辣香锅.jpg', caption: '麻辣香锅' },
                                         { src: 'images/苍梧校区/食堂/第一食堂/苍梧校区_第一食堂_腊汁肉夹馍.jpg', caption: '腊汁肉夹馍' },
                                         { src: 'images/苍梧校区/食堂/第一食堂/苍梧校区_第一食堂_鸡蛋拌面.jpg', caption: '鸡蛋拌面' },
                                     ],
-                                    specialty: ['自选快餐', '特色炒饭', '肉夹馍','包子'],
+                                    specialty: ['自选快餐', '特色炒饭', '肉夹馍', '包子'],
                                     priceRange: '待补充',
                                     openingHours: '待补充',
                                     notes: '主打便捷快餐，出餐速度快，是上下课间快速解决吃饭问题的首选。'
                                 }
                             ]
                         },
-                        'canteen2': { 
-                            name: '第二食堂 & 风味餐厅', 
-                            image: 'images/苍梧校区/食堂/第二食堂.jpg', 
-                            summary: '位于海洋楼旁，离教学区最近，装修典雅。', 
+                        'canteen2': {
+                            name: '第二食堂 & 风味餐厅',
+                            image: 'images/苍梧校区/食堂/第二食堂.jpg',
+                            summary: '位于海洋楼旁，离教学区最近，装修典雅。',
                             details: [
-                               {
+                                {
                                     area: '一楼：第二食堂',
                                     images: [
                                         { src: 'images/苍梧校区/食堂/第二食堂&风味餐厅/苍梧校区_第二食堂 & 风味餐厅_明炉羊肉.jpg', caption: '明炉羊肉' },
                                         { src: 'images/苍梧校区/食堂/第二食堂&风味餐厅/苍梧校区_第二食堂 & 风味餐厅_虾仁鸡蛋炒面.jpg', caption: '虾仁鸡蛋炒面' },
                                         { src: 'images/苍梧校区/食堂/第二食堂&风味餐厅/苍梧校区_第二食堂 & 风味餐厅_卤汁香肠拌面.jpg', caption: '卤汁香肠拌面' },
                                         { src: 'images/苍梧校区/食堂/第二食堂&风味餐厅/苍梧校区_第二食堂 & 风味餐厅_水煮小酥肉.jpg', caption: '水煮小酥肉' },
-                                    ], 
-                                    specialty: ['小火锅','盖浇饭', '川菜', '拌饭'],
+                                    ],
+                                    specialty: ['小火锅', '盖浇饭', '川菜', '拌饭'],
                                     priceRange: '待补充',
                                     openingHours: '待补充',
                                     notes: '离教学楼最近，菜品实惠，是解决日常三餐的主要场所。'
@@ -1180,10 +1023,10 @@
                                 }
                             ]
                         },
-                        'canteen3': { 
-                            name: '第三食堂 & 第四食堂', 
-                            image: 'images/苍梧校区/食堂/第三食堂.jpg', 
-                            summary: '网红餐厅，种类丰富，最大和豪华的食堂。', 
+                        'canteen3': {
+                            name: '第三食堂 & 第四食堂',
+                            image: 'images/苍梧校区/食堂/第三食堂.jpg',
+                            summary: '网红餐厅，种类丰富，最大和豪华的食堂。',
                             details: [
                                 {
                                     area: '一楼：第三食堂',
@@ -1198,7 +1041,7 @@
                                         { src: 'images/苍梧校区/食堂/第三食堂&第四食堂/苍梧校区_第三 & 第四食堂_重庆小面.jpg', caption: '重庆小面' },
                                         { src: 'images/苍梧校区/食堂/第三食堂&第四食堂/苍梧校区_第三 & 第四食堂_汉堡工厂.jpg', caption: '汉堡工厂' },
                                     ],
-                                    specialty: ['5元特价快餐', '校园川菜', '拉面','武汉热干面'],
+                                    specialty: ['5元特价快餐', '校园川菜', '拉面', '武汉热干面'],
                                     priceRange: '待补充',
                                     openingHours: '待补充',
                                     notes: '学以其超高性价比的5元快餐闻名，是月底的“救星”。'
@@ -1219,10 +1062,10 @@
                                 }
                             ]
                         },
-                        'canteen_east': { 
-                            name: '东区食堂', 
-                            image: 'images/苍梧校区/食堂/东区食堂.jpg', 
-                            summary: 'D区食堂，空间大，座位多。', 
+                        'canteen_east': {
+                            name: '东区食堂',
+                            image: 'images/苍梧校区/食堂/东区食堂.jpg',
+                            summary: 'D区食堂，空间大，座位多。',
                             details: [
                                 {
                                     area: 'D区食堂',
@@ -1241,12 +1084,12 @@
                                 }
                             ]
                         },
-                        'canteen_ethnic': { 
-                            name: '民族餐厅', 
-                            image: 'images/苍梧校区/食堂/民族餐厅.jpg', 
-                            summary: '位于医务室旁，清真食堂。', 
+                        'canteen_ethnic': {
+                            name: '民族餐厅',
+                            image: 'images/苍梧校区/食堂/民族餐厅.jpg',
+                            summary: '位于医务室旁，清真食堂。',
                             details: [
-                               {
+                                {
                                     area: '清真美食',
                                     images: [
                                         { src: 'images/苍梧校区/食堂/民族餐厅/苍梧校区_民族餐厅_特色风味面.jpg', caption: '特色风味面' },
@@ -1262,10 +1105,10 @@
                                 }
                             ]
                         },
-                        'canteen_south': { 
-                            name: '南园餐厅', 
-                            image: 'images/苍梧校区/食堂/南园餐厅.jpg', 
-                            summary: '位于文予楼旁，特色是宴席。', 
+                        'canteen_south': {
+                            name: '南园餐厅',
+                            image: 'images/苍梧校区/食堂/南园餐厅.jpg',
+                            summary: '位于文予楼旁，特色是宴席。',
                             details: [
                                 {
                                     area: '海洋餐厅',
@@ -1291,10 +1134,10 @@
                 dormitory: {
                     title: "通灌校区宿舍介绍",
                     items: {
-                        'jinxiu_dorm': { 
-                            name: '锦绣宿舍', 
-                            image: 'images/通灌校区/宿舍/锦绣宿舍.jpg', 
-                            summary: '通灌校区主要学生宿舍区。', 
+                        'jinxiu_dorm': {
+                            name: '锦绣宿舍',
+                            image: 'images/通灌校区/宿舍/锦绣宿舍.jpg',
+                            summary: '通灌校区主要学生宿舍区。',
                             details: [
                                 {
                                     building: '锦绣1,2,5号楼',
@@ -1314,7 +1157,7 @@
                                 },
                                 {
                                     building: '锦绣3，4，8号楼',
-                                    images: [{ src: 'images/通灌校区/宿舍/锦绣3,4,8号楼/宿舍内情况.jpg', caption: '宿舍内景' }], 
+                                    images: [{ src: 'images/通灌校区/宿舍/锦绣3,4,8号楼/宿舍内情况.jpg', caption: '宿舍内景' }],
                                     roomType: '四人间（少量双人间）',
                                     layout: '上下铺',
                                     bathroom: '有独立卫生间，澡堂在前程餐厅旁',
@@ -1347,10 +1190,10 @@
                 canteen: {
                     title: "通灌校区食堂介绍",
                     items: {
-                        'qiancheng_canteen': { 
-                            name: '前程餐厅', 
-                            image: 'images/通灌校区/食堂/前程餐厅.jpg', 
-                            summary: '校区主食堂，满足日常用餐需求。', 
+                        'qiancheng_canteen': {
+                            name: '前程餐厅',
+                            image: 'images/通灌校区/食堂/前程餐厅.jpg',
+                            summary: '校区主食堂，满足日常用餐需求。',
                             details: [
                                 {
                                     area: '前程餐厅',
@@ -1359,17 +1202,17 @@
                                         { src: 'images/通灌校区/食堂/前程餐厅/通灌校区_前程餐厅_招牌鸡腿饭.jpg', caption: '招牌鸡腿饭' },
                                         { src: 'images/通灌校区/食堂/前程餐厅/通灌校区_前程餐厅_藤椒鸡柳拌面.jpg', caption: '藤椒鸡柳拌面' },
                                     ],
-                                    specialty: ['版面', '快餐', '水饺','烤鸭'],
+                                    specialty: ['版面', '快餐', '水饺', '烤鸭'],
                                     priceRange: '待补充',
                                     openingHours: '待补充',
                                     notes: '菜品丰富，价格实惠，快餐很棒，窗口很多'
                                 }
                             ]
                         },
-                        'food_square': { 
-                            name: '美食广场', 
-                            image: 'images/通灌校区/食堂/美食广场.jpg', 
-                            summary: '汇集多种风味美食，提供多样化选择。', 
+                        'food_square': {
+                            name: '美食广场',
+                            image: 'images/通灌校区/食堂/美食广场.jpg',
+                            summary: '汇集多种风味美食，提供多样化选择。',
                             details: [
                                 {
                                     area: '美食广场',
@@ -1385,19 +1228,19 @@
                                 }
                             ]
                         },
-                        '民族风味餐厅': { 
-                            name: '民族风味餐厅', 
-                            image: 'images/通灌校区/食堂/民族风味餐厅.jpg', 
-                            summary: '汇集多种风味美食，提供多样化选择。', 
+                        '民族风味餐厅': {
+                            name: '民族风味餐厅',
+                            image: 'images/通灌校区/食堂/民族风味餐厅.jpg',
+                            summary: '汇集多种风味美食，提供多样化选择。',
                             details: [
                                 {
                                     area: '民族风味餐厅',
                                     images: [
                                         { src: 'images/通灌校区/食堂/民族风味餐厅/通灌校区_民族风味餐厅_番茄鸡排饭.jpg', caption: '番茄鸡排饭' },
                                         { src: 'images/通灌校区/食堂/民族风味餐厅/通灌校区_民族风味餐厅_酸菜牛肉炒饭.jpg', caption: '酸菜牛肉炒饭' },
-                                        { src: 'images/通灌校区/食堂/民族风味餐厅/通灌校区_民族风味餐厅_鸡排烤冷面.jpg', caption: '鸡排烤冷面' }  
+                                        { src: 'images/通灌校区/食堂/民族风味餐厅/通灌校区_民族风味餐厅_鸡排烤冷面.jpg', caption: '鸡排烤冷面' }
                                     ],
-                                    specialty: ['黄焖鸡', '粉丝', '鸡排饭', ],
+                                    specialty: ['黄焖鸡', '粉丝', '鸡排饭',],
                                     priceRange: '待补充',
                                     openingHours: '待补充',
                                     notes: '年轻人喜爱的地方，营业时间长，适合休闲和夜宵。'
@@ -1411,10 +1254,10 @@
                 name: "宋跳校区",
                 dormitory: {
                     title: "宋跳校区宿舍介绍",
-                     items: {
-                        'songtiao_dorm': { 
-                            name: '宋跳校区宿舍', 
-                            image: 'images/宋跳校区/宿舍/宋跳宿舍.jpg', 
+                    items: {
+                        'songtiao_dorm': {
+                            name: '宋跳校区宿舍',
+                            image: 'images/宋跳校区/宿舍/宋跳宿舍.jpg',
                             summary: '宋跳校区学生生活区。',
                             details: [
                                 {
@@ -1434,7 +1277,7 @@
                                     notes: '宿舍条件较好，均为标准四人间配置，生活舒适。新改造的卫生间有自洁功能'
                                 },
                                 {
-                                building: '3，6号楼(六人间)',
+                                    building: '3，6号楼(六人间)',
                                     images: [{ src: 'images/宋跳校区/宿舍/3,6号楼/3,6号楼宿舍内景.jpg', caption: '六人间宿舍内景' }],
                                     roomType: '六人间',
                                     layout: '上下铺',
@@ -1468,12 +1311,12 @@
                 canteen: {
                     title: "宋跳校区食堂介绍",
                     items: {
-                       'donggang_canteen': { 
-                           name: '东港餐厅', 
-                           image: 'images/宋跳校区/食堂/东港餐厅.jpg', 
-                           summary: '校区内唯一的学生食堂。',
-                           details: [
-                               {
+                        'donggang_canteen': {
+                            name: '东港餐厅',
+                            image: 'images/宋跳校区/食堂/东港餐厅.jpg',
+                            summary: '校区内唯一的学生食堂。',
+                            details: [
+                                {
                                     area: '综合食堂',
                                     images: [
                                         { src: 'images/宋跳校区/食堂/东港餐厅/宋跳校区_东港餐厅_兰州拉面.jpg', caption: '兰州拉面' },
@@ -1481,18 +1324,18 @@
                                         { src: 'images/宋跳校区/食堂/东港餐厅/宋跳校区_东港餐厅_中式快餐.jpg', caption: '中式快餐' },
                                         { src: 'images/宋跳校区/食堂/东港餐厅/宋跳校区_东港餐厅_川味小炒.jpg', caption: '川味小炒' },
                                     ],
-                                    specialty: ['新疆炒米粉', '兰州拉面', '盖浇饭','川味小炒'],
+                                    specialty: ['新疆炒米粉', '兰州拉面', '盖浇饭', '川味小炒'],
                                     priceRange: '待补充',
                                     openingHours: '待补充',
                                     notes: '虽然选择不如主校区多，但能满足日常基本用餐需求，口味不错。'
-                               }
-                           ]
+                                }
+                            ]
                         }
                     }
                 }
             }
         };
-        
+
         // 新增: 用于填充专业和年份下拉菜单的数据
         const campusInfoData = {
             "苍梧校区": [
@@ -1552,12 +1395,12 @@
                 this.detailTitle = document.getElementById('detail-title');
                 this.detailContent = document.getElementById('detail-content');
                 this.backToMainBtn = document.getElementById('back-to-main-btn');
-                
+
                 // 桌面端搜索元素
                 this.searchForm = document.getElementById('search-form');
                 this.searchInput = document.getElementById('search-input');
                 this.liveSearchResultsContainer = document.getElementById('live-search-results');
-                
+
                 // 移动端优化元素
                 this.bottomNav = document.getElementById('bottom-nav');
                 this.bottomNavHome = document.getElementById('bottom-nav-home');
@@ -1586,7 +1429,7 @@
                 this.userProfileBtn = document.getElementById('user-profile-btn');
                 this.closeAuthBtn = document.getElementById('close-auth-btn');
                 this.authTitle = document.getElementById('auth-title');
-                
+
                 this.loginFormContainer = document.getElementById('login-form-container');
                 this.registerFormContainer = document.getElementById('register-form-container');
                 this.resetPasswordFormContainer = document.getElementById('reset-password-form-container');
@@ -1594,12 +1437,12 @@
                 this.loginForm = document.getElementById('login-form');
                 this.registerForm = document.getElementById('register-form');
                 this.resetPasswordForm = document.getElementById('reset-password-form');
-                
+
                 this.forgotPasswordLink = document.getElementById('forgot-password-link');
                 this.goToRegisterLink = document.getElementById('go-to-register');
                 this.goToLoginFromRegisterLink = document.getElementById('go-to-login-from-register');
                 this.goToLoginFromResetLink = document.getElementById('go-to-login-from-reset');
-                
+
                 // 新增: 用户中心UI元素
                 this.profileModal = document.getElementById('profile-modal');
                 this.profileDialog = document.getElementById('profile-dialog');
@@ -1608,7 +1451,7 @@
                 this.editProfileBtn = document.getElementById('edit-profile-btn');
                 this.cancelEditBtn = document.getElementById('cancel-edit-btn');
                 this.saveProfileBtn = document.getElementById('save-profile-btn');
-                
+
                 this.profileViewContainer = document.getElementById('profile-view-container');
                 this.profileEditContainer = document.getElementById('profile-edit-container');
 
@@ -1619,7 +1462,7 @@
                 this.profileEmail = document.getElementById('profile-email');
                 this.profileMajorYear = document.getElementById('profile-major-year').querySelector('span');
                 this.profileBio = document.getElementById('profile-bio');
-                
+
                 this.avatarSelectionGrid = document.getElementById('avatar-selection-grid');
                 this.editNickname = document.getElementById('edit-nickname');
                 this.editBio = document.getElementById('edit-bio');
@@ -1631,7 +1474,7 @@
                 const container = document.getElementById('toast-container');
                 const toast = document.createElement('div');
                 toast.className = `toast-notification ${type}`;
-                
+
                 let iconName = 'info';
                 if (type === 'success') iconName = 'check-circle';
                 if (type === 'error') iconName = 'alert-circle';
@@ -1640,7 +1483,7 @@
                     <div class="toast-icon"><i data-lucide="${iconName}"></i></div>
                     <span>${message}</span>
                 `;
-                
+
                 container.appendChild(toast);
                 lucide.createIcons({ nodes: [toast.querySelector('.toast-icon')] });
 
@@ -1675,7 +1518,7 @@
                     setTimeout(() => this.loadingOverlay.style.display = 'none', 500);
                 }, 500);
             }
-            
+
             runApp() {
                 this._createNav();
                 this._renderAllContent();
@@ -1690,7 +1533,7 @@
                     const categoryData = this.guideData[categoryKey];
                     const categoryDiv = document.createElement('div');
                     categoryDiv.className = 'nav-category';
-                    
+
                     if (categoryData.isHomePage) {
                         const link = this._createNavLink(categoryKey, 'home', categoryData.icon, categoryKey, true);
                         this.navMenu.appendChild(link);
@@ -1771,17 +1614,17 @@
                         this.contentArea.appendChild(section);
                     }
                 }
-                
+
                 this._addHomeListeners();
                 lucide.createIcons();
             }
-            
+
             _generateCampusCards(items, type) {
-                 if (!items) return '<p class="text-gray-500 dark:text-gray-400">该校区暂无相关信息。</p>';
-                 const itemKeys = Object.keys(items);
-                 const cardHtml = itemKeys.map(key => {
-                     const item = items[key];
-                     return `
+                if (!items) return '<p class="text-gray-500 dark:text-gray-400">该校区暂无相关信息。</p>';
+                const itemKeys = Object.keys(items);
+                const cardHtml = itemKeys.map(key => {
+                    const item = items[key];
+                    return `
                          <a href="#" class="detail-card bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 group" data-type="${type}" data-key="${key}">
                              <div class="h-56 overflow-hidden">
                                  <img src="${item.image}" alt="[${item.name}的图片]" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
@@ -1792,9 +1635,9 @@
                              </div>
                          </a>
                      `;
-                 }).join('');
+                }).join('');
 
-                 return `<div class="w-full max-w-6xl mx-auto">
+                return `<div class="w-full max-w-6xl mx-auto">
                              <h3 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-8 text-center">${type === 'dormitory' ? '宿舍概览' : '美食天地'}</h3>
                              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                                  ${cardHtml}
@@ -1875,7 +1718,7 @@
                     </div>
                 `;
             }
-            
+
             _addClubTabListeners(container) {
                 const tabContainer = container.querySelector('.club-tabs');
                 if (!tabContainer) return;
@@ -1885,7 +1728,7 @@
                     if (!button) return;
 
                     const level = button.dataset.level;
-                    
+
                     // 更新按钮激活状态
                     tabContainer.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
                     button.classList.add('active');
@@ -1895,9 +1738,9 @@
                     paneContainer.querySelectorAll('.club-pane').forEach(pane => {
                         pane.classList.remove('active');
                     });
-                    
+
                     const targetPane = paneContainer.querySelector(`.club-pane[data-level="${level}"]`);
-                    if(targetPane) {
+                    if (targetPane) {
                         targetPane.classList.add('active');
                     }
                 });
@@ -1911,7 +1754,7 @@
                 this.sidebarOverlay.addEventListener('click', this._toggleSidebar.bind(this));
                 this.campusModal.addEventListener('click', this._handleCampusSelection.bind(this));
                 this.changeCampusBtn.addEventListener('click', this._showCampusSelector.bind(this));
-                
+
                 this.contentArea.addEventListener('click', this._handleCardClick.bind(this));
                 this.backToMainBtn.addEventListener('click', this._hideDetailView.bind(this));
 
@@ -1919,7 +1762,7 @@
                 this.searchInput.addEventListener('input', this._handleLiveSearch.bind(this));
                 document.addEventListener('click', this._handleGlobalClick.bind(this));
                 this.liveSearchResultsContainer.addEventListener('click', this._handleSearchResultClick.bind(this));
-                
+
                 this.bottomNavHome.addEventListener('click', this._handleHomeClick.bind(this));
                 this.bottomNavMenu.addEventListener('click', this._toggleSidebar.bind(this));
                 this.bottomNavSearch.addEventListener('click', this._showMobileSearch.bind(this));
@@ -1936,17 +1779,17 @@
                     if (e.target === this.feedbackModal) this._hideFeedbackModal();
                 });
                 this.feedbackForm.addEventListener('submit', this._handleFeedbackSubmit.bind(this));
-                
+
                 this.loginPromptBtn.addEventListener('click', this._showAuthModal.bind(this));
                 this.closeAuthBtn.addEventListener('click', this._hideAuthModal.bind(this));
                 this.authModal.addEventListener('click', (e) => {
                     if (e.target === this.authModal) this._hideAuthModal();
                 });
-                
+
                 this.registerForm.addEventListener('submit', this._handleRegisterSubmit.bind(this));
                 this.loginForm.addEventListener('submit', this._handleLoginSubmit.bind(this));
                 this.resetPasswordForm.addEventListener('submit', this._handlePasswordResetSubmit.bind(this));
-                
+
                 this.forgotPasswordLink.addEventListener('click', (e) => { e.preventDefault(); this._handleAuthViewChange('reset'); });
                 this.goToRegisterLink.addEventListener('click', (e) => { e.preventDefault(); this._handleAuthViewChange('register'); });
                 this.goToLoginFromRegisterLink.addEventListener('click', (e) => { e.preventDefault(); this._handleAuthViewChange('login'); });
@@ -1961,7 +1804,7 @@
                 this.editProfileBtn.addEventListener('click', () => this._handleProfileViewChange('edit'));
                 this.cancelEditBtn.addEventListener('click', () => this._handleProfileViewChange('view'));
                 this.saveProfileBtn.addEventListener('click', this._handleProfileSave.bind(this));
-                
+
                 // [已修复] 移除对不存在的 .profile-tab 元素的事件监听
 
                 this.avatarSelectionGrid.addEventListener('click', e => {
@@ -1998,20 +1841,20 @@
                 this.campusModal.style.opacity = '0';
                 this.campusDialog.style.transform = 'scale(0.95)';
                 this.campusDialog.style.opacity = '0';
-                
+
                 setTimeout(() => {
                     this.campusModal.classList.add('hidden');
                     this.runApp();
                 }, 300);
             }
-            
+
             _updateCampusDisplay() {
                 if (this.selectedCampus && this.campusData[this.selectedCampus]) {
                     this.currentCampusDisplay.textContent = `当前: ${this.campusData[this.selectedCampus].name}`;
                 }
             }
 
-             _setupIntersectionObserver() {
+            _setupIntersectionObserver() {
                 const options = {
                     root: this.contentArea,
                     threshold: 0,
@@ -2020,7 +1863,7 @@
 
                 this.observer = new IntersectionObserver((entries) => {
                     if (this.isScrollingProgrammatically) return;
-                    
+
                     entries.forEach(entry => {
                         if (entry.isIntersecting) {
                             const { categoryKey, pageKey } = entry.target.dataset;
@@ -2033,7 +1876,7 @@
                     this.observer.observe(section);
                 });
             }
-            
+
             _updateActiveState(categoryKey, pageKey) {
                 const pageData = this.guideData[categoryKey]?.pages[pageKey];
                 if (pageData) {
@@ -2066,51 +1909,51 @@
                     this.bottomNavHome.classList.add('active');
                 }
             }
-            
+
             _handleNavClick(e) {
-                 const link = e.target.closest('.sidebar-link');
-                 const header = e.target.closest('.category-header');
-                 if (link) {
-                     e.preventDefault();
-                     this._hideAllViews();
-                     const href = link.getAttribute('href');
-                     if (href && href.startsWith('#')) {
-                         const { category, page } = link.dataset;
-                         this._updateActiveState(category, page);
-                         const targetElement = document.getElementById(href.substring(1));
-                         if (targetElement) this._scrollToElement(targetElement);
-                         if (window.innerWidth < 768) this._toggleSidebar();
-                     }
-                 } else if (header) {
-                     const submenu = header.nextElementSibling;
-                     header.classList.toggle('open');
-                     submenu.classList.toggle('open');
-                 }
+                const link = e.target.closest('.sidebar-link');
+                const header = e.target.closest('.category-header');
+                if (link) {
+                    e.preventDefault();
+                    this._hideAllViews();
+                    const href = link.getAttribute('href');
+                    if (href && href.startsWith('#')) {
+                        const { category, page } = link.dataset;
+                        this._updateActiveState(category, page);
+                        const targetElement = document.getElementById(href.substring(1));
+                        if (targetElement) this._scrollToElement(targetElement);
+                        if (window.innerWidth < 768) this._toggleSidebar();
+                    }
+                } else if (header) {
+                    const submenu = header.nextElementSibling;
+                    header.classList.toggle('open');
+                    submenu.classList.toggle('open');
+                }
             }
-            
+
             _handleHomeClick(e) {
                 e.preventDefault();
                 this._hideAllViews();
                 const homeElement = document.getElementById('page-主页-home');
-                if(homeElement) {
+                if (homeElement) {
                     this._updateActiveState("主页", "home");
                     this._scrollToElement(homeElement);
                 }
             }
-            
+
             _toggleSidebar() {
                 const isHidden = this.sidebar.classList.contains('-translate-x-full');
                 this.sidebar.classList.toggle('-translate-x-full');
                 this.sidebarOverlay.classList.toggle('hidden', !isHidden);
                 this.bottomNavMenu.classList.toggle('active', !isHidden);
             }
-            
+
             _scrollToElement(targetElement, keyword = null) {
                 this.isScrollingProgrammatically = true;
                 const topOffset = document.querySelector('header').offsetHeight;
                 const elementPosition = targetElement.getBoundingClientRect().top;
                 const offsetPosition = elementPosition + this.contentArea.scrollTop - topOffset;
-                
+
                 this.contentArea.scrollTo({ top: offsetPosition, behavior: 'smooth' });
 
                 if (keyword) {
@@ -2118,9 +1961,9 @@
                 }
 
                 clearTimeout(this.scrollTimeout);
-                this.scrollTimeout = setTimeout(() => { this.isScrollingProgrammatically = false; }, 1000); 
+                this.scrollTimeout = setTimeout(() => { this.isScrollingProgrammatically = false; }, 1000);
             }
-            
+
             _createFaqHtml(items) {
                 let html = '<div class="space-y-4 w-full max-w-4xl mx-auto">';
                 items.forEach((item) => {
@@ -2129,7 +1972,7 @@
                 html += '</div>';
                 return html;
             }
-            
+
             _addFaqListeners(container) {
                 const headers = container.querySelectorAll('.accordion-header');
                 headers.forEach(header => {
@@ -2141,7 +1984,7 @@
                     });
                 });
             }
-            
+
             _addHomeListeners() {
                 document.getElementById('explore-btn')?.addEventListener('click', (e) => {
                     e.preventDefault();
@@ -2157,8 +2000,8 @@
                         const navData = JSON.parse(card.dataset.navlink);
                         const targetElement = document.getElementById(`page-${navData.category}-${navData.page}`);
                         if (targetElement) {
-                             this._updateActiveState(navData.category, navData.page);
-                             this._scrollToElement(targetElement);
+                            this._updateActiveState(navData.category, navData.page);
+                            this._scrollToElement(targetElement);
                         }
                     });
                 });
@@ -2247,7 +2090,7 @@
             }
 
             _generateCanteenDetailsHtml(details) {
-                 return details.map(canteen => {
+                return details.map(canteen => {
                     const sliderHtml = this._generateSliderHtml(canteen.images);
                     return `
                     <div class="bg-white dark:bg-gray-800 p-6 rounded-lg mb-6 shadow-md border border-gray-200 dark:border-gray-700">
@@ -2289,7 +2132,7 @@
                         </div>
                     </div>
                 `;
-                
+
                 this.mainView.classList.add('hidden');
                 this.detailView.classList.remove('hidden', 'translate-x-full');
                 this.detailView.classList.add('flex');
@@ -2309,17 +2152,17 @@
                     const nextBtn = slider.querySelector('.slider-nav.next');
                     const captionEl = slider.querySelector('.slider-caption');
                     const dotsContainer = slider.querySelector('.slider-dots');
-                    
+
                     if (slides.length <= 1) return; // 如果只有一张图或没有图，则不初始化
 
-                    const imagesData = this.campusData[this.selectedCampus]; 
+                    const imagesData = this.campusData[this.selectedCampus];
                     let currentIndex = 0;
                     const totalSlides = slides.length;
 
                     const goToSlide = (index) => {
                         currentIndex = (index + totalSlides) % totalSlides;
                         wrapper.style.transform = `translateX(-${currentIndex * 100}%)`;
-                        
+
                         const slideElement = slides[currentIndex];
                         const imgElement = slideElement.querySelector('img');
                         captionEl.textContent = imgElement.alt;
@@ -2353,7 +2196,7 @@
                     }, 300);
                 }
             }
-            
+
             // --- 搜索功能 ---
             _handleLiveSearch(e) {
                 const query = e.target.value.trim();
@@ -2364,7 +2207,7 @@
                     this._hideLiveSearchResults();
                 }
             }
-            
+
             _handleMobileLiveSearch(e) {
                 const query = e.target.value.trim();
                 if (query.length > 0) {
@@ -2382,7 +2225,7 @@
                     container.innerHTML = results.map(result => {
                         const snippet = this._createSnippet(result.text, query);
                         const highlightedSnippet = snippet.replace(new RegExp(this._escapeRegExp(query), 'gi'), (match) => `<mark class="search-highlight">${this._escapeHtml(match)}</mark>`);
-                        
+
                         const dataAttrs = result.isDetail
                             ? `data-is-detail="true" data-detail-type="${result.detailType}" data-detail-key="${result.detailKey}"`
                             : `data-category-key="${result.categoryKey}" data-page-key="${result.pageKey}"`;
@@ -2395,7 +2238,7 @@
                         `;
                     }).join('');
                 }
-                if(container === this.liveSearchResultsContainer) {
+                if (container === this.liveSearchResultsContainer) {
                     container.classList.remove('hidden');
                 }
             }
@@ -2403,13 +2246,13 @@
             _hideLiveSearchResults() {
                 this.liveSearchResultsContainer.classList.add('hidden');
             }
-            
+
             _handleGlobalClick(e) {
                 if (!this.searchForm.contains(e.target)) {
                     this._hideLiveSearchResults();
                 }
             }
-            
+
             _performSearch(query) {
                 const results = [];
                 const tempDiv = document.createElement('div');
@@ -2419,10 +2262,10 @@
                 for (const categoryKey in this.guideData) {
                     for (const pageKey in this.guideData[categoryKey].pages) {
                         const page = this.guideData[categoryKey].pages[pageKey];
-                        
+
                         let searchableText = page.title;
-                        
-                        if (page.type === 'clubs') { 
+
+                        if (page.type === 'clubs') {
                             const clubData = page.data;
                             searchableText += ' ' + clubData.introduction;
                             clubData.clubs.forEach(group => {
@@ -2477,7 +2320,7 @@
                         }
                     });
                 }
-                
+
                 return results;
             }
 
@@ -2490,9 +2333,9 @@
                 this._hideMobileSearch();
                 this.searchInput.value = '';
                 this.mobileSearchInput.value = '';
-                
+
                 const { isDetail, detailType, detailKey, categoryKey, pageKey, keyword } = item.dataset;
-                
+
                 if (isDetail === 'true') {
                     this._showDetailView(detailType, detailKey);
                     setTimeout(() => this._highlightKeywordInSection(this.detailContent, keyword), 500);
@@ -2525,11 +2368,11 @@
                         nodesToReplace.push(node);
                     }
                 }
-                
+
                 nodesToReplace.forEach(textNode => {
                     const parent = textNode.parentNode;
                     if (!parent || parent.nodeName === 'MARK' || parent.nodeName === 'SCRIPT' || parent.nodeName === 'STYLE') return;
-                    
+
                     const parts = textNode.textContent.split(regex);
                     const matches = textNode.textContent.match(regex);
 
@@ -2548,7 +2391,7 @@
                     parent.replaceChild(fragment, textNode);
                 });
             }
-            
+
             _showMobileSearch() {
                 this.mobileSearchOverlay.classList.remove('hidden');
                 setTimeout(() => {
@@ -2579,7 +2422,7 @@
             _determineAndApplyInitialTheme() {
                 const savedTheme = localStorage.getItem('theme');
                 const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                
+
                 if (savedTheme) {
                     this._applyTheme(savedTheme);
                 } else {
@@ -2594,7 +2437,7 @@
                     document.documentElement.classList.remove('dark');
                 }
                 localStorage.setItem('theme', theme);
-                
+
                 const isDark = theme === 'dark';
                 document.getElementById('theme-icon-sun').classList.toggle('hidden', isDark);
                 document.getElementById('theme-icon-moon').classList.toggle('hidden', !isDark);
@@ -2636,19 +2479,19 @@
                     headers: { "Content-Type": "application/x-www-form-urlencoded" },
                     body: new URLSearchParams(formData).toString()
                 })
-                .then(() => {
-                    this.feedbackForm.classList.add('hidden');
-                    this.feedbackSuccessMsg.classList.remove('hidden');
-                    setTimeout(() => {
-                        this._hideFeedbackModal();
-                    }, 2000);
-                })
-                .catch((error) => {
-                    console.error(error);
-                    const submitButton = form.querySelector('button[type="submit"]');
-                    submitButton.textContent = '提交失败!';
-                    submitButton.classList.add('bg-red-600');
-                });
+                    .then(() => {
+                        this.feedbackForm.classList.add('hidden');
+                        this.feedbackSuccessMsg.classList.remove('hidden');
+                        setTimeout(() => {
+                            this._hideFeedbackModal();
+                        }, 2000);
+                    })
+                    .catch((error) => {
+                        console.error(error);
+                        const submitButton = form.querySelector('button[type="submit"]');
+                        submitButton.textContent = '提交失败!';
+                        submitButton.classList.add('bg-red-600');
+                    });
             }
 
             // --- 认证模态框方法 ---
@@ -2691,7 +2534,7 @@
             }
 
             // --- Firebase 认证核心逻辑 ---
-             async _handleRegisterSubmit(e) {
+            async _handleRegisterSubmit(e) {
                 e.preventDefault();
                 const emailPrefix = this.registerForm.email_prefix.value;
                 const password = this.registerForm.password.value;
@@ -2701,7 +2544,7 @@
                     return;
                 }
                 const email = emailPrefix + '@jou.edu.cn';
-                
+
                 if (password.length < 8) {
                     this._showToast("密码长度不能少于8位！", "error");
                     return;
@@ -2710,7 +2553,7 @@
                 try {
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     const user = userCredential.user;
-                    
+
                     const newUserDoc = {
                         email: user.email,
                         nickname: "萌新" + emailPrefix.slice(-4),
@@ -2739,7 +2582,7 @@
                 e.preventDefault();
                 const emailPrefix = this.loginForm.email_prefix.value;
                 const password = this.loginForm.password.value;
-                
+
                 if (!emailPrefix) {
                     this._showToast("请输入你的学号！", "error");
                     return;
@@ -2761,8 +2604,8 @@
                     this._showToast("登录失败：学号或密码错误。", "error");
                 }
             }
-            
-             async _handlePasswordResetSubmit(e) {
+
+            async _handlePasswordResetSubmit(e) {
                 e.preventDefault();
                 const emailPrefix = this.resetPasswordForm.email_prefix.value;
                 if (!emailPrefix) {
@@ -2783,7 +2626,7 @@
                     }
                 }
             }
-            
+
             async _handleLogout() {
                 try {
                     await signOut(auth);
@@ -2805,7 +2648,7 @@
                         // 用户已登录且邮箱已验证
                         this.loginPromptBtn.classList.add('hidden');
                         this.userProfileBtn.classList.remove('hidden');
-                        
+
                         // 实时监听用户文档
                         const userDocRef = doc(db, "users", user.uid);
                         this.unsubscribeUserDoc = onSnapshot(userDocRef, (docSnap) => {
@@ -2828,7 +2671,7 @@
                     }
                 });
             }
-            
+
             _updateUIWithUserData() {
                 if (!this.currentUserData) return;
 
@@ -2863,17 +2706,17 @@
                     this.profileModal.classList.add('hidden');
                 }, 300);
             }
-            
+
             _handleProfileViewChange(viewName) {
                 // 更新Tab激活状态
                 this.profileDialog.querySelectorAll('.profile-tab').forEach(tab => {
                     tab.classList.toggle('active', tab.dataset.view === viewName);
                 });
-                
+
                 // 切换视图
                 this.profileViewContainer.classList.add('hidden');
                 this.profileEditContainer.classList.add('hidden');
-                
+
                 if (viewName === 'view') {
                     this.profileViewContainer.classList.remove('hidden');
                 } else if (viewName === 'edit') {
@@ -2899,7 +2742,7 @@
                 this.editEnrollmentYear.value = this.currentUserData.enrollmentYear || new Date().getFullYear();
                 this.editMajor.value = this.currentUserData.major || '';
             }
-            
+
             _populateProfileEditDropdowns() {
                 // 填充年份
                 const currentYear = new Date().getFullYear();
@@ -2907,7 +2750,7 @@
                     const option = new Option(i + '级', i);
                     this.editEnrollmentYear.add(option);
                 }
-                
+
                 // 填充专业
                 const allMajors = [];
                 Object.values(campusInfoData).forEach(campus => {
@@ -2915,8 +2758,8 @@
                         allMajors.push(...college.majors);
                     });
                 });
-                const uniqueMajors = [...new Set(allMajors)].sort((a,b) => a.localeCompare(b, 'zh-CN'));
-                
+                const uniqueMajors = [...new Set(allMajors)].sort((a, b) => a.localeCompare(b, 'zh-CN'));
+
                 uniqueMajors.forEach(major => {
                     const option = new Option(major, major);
                     this.editMajor.add(option);
@@ -2954,7 +2797,7 @@
                     this.saveProfileBtn.innerHTML = `保存更改`;
                 }
             }
-            
+
 
 
             // --- 校区查询工具相关方法 ---
@@ -3001,7 +2844,7 @@
                     campusInfoData[campus].forEach(item => allColleges.push(item.college));
                 }
                 const uniqueColleges = [...new Set(allColleges)].sort((a, b) => a.localeCompare(b, 'zh-CN'));
-                
+
                 uniqueColleges.forEach(college => {
                     const option = document.createElement('option');
                     option.value = college;
@@ -3050,7 +2893,7 @@
                     if (selectedCollege && selectedMajor) {
                         let campusResult = '';
                         for (const campus in campusInfoData) {
-                            const found = campusInfoData[campus].some(c => 
+                            const found = campusInfoData[campus].some(c =>
                                 c.college === selectedCollege && c.majors.includes(selectedMajor)
                             );
                             if (found) {
@@ -3105,8 +2948,9 @@
             const app = new GuideApp(guideData, campusData);
             app.init();
         });
-        
+
     </script>
     <div id="toast-container"></div>
 </body>
+
 </html>
