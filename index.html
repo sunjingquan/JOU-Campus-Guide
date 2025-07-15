@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>江苏海洋大学校园指南 (功能更新)</title>
+    <title>江苏海洋大学校园指南 (重构升级)</title>
     <!-- 引入Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Tailwind CSS 配置 -->
@@ -529,10 +529,15 @@
 
     <script type="module">
         // ===================================================================================
+        // --- 模块导入 ---
+        // ===================================================================================
+        import { guideData } from './js/data/guideData.js';
+        import { campusData, campusInfoData } from './js/data/campusData.js';
+
+
+        // ===================================================================================
         // --- Firebase 初始化 ---
         // ===================================================================================
-
-        // 1. 引入 Firebase 服务模块
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
         import {
             getAuth,
@@ -553,7 +558,6 @@
             Timestamp
         } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
-        // 2. 粘贴你的 Firebase 项目配置信息
         // 重要: 请将下面的占位符替换为你自己项目中的 firebaseConfig 对象！
         const firebaseConfig = {
             apiKey: "AIzaSyC-vmphXiQG0zs3iXHCrr-TIuLhko8zp1I",
@@ -565,805 +569,19 @@
             measurementId: "G-47QZBR81RC"
         };
 
-
-        // 3. 初始化 Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
         // ===================================================================================
-        // --- 新增: 个性化数据 ---
+        // --- 全局数据与常量 ---
         // ===================================================================================
         const AVATARS = Array.from({ length: 1 }, (_, i) => `avatar_${String(i + 1).padStart(2, '0')}`);
         const getAvatarUrl = (id) => id ? `images/默认头像/${id}.png` : 'images/默认头像/avatar_01.png';
 
         // ===================================================================================
-        // --- 数据中心 (Data Center) ---
+        // --- 应用主类 ---
         // ===================================================================================
-        const guideData = {
-            "主页": {
-                icon: "home",
-                isHomePage: true,
-                pages: {
-                    "home": {
-                        title: "欢迎来到江苏海洋大学", content: `
-                                        <div class="flex flex-col justify-center items-center h-full">
-                                            <div class="hero-bg text-white p-12 rounded-2xl text-center flex flex-col items-center justify-center shadow-xl mb-12">
-                                                <h1 class="text-5xl font-extrabold mb-4 drop-shadow-lg">开启你的大学新篇章</h1>
-                                                <p class="text-lg max-w-2xl mb-8 drop-shadow-md">本指南将帮助你快速熟悉校园生活，解决入学遇到的各种问题。准备好了吗？</p>
-                                                <button id="explore-btn" class="bg-white text-blue-800 font-bold py-3 px-8 rounded-full text-lg hover:bg-blue-100 transform hover:scale-105 transition-all duration-300 shadow-lg">开始探索</button>
-                                            </div>
-                                            <div>
-                                                <h2 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-8 text-center">快速导航</h2>
-                                                <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-                                                    <a href="#" data-navlink='{"category": "入学准备", "page": "新生入学流程"}' class="nav-card bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md hover:shadow-2xl dark:hover:shadow-blue-500/20 hover:-translate-y-2 transition-all duration-300 flex flex-col items-center text-center">
-                                                        <div class="bg-blue-100 text-blue-600 p-4 rounded-full mb-4"><i data-lucide="list-checks" class="w-8 h-8"></i></div>
-                                                        <h3 class="font-semibold text-lg text-gray-900 dark:text-gray-100">入学流程</h3>
-                                                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">报到注册步骤全解析</p>
-                                                    </a>
-                                                    <a href="#" data-navlink='{"category": "校园生活", "page": "宿舍介绍"}' class="nav-card bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md hover:shadow-2xl dark:hover:shadow-green-500/20 hover:-translate-y-2 transition-all duration-300 flex flex-col items-center text-center">
-                                                        <div class="bg-green-100 text-green-600 p-4 rounded-full mb-4"><i data-lucide="bed-double" class="w-8 h-8"></i></div>
-                                                        <h3 class="font-semibold text-lg text-gray-900 dark:text-gray-100">宿舍介绍</h3>
-                                                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">了解你的新家</p>
-                                                    </a>
-                                                    <a href="#" data-navlink='{"category": "学习科研", "page": "关于绩点和学分"}' class="nav-card bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-2xl dark:hover:shadow-purple-500/20 hover:-translate-y-2 transition-all duration-300 flex flex-col items-center text-center">
-                                                        <div class="bg-purple-100 text-purple-600 p-4 rounded-full mb-4"><i data-lucide="graduation-cap" class="w-8 h-8"></i></div>
-                                                        <h3 class="font-semibold text-lg text-gray-900 dark:text-gray-100">学业发展</h3>
-                                                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">绩点、转专业、竞赛</p>
-                                                    </a>
-                                                    <a href="#" data-navlink='{"category": "答疑与支持", "page": "常见问题汇总"}' class="nav-card bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md hover:shadow-2xl dark:hover:shadow-red-500/20 hover:-translate-y-2 transition-all duration-300 flex flex-col items-center text-center">
-                                                        <div class="bg-red-100 text-red-600 p-4 rounded-full mb-4"><i data-lucide="help-circle" class="w-8 h-8"></i></div>
-                                                        <h3 class="font-semibold text-lg text-gray-900 dark:text-gray-100">常见问题</h3>
-                                                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">新生疑惑解答</p>
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </div>`
-                    }
-                }
-            },
-            "入学准备": {
-                icon: "package-check",
-                pages: {
-                    // 新增: 大一校区查询页面
-                    "大一校区查询": {
-                        title: "大一校区查询",
-                        type: "campus-query-tool", // 特殊类型，用于触发JS初始化
-                        content: `` // 内容将在JS中生成，但我们先定义页面
-                    },
-                    "开学必备清单": {
-                        title: "开学必备清单", content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto">
-    <div class="p-6 rounded-xl w-full">
-        <h3 class="text-2xl font-bold text-blue-800 dark:text-blue-400 mb-6 border-l-4 border-blue-700 dark:border-blue-500 pl-4">证件及文件类 (最重要！)</h3>
-        <ul class="list-none space-y-4 text-gray-700 dark:text-gray-300">
-            <li class="flex items-start"><i data-lucide="check-circle-2" class="text-green-500 w-5 h-5 mr-3 mt-1 flex-shrink-0"></i><div><strong>录取通知书、高考准考证、身份证：</strong>最重要的身份证明，务必随身携带，妥善保管。</div></li>
-            <li class="flex items-start"><i data-lucide="check-circle-2" class="text-green-500 w-5 h-5 mr-3 mt-1 flex-shrink-0"></i><div><strong>身份证复印件：</strong>正反面复印在同一张A4纸上，建议准备3-4份，部分手续需要。</div></li>
-            <li class="flex items-start"><i data-lucide="check-circle-2" class="text-green-500 w-5 h-5 mr-3 mt-1 flex-shrink-0"></i><div><strong>户口本本人页复印件：</strong>申请助学金或办理户口迁移时可能需要。</div></li>
-            <li class="flex items-start"><i data-lucide="check-circle-2" class="text-green-500 w-5 h-5 mr-3 mt-1 flex-shrink-0"></i><div><strong>一寸/两寸证件照：</strong>红蓝白底各准备一版（约8-16张），用于办理学生证、体检、社团申请等。</div></li>
-            <li class="flex items-start"><i data-lucide="check-circle-2" class="text-green-500 w-5 h-5 mr-3 mt-1 flex-shrink-0"></i><div><strong>党/团组织关系材料：</strong>团员证及相关档案，按学校要求办理转接手续。</div></li>
-            <li class="flex items-start"><i data-lucide="check-circle-2" class="text-green-500 w-5 h-5 mr-3 mt-1 flex-shrink-0"></i><div><strong>学生档案：</strong>部分地区需要学生自带，请确认清楚并妥善保管，切勿私自拆封！</div></li>
-        </ul>
-    </div>
-    
-    <div class="grid md:grid-cols-2 gap-x-8 mt-8">
-        <div class="p-6 rounded-xl w-full">
-            <h3 class="text-2xl font-bold text-green-800 dark:text-green-400 mb-6 border-l-4 border-green-700 dark:border-green-500 pl-4">床上用品</h3>
-            <ul class="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300">
-                <li>床垫、被子、枕头</li>
-                <li>床单、被套、枕套（三件套）</li>
-                <li>蚊帐、床帘（提高私密性）</li>
-            </ul>
-        </div>
-
-        <div class="p-6 rounded-xl w-full">
-            <h3 class="text-2xl font-bold text-cyan-800 dark:text-cyan-400 mb-6 border-l-4 border-cyan-700 dark:border-cyan-500 pl-4">洗漱用品</h3>
-            <ul class="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300">
-                <li>牙刷、牙膏、漱口杯</li>
-                <li>毛巾、浴巾</li>
-                <li>洗发水、沐浴露、洗面奶</li>
-                <li>脸盆、水桶</li>
-                <li>洗衣液、肥皂、皂盒</li>
-            </ul>
-        </div>
-
-        <div class="p-6 rounded-xl w-full mt-4">
-            <h3 class="text-2xl font-bold text-purple-800 dark:text-purple-400 mb-6 border-l-4 border-purple-700 dark:border-purple-500 pl-4">衣物鞋袜</h3>
-            <ul class="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300">
-                <li>根据连云港气候准备四季衣物</li>
-                <li>睡衣、居家服</li>
-                <li>拖鞋、运动鞋、日常穿着的鞋</li>
-                <li>袜子、内衣裤（多备几套）</li>
-                <li>衣架、裤架、收纳袋</li>
-            </ul>
-        </div>
-
-        <div class="p-6 rounded-xl w-full mt-4">
-            <h3 class="text-2xl font-bold text-orange-800 dark:text-orange-400 mb-6 border-l-4 border-orange-700 dark:border-orange-500 pl-4">电子产品及其它</h3>
-            <ul class="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300">
-                <li>手机、充电器、充电宝</li>
-                <li>笔记本电脑、鼠标、U盘</li>
-                <li>耳机、数据线</li>
-                <li>台灯、可用于床头的夹灯</li>
-                <li>带有多孔位的插排</li>
-                <li>少量现金以备不时之需</li>
-            </ul>
-        </div>
-    </div>
-
-    <div class="bg-yellow-100 dark:bg-yellow-900/20 border-l-4 border-yellow-500 text-yellow-800 dark:text-yellow-300 p-6 rounded-lg w-full mt-10" role="alert">
-        <div class="flex">
-            <div class="py-1"><i data-lucide="alert-triangle" class="w-6 h-6 text-yellow-600 mr-4 flex-shrink-0"></i></div>
-            <div>
-                <p class="font-bold">温馨提示</p>
-                <ul class="list-disc list-inside mt-2 text-sm">
-                    <li>大件物品如被褥、床垫等，若路途遥远，建议到校后购买或提前邮寄至学校，以减轻行李负担。</li>
-                    <li>电脑等贵重电子产品，建议到校安顿好后再购买或由家人寄送。</li>
-                    <li>可以准备一些个人常用药品，如感冒药、创可贴、肠胃药等。</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>` },
-                    "新生入学流程": {
-                        title: "新生入学流程",
-                        content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><div class="relative border-l-4 border-blue-500 pl-10 space-y-16 py-6 w-full"><div class="absolute w-4 h-4 bg-blue-600 rounded-full -left-2 top-6 ring-8 ring-white dark:ring-gray-800"></div><div class="relative"><h3 class="text-xl font-bold text-blue-800 dark:text-blue-400">第一步：报到注册</h3><p class="text-gray-600 dark:text-gray-300 mt-2">在指定日期（通常在9月4号到8号，每年不固定），在红马甲志愿者（都是学长学姐门）的引导下，前往所在学院的迎新点->找到自己对应的班级->在有电脑的地方刷身份证进行登记->找到坐在帐篷里的班助->提交身份证复印件+录取通知书原件并登记面前的登记表->领取①校园手提袋②海大蓝T恤③军训服装领取卡④入学体检单⑤学生手册⑥宿舍床上用品领取单（选购）等材料。班助，辅导员和迎新学长学姐会在此等候。</p></div><div class="absolute w-4 h-4 bg-blue-600 rounded-full -left-2" style="top: 33.33%"></div><div class="relative"><h3 class="text-xl font-bold text-blue-800 dark:text-blue-400">第二步：入住寝室</h3><p class="text-gray-600 dark:text-gray-300 mt-2">在负责运送行李的红马甲志愿者的带领下前往自己的宿舍楼和房间，在宿管阿姨处办理入住手续，注册完美校园，领取房卡（部分地区用校园卡就可以刷开门）。整理个人物品，打扫卫生，与新室友见面，熟悉环境。</p></div><div class="absolute w-4 h-4 bg-blue-600 rounded-full -left-2" style="top: 66.66%"></div><div class="relative"><h3 class="text-xl font-bold text-blue-800 dark:text-blue-400">第三步：办理各项手续</h3><p class="text-gray-600 dark:text-gray-300 mt-2">缴纳学费、住宿费（请关注江苏海洋大学财务平台微信公众号）；根据需要办理户口迁移；参加学校统一组织的入学体检，会在报道的第二天开始进行，通常在第二人民医院，在集合点坐车去。</p></div><div class="absolute w-4 h-4 bg-blue-600 rounded-full -left-2 bottom-6 ring-8 ring-white dark:ring-gray-800"></div><div class="relative"><h3 class="text-xl font-bold text-blue-800 dark:text-blue-400">第四步：开启新生活</h3><p class="text-gray-600 dark:text-gray-300 mt-2">参加开学典礼、军训动员大会、班级会议。之后将开始军训和正式的课程学习，正式开启大学生活！</p></div></div></div>`
-                    },
-                    "开学须知": {
-                        title: "开学须知",
-                        content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><div class="space-y-6"><div class="border-b dark:border-gray-700 pb-4"><h4 class="font-bold text-xl text-gray-800 dark:text-gray-100 flex items-center"><i data-lucide="calendar-days" class="text-indigo-500 mr-3"></i>报到时间与地点</h4><p class="text-gray-600 dark:text-gray-300 mt-2 pl-8">请严格按照录取通知书上的时间和地点报到，不要过早或过晚。如有特殊情况（如因病、交通问题等）无法按时报到，务必提前联系班助、学院辅导员说明情况，办理请假手续。</p></div><div class="border-b dark:border-gray-700 pb-4"><h4 class="font-bold text-xl text-gray-800 dark:text-gray-100 flex items-center"><i data-lucide="shield-check" class="text-red-500 mr-3"></i>安全问题</h4><p class="text-gray-600 dark:text-gray-300 mt-2 pl-8">注意人身和财产安全，保管好个人贵重物品。警惕陌生人的过度热情和推销，特别是上门推销电话卡、文具等。不要轻易相信任何要求转账汇款的信息，谨防电信诈骗和校园贷陷阱。</p></div><div><h4 class="font-bold text-xl text-gray-800 dark:text-gray-100 flex items-center"><i data-lucide="file-archive" class="text-yellow-500 mr-3"></i>档案转移</h4><p class="text-gray-600 dark:text-gray-300 mt-2 pl-8">确认自己的党/团组织关系和学生档案是否已按要求转至学校。自带档案的同学，报到后应立即将档案上交至指定部门，切勿私自拆封。</p></div></div></div>`
-                    },
-                    "军训攻略": {
-                        title: "军训攻略",
-                        content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-6xl mx-auto"><div class="grid md:grid-cols-2 gap-8"><div class="p-6 rounded-xl"><h3 class="text-2xl font-bold text-teal-800 dark:text-teal-400 mb-6 border-l-4 border-teal-700 dark:border-teal-500 pl-4">军训攻略</h3><ul class="list-disc list-inside space-y-3 text-gray-700 dark:text-gray-300"><li><strong>待开发</strong></li></ul></div></div></div>`
-                    }
-                }
-            },
-            "校园生活": {
-                icon: "utensils-crossed",
-                pages: {
-                    "食堂介绍": { title: "食堂介绍", isCampusSpecific: true },
-                    "宿舍介绍": { title: "宿舍介绍", isCampusSpecific: true },
-                    "校园超市与共享单车": {
-                        title: "校园超市与共享单车",
-                        content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><div class="p-6 rounded-xl w-full"><h3 class="text-2xl font-bold text-purple-800 dark:text-purple-400 mb-4 border-l-4 border-purple-700 dark:border-purple-500 pl-4">校园超市</h3><p class="text-gray-700 dark:text-gray-300">校内设有多个超市，苍梧校区在三食堂旁、顺丰快递旁有超市。支持使用校园卡、微信、支付宝等多种支付方式。</p></div><div class="p-6 rounded-xl w-full mt-8"><h3 class="text-2xl font-bold text-sky-800 dark:text-sky-400 mb-4 border-l-4 border-sky-700 dark:border-sky-500 pl-4">校园共享单车</h3><p class="text-gray-700 dark:text-gray-300">由于校园面积较大，各功能区之间有一定距离，共享单车是校内非常便捷的代步工具。校园内有7MA”小蓝车“，用微信扫码即可开锁使用。请大家注意遵守交通规则，并将车辆停放在指定的划线区域内，共同维护校园环境。</p></div></div>`
-                    },
-                    "社团与组织": {
-                        title: "社团与组织",
-                        type: "clubs",
-                        data: {
-                            introduction: "大学生活不只有学习，丰富多彩的社团活动是结交朋友、培养兴趣、提升能力的重要平台。我校拥有上百个学生社团，百花齐放。每年开学季，学校都会举办盛大的“百团大战”社团招新活动，届时所有社团都会集中展示自己，是了解和加入社团的最佳时机！",
-                            clubs: [
-                                {
-                                    level: 5,
-                                    label: "五星级社团",
-                                    icon: "star",
-                                    color: "text-yellow-400",
-                                    list: ["大学生科技协会", "青年志愿者协会", "大学生艺术团", "生命-海洋协会", "“淮海之声”广播站", "大学生书画协会", "艺馨艺术团", "大学生通讯社", "大学生创新创业协会"]
-                                },
-                                {
-                                    level: 4,
-                                    label: "四星级社团",
-                                    icon: "award",
-                                    color: "text-slate-400",
-                                    list: ["绿色能源协会", "琢闻编校社", "大学生读者之友协会", "淮海思源社", "大学生飞镖协会", "淮海棋社", "演讲与口才协会", "白桦俄语社", "大学生就业服务协会"]
-                                },
-                                {
-                                    level: 3,
-                                    label: "三星级社团",
-                                    icon: "medal",
-                                    color: "text-orange-400",
-                                    list: ["小企鹅海洋保护协会", "大学生“三农”协会", "大学生法律之友协会", "大学生英语沙龙协会", "韩屋村", "青年学习社", "大学生燎原学社", "国贸协会", "翻译工作者协会", "大学生模拟联合国大会协会", "金融协会", "天文探索者协会", "中医药协会", "海航社", "阳光手语社", "大学生乒乓球协会", "羽毛球协会", "未央话剧社", "Boom DayBreak街舞社", "GTR动漫社", "国风社", "樱花社", "民族之汇", "纵横辩论社", "大学生心理协会", "未来管理者协会", "企业模拟运营协会", "风暴足球联盟", "大学生排球协会"]
-                                },
-                                {
-                                    level: 2,
-                                    label: "二星级社团",
-                                    icon: "gem",
-                                    color: "text-cyan-400",
-                                    list: ["八一军旅社", "IDV剧社", "Relax Cosplay 动漫协会", "无人机协会", "食安社", "大学生物流协会", "水族协会", "文源社", "大学生中华传统武术协会", "电子竞技社团", "大学生健身健美协会"]
-                                },
-                                {
-                                    level: 1,
-                                    label: "一星级社团",
-                                    icon: "sparkle",
-                                    color: "text-green-400",
-                                    list: ["会计协会", "DIY手艺社", "ALLAN推理社", "大学生台球协会", "M.E街舞艺术团", "T.O轮滑协会"]
-                                }
-                            ],
-                            organizations: {
-                                title: "团学组织",
-                                content: "团学组织是学生自我管理、自我服务、自我教育的重要载体，主要包括校级和院级的<strong>学生会各部门和团委</strong>等。加入这些组织，不仅可以锻炼自己的组织协调、沟通表达、活动策划等多方面能力，还能更深入地参与到学校和学院的管理服务工作中，为同学们发声，为校园建设贡献力量。团学组织的招新信息通常会在开学后通过官方公众号、班级群等渠道发布，有意向的同学可以多多关注。"
-                            }
-                        }
-                    }
-                }
-            },
-            "学习科研": {
-                icon: "graduation-cap",
-                pages: {
-                    "关于绩点和学分": {
-                        title: "关于绩点和学分",
-                        content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><div class="space-y-8"><div><h4 class="font-bold text-2xl text-gray-800 dark:text-gray-100 flex items-center mb-4"><i data-lucide="star" class="text-yellow-500 mr-3"></i>学分 (Credit)</h4><p class="text-gray-600 dark:text-gray-300 text-lg">学分是衡量你学习量的单位。每门课程都有固定的学分，例如“高等数学”可能是4个学分，“大学体育”可能是1个学分。你必须在大学期间修满培养方案规定的<strong>总学分</strong>和<strong>各类课程（如必修课、选修课）的最低学分要求</strong>，才能顺利毕业。所以，请务必认真对待每一门课程。</p></div><div class="border-t my-6 dark:border-gray-700"></div><div><h4 class="font-bold text-2xl text-gray-800 dark:text-gray-100 flex items-center mb-4"><i data-lucide="trending-up" class="text-green-500 mr-3"></i>绩点 (GPA)</h4><p class="text-gray-600 dark:text-gray-300 text-lg">绩点（Grade Point Average）是衡量你学习质量的核心指标，它由你的课程成绩按照特定公式换算而来（通常分数越高，绩点越高）。绩点非常重要，它直接影响到你的<strong>奖学金评定、评优评先</strong>等方方面面。一个高的绩点是你大学学习成果的最直观体现，请从大一开始就努力保持良好的成绩！</p></div></div></div>`
-                    },
-                    "关于转专业": {
-                        title: "关于转专业",
-                        content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">转专业政策简介</h3><p class="text-gray-600 dark:text-gray-300">学校为给学生提供更多自主选择和发展的机会，设立了转专业制度。通常在大一学年结束后，符合条件的学生可以申请转入其他专业学习。具体政策请关注教务处通知。</p></div>`
-                    },
-                    "竞赛与证书": {
-                        title: "竞赛与证书",
-                        content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">积极参与，提升自我</h3><p class="text-gray-600 dark:text-gray-300 mb-6">参加学科竞赛和考取有含金量的证书是提升个人综合能力、增加未来竞争力的重要途径。</p></div>`
-                    }
-                }
-            },
-            "数字化校园": {
-                icon: "smartphone",
-                pages: {
-                    "校园卡与APP": {
-                        title: "校园卡与完美校园APP",
-                        content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">校园一卡通与APP</h3><p class="text-gray-600 dark:text-gray-300">校园卡是校内身份识别和消费的重要凭证。配合“完美校园”APP可以进行充值、查询消费记录、缴纳网费电费等。</p></div>`
-                    },
-                    "宽带与电费": {
-                        title: "宿舍宽带与电费缴纳",
-                        content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><div class="w-full"><h3 class="text-2xl font-bold text-cyan-800 dark:text-cyan-400 mb-6 border-l-4 border-cyan-700 dark:border-cyan-500 pl-4">宿舍宽带使用教程</h3><p class="text-gray-700 dark:text-gray-300 mb-4">宿舍上网需要自行办理。一般流程如下：</p><ol class="list-decimal list-inside space-y-2 text-gray-600 dark:text-gray-400"><li><strong>选择运营商：</strong>开学时，中国移动、联通、电信三大运营商都会在校内设点，提供不同价格和速率的校园套餐，可根据需求自行选择。</li><li><strong>连接与认证：</strong>将网线连接到宿舍墙上的网络端口和你的电脑（或路由器）连接并拨号。以Win11系统举例，拨号界面在设置->网络和Internet->拨号，第一次使用时候设置新连接，移动的账号是学号@cmcc，电信是学号@telecom，联通是学号@unicom，密码都为身份证后八位。</li></ol></div><div class="w-full mt-8"><h3 class="text-2xl font-bold text-amber-800 dark:text-amber-400 mb-6 border-l-4 border-amber-700 dark:border-amber-500 pl-4">电费查询及缴纳</h3><p class="text-gray-700 dark:text-gray-300">请关注”江苏海洋大学微后勤”微信公众号，可以查询宿舍的电费信息并缴纳电费。每个宿舍每学期有少量免费用电额度。</p></div></div>`
-                    },
-                    "WebVPN系统": {
-                        title: "江苏海洋大学WebVPN系统",
-                        content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">什么是WebVPN？</h3><p class="text-gray-600 dark:text-gray-300">WebVPN是一个神奇的工具，它能让你在校外也能像在校园网内一样，访问学校内部的各种网络资源，如图书馆数据库、教务系统等。</p><h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">我该如何使用WebVPN</h3> WebVPN网站：http://webvpn.jou.edu.cn:58888/login ，账号是学号，密码默认是身份证后8位，登陆后点击“统一门户”，在校需要的功能基本上都能在里面找到。</div>`
-                    }
-                }
-            },
-            "答疑与支持": {
-                icon: "life-buoy",
-                pages: {
-                    "常见问题汇总": {
-                        title: "常见问题汇总 (FAQ)", type: "faq", items: [
-                            { q: "学校的快递点在哪里？怎么收发快递？", a: "校内设有菜鸟驿站。你的快递会被送到驿站，凭取件码即可领取。寄快递也可以在驿站操作，非常方便。" },
-                            { q: "生病了要去哪里看病？医保怎么用？", a: "校内设有校医院，可以处理常见的头疼感冒、小外伤等。凭校园卡挂号看病，可享受学生医保报销。如果病情较重，校医院医生会建议并协助转诊至校外的大型医院。" },
-                            { q: "如何查询课程表和成绩？", a: "可以通过学校的教务系统网站查询个人课程表、考试安排和各科成绩。" },
-                            { q: "校园网经常掉线或者速度慢怎么办？", a: "首先可以尝试重启路由器或电脑。如果问题依然存在，可以联系你所办理的运营商客服报修。" }
-                        ]
-                    },
-                    "重要部门联系方式": {
-                        title: "重要部门联系方式",
-                        content: `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">学校官网链接：</h3><div class="overflow-x-auto"><table class="w-full text-left"><thead><p style="color: rgb(0, 0, 255);"><a href="https://www.jou.edu.cn/bgdhcx.htm">https://www.jou.edu.cn/bgdhcx.htm</a></p>`
-                    }
-                }
-            }
-        };
-
-        // 校区特定数据
-        const campusData = {
-            cangwu: {
-                name: "苍梧校区",
-                dormitory: {
-                    title: "苍梧校区宿舍介绍",
-                    items: {
-                        'a_dorm': {
-                            name: 'A区宿舍 (女生)',
-                            image: 'images/苍梧校区/宿舍/A区宿舍.jpg',
-                            summary: '主要为女生宿舍，靠近三食堂和浴室，生活便利。',
-                            details: [
-                                {
-                                    building: 'A1-A4,A8-A10栋',
-                                    images: [
-                                        { src: 'images/苍梧校区/宿舍/A区/A1-A4,A8-A9栋楼/A1-A4,A8-A9宿舍内景.jpg', caption: '宿舍内景（上下铺）' },
-                                    ],
-                                    roomType: '四人间',
-                                    layout: '上下铺',
-                                    bathroom: '独立卫生间，澡堂在三食堂附近',
-                                    ac: '有',
-                                    balcony: '有',
-                                    network: '周日至周四24:00断网，周五周六不断网',
-                                    laundry: '一楼有洗衣房',
-                                    waterHeater: '部分楼层有',
-                                    price: '1200元/年',
-                                    notes: '传统的宿舍结构，空间紧凑但生活气息浓厚。开门使用校卡'
-                                },
-                                {
-                                    building: 'A5-A8栋',
-                                    images: [
-                                        { src: 'images/苍梧校区/宿舍/A区/A5-A8栋楼/A5-A8栋楼宿舍内景.jpg', caption: '宿舍内景（上床下桌）' },
-                                    ],
-                                    roomType: '四人间',
-                                    layout: '上床下桌',
-                                    bathroom: '独立卫生间，澡堂在三食堂附近',
-                                    ac: '有',
-                                    balcony: '有',
-                                    network: '周日至周四24:00断网，周五周六不断网',
-                                    laundry: '一楼有洗衣房',
-                                    waterHeater: '部分楼层有',
-                                    price: '1200元/年',
-                                    notes: '24年暑假刚装修过，装修后变成上床下桌了，宿舍内环境新颖友好。开门使用校卡'
-                                },
-                            ]
-                        },
-                        'b_dorm': {
-                            name: 'B区宿舍 (男生)',
-                            image: 'images/苍梧校区/宿舍/B区宿舍.jpg',
-                            summary: '主要为男生宿舍，楼栋数量多，覆盖多个学院。',
-                            details: [
-                                {
-                                    building: 'B1-B4栋',
-                                    images: [{ src: 'images/苍梧校区/宿舍/B区/B1-B4/B1-B4宿舍内景.jpg', caption: '宿舍内景（上下铺）' }],
-                                    roomType: '四人间',
-                                    layout: '上下铺，床对面一排桌子',
-                                    bathroom: '三食堂西边',
-                                    ac: '有',
-                                    balcony: '有',
-                                    network: '周日至周四24:00断网，周五周六不断网',
-                                    laundry: 'B5楼下，篮球场南边',
-                                    waterHeater: '每层楼一个热水机，24H供热水',
-                                    price: '1200元/年',
-                                    notes: 'B区是最大的宿舍区之一，楼下有小卖部和活动空间。开门使用单独的门卡。'
-                                },
-                                {
-                                    building: 'B5-B6栋',
-                                    images:
-                                        [
-                                            { src: 'images/苍梧校区/宿舍/B区/B5-B6/B5-B6宿舍内景.jpg', caption: '宿舍内景（上床下桌）' },
-                                            { src: 'images/苍梧校区/宿舍/B区/B5-B6/宿舍内详景.jpg', caption: '宿舍内详景' },
-                                            { src: 'images/苍梧校区/宿舍/B区/B5-B6/公共卫生间.jpg', caption: '公共卫生间' },
-                                            { src: 'images/苍梧校区/宿舍/B区/B5-B6/公共卫生间洗手池.jpg', caption: '公共卫生间洗手池' }
-                                        ],
-                                    roomType: '四人间',
-                                    layout: '上床下桌',
-                                    bathroom: '公共卫生间，公共浴室在三食堂西边',
-                                    ac: '有',
-                                    balcony: '有',
-                                    network: '周日至周四24:00断网，周五周六不断网',
-                                    laundry: 'B5楼下，篮球场南边',
-                                    waterHeater: '每层楼一个热水机，24H供热水',
-                                    price: '1000（3、4人间）',
-                                    notes: 'B区是最大的宿舍区之一，楼下有小卖部和活动空间。开门使用单独的门卡。'
-                                },
-                                {
-                                    building: 'B7-B12栋',
-                                    images: [{ src: 'images/苍梧校区/宿舍/B区/B7-B12/B7-B12宿舍内景.jpg', caption: '六人间宿舍内景' }],
-                                    roomType: '六人间',
-                                    layout: '上下铺',
-                                    bathroom: '有独立卫生间',
-                                    ac: '有',
-                                    balcony: '有',
-                                    network: '周日至周四24:00断网，周五周六不断网',
-                                    laundry: '洗衣房在B5楼下，篮球场南边',
-                                    waterHeater: '部分楼层有开水',
-                                    price: '950元/年',
-                                    notes: 'B区是最大的宿舍区之一，楼下有小卖部和活动空间。开门使用单独的门卡。'
-                                },
-                            ]
-                        },
-                        'd_dorm': {
-                            name: 'D区宿舍 (东区)',
-                            image: 'images/苍梧校区/宿舍/D区宿舍.jpg',
-                            summary: '男女生宿舍都有，四人间独立卫浴，条件优越。',
-                            details: [
-                                {
-                                    building: 'D5-6，D9-10栋',
-                                    images: [{ src: 'images/苍梧校区/宿舍/D区/D5,6,9,10/D5,6,9,10宿舍内景.jpg', caption: '宿舍内景（四人间）' }],
-                                    roomType: '四人间',
-                                    layout: '上床下桌',
-                                    bathroom: '独立卫浴，一楼也有公共澡堂',
-                                    ac: '有',
-                                    balcony: '两个宿舍共用一个大阳台',
-                                    network: '周日至周四24:00断电',
-                                    laundry: '宿舍楼一楼有公共洗衣房',
-                                    waterHeater: '宿舍内刷卡可取热水，每层楼有一个饮水机',
-                                    price: '1500元/年（未免费供应热水，实际按1350元/年收取）',
-                                    notes: '位于学校东侧，也被称为东区宿舍，靠近东区食堂和四号门，环境安静。'
-                                },
-                                {
-                                    building: 'D7-8栋',
-                                    images: [{ src: 'images/苍梧校区/宿舍/D区/D7-D8栋楼/D7-D8栋楼宿舍内景.jpg', caption: '宿舍内景（三人间）' }],
-                                    roomType: '三人间',
-                                    layout: '上床下桌',
-                                    bathroom: '独立卫浴',
-                                    ac: '有',
-                                    balcony: '有',
-                                    network: '周日至周四24:00断网，周五周六不断网',
-                                    laundry: '宿舍楼一楼有洗衣房',
-                                    waterHeater: '每层楼有热水机',
-                                    price: '1500元/年',
-                                    notes: '位于学校东侧，也被称为东区宿舍，靠近东区食堂和四号门，环境安静。'
-                                },
-                            ]
-                        }
-                    }
-                },
-                canteen: {
-                    title: "苍梧校区食堂介绍(未完成，内容仅仅是占位用的，未核实，待开发)",
-                    items: {
-                        'canteen1': {
-                            name: '第一食堂',
-                            image: 'images/苍梧校区/食堂/第一食堂.jpg',
-                            summary: '位于大学生活动中心旁，上下课必经之路。',
-                            details: [
-                                {
-                                    area: '第一食堂',
-                                    images: [
-                                        { src: 'images/苍梧校区/食堂/第一食堂/苍梧校区_第一食堂_麻辣香锅.jpg', caption: '麻辣香锅' },
-                                        { src: 'images/苍梧校区/食堂/第一食堂/苍梧校区_第一食堂_腊汁肉夹馍.jpg', caption: '腊汁肉夹馍' },
-                                        { src: 'images/苍梧校区/食堂/第一食堂/苍梧校区_第一食堂_鸡蛋拌面.jpg', caption: '鸡蛋拌面' },
-                                    ],
-                                    specialty: ['自选快餐', '特色炒饭', '肉夹馍', '包子'],
-                                    priceRange: '待补充',
-                                    openingHours: '待补充',
-                                    notes: '主打便捷快餐，出餐速度快，是上下课间快速解决吃饭问题的首选。'
-                                }
-                            ]
-                        },
-                        'canteen2': {
-                            name: '第二食堂 & 风味餐厅',
-                            image: 'images/苍梧校区/食堂/第二食堂.jpg',
-                            summary: '位于海洋楼旁，离教学区最近，装修典雅。',
-                            details: [
-                                {
-                                    area: '一楼：第二食堂',
-                                    images: [
-                                        { src: 'images/苍梧校区/食堂/第二食堂&风味餐厅/苍梧校区_第二食堂 & 风味餐厅_明炉羊肉.jpg', caption: '明炉羊肉' },
-                                        { src: 'images/苍梧校区/食堂/第二食堂&风味餐厅/苍梧校区_第二食堂 & 风味餐厅_虾仁鸡蛋炒面.jpg', caption: '虾仁鸡蛋炒面' },
-                                        { src: 'images/苍梧校区/食堂/第二食堂&风味餐厅/苍梧校区_第二食堂 & 风味餐厅_卤汁香肠拌面.jpg', caption: '卤汁香肠拌面' },
-                                        { src: 'images/苍梧校区/食堂/第二食堂&风味餐厅/苍梧校区_第二食堂 & 风味餐厅_水煮小酥肉.jpg', caption: '水煮小酥肉' },
-                                    ],
-                                    specialty: ['小火锅', '盖浇饭', '川菜', '拌饭'],
-                                    priceRange: '待补充',
-                                    openingHours: '待补充',
-                                    notes: '离教学楼最近，菜品实惠，是解决日常三餐的主要场所。'
-                                },
-                                {
-                                    area: '二楼：风味餐厅',
-                                    images: [
-                                        { src: 'images/苍梧校区/食堂/第二食堂&风味餐厅/苍梧校区_第二食堂 & 风味餐厅_特色米线.jpg', caption: '特色米线' },
-                                        { src: 'images/苍梧校区/食堂/第二食堂&风味餐厅/苍梧校区_第二食堂 & 风味餐厅_煎肉拌饭.jpg', caption: '煎肉拌饭' },
-                                        { src: 'images/苍梧校区/食堂/第二食堂&风味餐厅/苍梧校区_第二食堂 & 风味餐厅_招牌法式咖喱蛋包饭.jpg', caption: '招牌法式咖喱蛋包饭' },
-                                        { src: 'images/苍梧校区/食堂/第二食堂&风味餐厅/苍梧校区_第二食堂 & 风味餐厅_淮南牛肉汤.jpg', caption: '淮南牛肉汤' },
-                                    ],
-                                    specialty: ['米线', '牛肉汤', '石锅拌饭', '咖喱饭'],
-                                    priceRange: '待补充',
-                                    openingHours: '待补充',
-                                    notes: '环境优雅，提供各地风味美食，适合改善伙食或朋友小聚。'
-                                }
-                            ]
-                        },
-                        'canteen3': {
-                            name: '第三食堂 & 第四食堂',
-                            image: 'images/苍梧校区/食堂/第三食堂.jpg',
-                            summary: '网红餐厅，种类丰富，最大和豪华的食堂。',
-                            details: [
-                                {
-                                    area: '一楼：第三食堂',
-                                    images: [
-                                        { src: 'images/苍梧校区/食堂/第三食堂&第四食堂/苍梧校区_第三 & 第四食堂_干锅鸡快.jpg', caption: '干锅鸡快' },
-                                        { src: 'images/苍梧校区/食堂/第三食堂&第四食堂/苍梧校区_第三 & 第四食堂_鸡肉铁板饭.jpg', caption: '鸡肉铁板饭' },
-                                        { src: 'images/苍梧校区/食堂/第三食堂&第四食堂/苍梧校区_第三 & 第四食堂_5元特价快餐.jpg', caption: '5元特价快餐' },
-                                        { src: 'images/苍梧校区/食堂/第三食堂&第四食堂/苍梧校区_第三 & 第四食堂_武汉热干面.jpg', caption: '武汉热干面' },
-                                        { src: 'images/苍梧校区/食堂/第三食堂&第四食堂/苍梧校区_第三 & 第四食堂_成都担担面.jpg', caption: '成都担担面' },
-                                        { src: 'images/苍梧校区/食堂/第三食堂&第四食堂/苍梧校区_第三 & 第四食堂_回锅肉炒饭.jpg', caption: '回锅肉炒饭' },
-                                        { src: 'images/苍梧校区/食堂/第三食堂&第四食堂/苍梧校区_第三 & 第四食堂_南京鸭血粉丝.jpg', caption: '南京鸭血粉丝' },
-                                        { src: 'images/苍梧校区/食堂/第三食堂&第四食堂/苍梧校区_第三 & 第四食堂_重庆小面.jpg', caption: '重庆小面' },
-                                        { src: 'images/苍梧校区/食堂/第三食堂&第四食堂/苍梧校区_第三 & 第四食堂_汉堡工厂.jpg', caption: '汉堡工厂' },
-                                    ],
-                                    specialty: ['5元特价快餐', '校园川菜', '拉面', '武汉热干面'],
-                                    priceRange: '待补充',
-                                    openingHours: '待补充',
-                                    notes: '学以其超高性价比的5元快餐闻名，是月底的“救星”。'
-                                },
-                                {
-                                    area: '二楼：第四食堂',
-                                    images: [
-                                        { src: 'images/苍梧校区/食堂/第三食堂&第四食堂/苍梧校区_第三 & 第四食堂_烤盘饭.jpg', caption: '烤盘饭' },
-                                        { src: 'images/苍梧校区/食堂/第三食堂&第四食堂/苍梧校区_第三 & 第四食堂_招牌烤肉拌饭.jpg', caption: '招牌烤肉拌饭' },
-                                        { src: 'images/苍梧校区/食堂/第三食堂&第四食堂/苍梧校区_第三 & 第四食堂_肥牛麻酱拌面.jpg', caption: '肥牛麻酱拌面' },
-                                        { src: 'images/苍梧校区/食堂/第三食堂&第四食堂/苍梧校区_第三 & 第四食堂_冒烤鸭.jpg', caption: '冒烤鸭' },
-                                        { src: 'images/苍梧校区/食堂/第三食堂&第四食堂/苍梧校区_第三 & 第四食堂_鸡排意面.jpg', caption: '鸡排意面' },
-                                    ],
-                                    specialty: ['麻辣烫', '冒烤鸭', '烤肉饭'],
-                                    priceRange: '待补充',
-                                    openingHours: '待补充',
-                                    notes: '学校的美食中心，选择多样，冒烤鸭尤其好吃。'
-                                }
-                            ]
-                        },
-                        'canteen_east': {
-                            name: '东区食堂',
-                            image: 'images/苍梧校区/食堂/东区食堂.jpg',
-                            summary: 'D区食堂，空间大，座位多。',
-                            details: [
-                                {
-                                    area: 'D区食堂',
-                                    images: [
-                                        { src: 'images/苍梧校区/食堂/东区食堂/苍梧校区_东区食堂_麻辣香锅.jpg', caption: '麻辣香锅' },
-                                        { src: 'images/苍梧校区/食堂/东区食堂/苍梧校区_东区食堂_石锅菜.jpg', caption: '石锅菜' },
-                                        { src: 'images/苍梧校区/食堂/东区食堂/苍梧校区_东区食堂_鸡肉拌面.jpg', caption: '鸡肉拌面' },
-                                        { src: 'images/苍梧校区/食堂/东区食堂/苍梧校区_东区食堂_烤肉饭.jpg', caption: '烤肉饭' },
-                                        { src: 'images/苍梧校区/食堂/东区食堂/苍梧校区_东区食堂_牛肉汤水饺.jpg', caption: '牛肉汤水饺' },
-                                        { src: 'images/苍梧校区/食堂/东区食堂/苍梧校区_东区食堂_快餐.jpg', caption: '快餐' },
-                                    ],
-                                    specialty: ['大众快餐', '面食窗口', '水饺', '香锅'],
-                                    priceRange: '待补充',
-                                    openingHours: '待补充',
-                                    notes: '空间宽敞明亮，座位充足，不用担心饭点找不到位置。服务D区及附近师生。'
-                                }
-                            ]
-                        },
-                        'canteen_ethnic': {
-                            name: '民族餐厅',
-                            image: 'images/苍梧校区/食堂/民族餐厅.jpg',
-                            summary: '位于医务室旁，清真食堂。',
-                            details: [
-                                {
-                                    area: '清真美食',
-                                    images: [
-                                        { src: 'images/苍梧校区/食堂/民族餐厅/苍梧校区_民族餐厅_特色风味面.jpg', caption: '特色风味面' },
-                                        { src: 'images/苍梧校区/食堂/民族餐厅/苍梧校区_民族餐厅_龙虾牛肉面.jpg', caption: '龙虾牛肉面' },
-                                        { src: 'images/苍梧校区/食堂/民族餐厅/苍梧校区_民族餐厅_精品快餐.jpg', caption: '精品快餐' },
-                                        { src: 'images/苍梧校区/食堂/民族餐厅/苍梧校区_民族餐厅_清真涮煮.jpg', caption: '清真涮煮' },
-                                        { src: 'images/苍梧校区/食堂/民族餐厅/苍梧校区_民族餐厅_营养早餐.jpg', caption: '营养早餐' },
-                                    ],
-                                    specialty: ['清真涮煮', '风味面', '炒面', '特色早餐'],
-                                    priceRange: '待补充',
-                                    openingHours: '待补充',
-                                    notes: '严格的清真食堂，为有需要的同学提供地道的民族风味美食，早餐的饼类尤其受欢迎。'
-                                }
-                            ]
-                        },
-                        'canteen_south': {
-                            name: '南园餐厅',
-                            image: 'images/苍梧校区/食堂/南园餐厅.jpg',
-                            summary: '位于文予楼旁，特色是宴席。',
-                            details: [
-                                {
-                                    area: '海洋餐厅',
-                                    images: [
-                                        { src: 'images/苍梧校区/食堂/南园餐厅/苍梧校区_南园餐厅_隆江猪脚饭.jpg', caption: '隆江猪脚饭' },
-                                        { src: 'images/苍梧校区/食堂/南园餐厅/苍梧校区_南园餐厅_番茄鸡蛋.jpg', caption: '番茄鸡蛋' },
-                                        { src: 'images/苍梧校区/食堂/南园餐厅/苍梧校区_南园餐厅_小炒.jpg', caption: '小炒' },
-
-                                    ],
-
-                                    specialty: ['家常炒菜', '隆江猪脚饭', '小炒'],
-                                    priceRange: '待补充',
-                                    openingHours: '待补充',
-                                    notes: '更像是校内的社会餐厅，提供点菜服务和包间，适合班级聚餐、生日宴请等活动。'
-                                }
-                            ]
-                        }
-                    }
-                }
-            },
-            tongguan: {
-                name: "通灌校区",
-                dormitory: {
-                    title: "通灌校区宿舍介绍",
-                    items: {
-                        'jinxiu_dorm': {
-                            name: '锦绣宿舍',
-                            image: 'images/通灌校区/宿舍/锦绣宿舍.jpg',
-                            summary: '通灌校区主要学生宿舍区。',
-                            details: [
-                                {
-                                    building: '锦绣1,2,5号楼',
-                                    images: [
-                                        { src: 'images/通灌校区/宿舍/锦绣1,2,5号楼/锦绣1,2,5号楼宿舍内景.jpg', caption: '宿舍内景（上下铺）' },
-                                    ],
-                                    roomType: '四人间',
-                                    layout: '上下铺',
-                                    bathroom: '无独立卫生间，每层楼有隔间式厕所，有人定期打扫。澡堂在前程餐厅旁',
-                                    ac: '有',
-                                    balcony: '无',
-                                    network: '周日至周四24:00断网，周五周六不断网',
-                                    laundry: '部分楼层有公共洗衣机',
-                                    waterHeater: '部分楼层有开水炉',
-                                    price: '900元/年',
-                                    notes: '部分水泥地部分有地砖，桌子上面有柜子可以放东西，宿舍还有大柜子，每个宿舍都有一套打扫工具，每层楼都有大的洗漱台，宿舍开门使用钥匙'
-                                },
-                                {
-                                    building: '锦绣3，4，8号楼',
-                                    images: [{ src: 'images/通灌校区/宿舍/锦绣3,4,8号楼/宿舍内情况.jpg', caption: '宿舍内景' }],
-                                    roomType: '四人间（少量双人间）',
-                                    layout: '上下铺',
-                                    bathroom: '有独立卫生间，澡堂在前程餐厅旁',
-                                    ac: '有',
-                                    balcony: '有',
-                                    network: '周日至周四24:00断网，周五周六不断网',
-                                    laundry: '有',
-                                    waterHeater: '双数楼层有热水机',
-                                    price: '1200元/年',
-                                    notes: '不仅每间宿舍内有洗漱台 每层楼也安排大洗漱台，开门使用钥匙'
-                                },
-                                {
-                                    building: '锦绣6，7号楼',
-                                    images: [{ src: 'images/通灌校区/宿舍/锦绣6,7号楼/锦绣6,7号楼宿舍内景.jpg', caption: '五人间宿舍内景' }],
-                                    roomType: '五人间，四个人上下铺，一个人上床下桌',
-                                    layout: '上床下桌/上下铺',
-                                    bathroom: '无独立卫生间，请到前程餐厅附近的澡堂洗澡',
-                                    ac: '有',
-                                    balcony: '无',
-                                    network: '周日至周四24:00断网，周五周六不断网',
-                                    laundry: '两层中有一层会有洗衣机',
-                                    waterHeater: '两层中有一层会有热水炉',
-                                    price: '700元/年',
-                                    notes: '部分水泥地部分有地砖，开门使用钥匙。多出来的桌子是上床下桌，比其他桌子大一些'
-                                }
-                            ]
-                        }
-                    }
-                },
-                canteen: {
-                    title: "通灌校区食堂介绍",
-                    items: {
-                        'qiancheng_canteen': {
-                            name: '前程餐厅',
-                            image: 'images/通灌校区/食堂/前程餐厅.jpg',
-                            summary: '校区主食堂，满足日常用餐需求。',
-                            details: [
-                                {
-                                    area: '前程餐厅',
-                                    images: [
-                                        { src: 'images/通灌校区/食堂/前程餐厅/通灌校区_前程餐厅_西红柿鸡蛋拌面.jpg', caption: '西红柿鸡蛋拌面' },
-                                        { src: 'images/通灌校区/食堂/前程餐厅/通灌校区_前程餐厅_招牌鸡腿饭.jpg', caption: '招牌鸡腿饭' },
-                                        { src: 'images/通灌校区/食堂/前程餐厅/通灌校区_前程餐厅_藤椒鸡柳拌面.jpg', caption: '藤椒鸡柳拌面' },
-                                    ],
-                                    specialty: ['版面', '快餐', '水饺', '烤鸭'],
-                                    priceRange: '待补充',
-                                    openingHours: '待补充',
-                                    notes: '菜品丰富，价格实惠，快餐很棒，窗口很多'
-                                }
-                            ]
-                        },
-                        'food_square': {
-                            name: '美食广场',
-                            image: 'images/通灌校区/食堂/美食广场.jpg',
-                            summary: '汇集多种风味美食，提供多样化选择。',
-                            details: [
-                                {
-                                    area: '美食广场',
-                                    images: [
-                                        { src: 'images/通灌校区/食堂/美食广场/通灌校区_美食广场_中式快餐.jpg', caption: '中式快餐' },
-                                        { src: 'images/通灌校区/食堂/美食广场/通灌校区_美食广场_麻辣烫香锅.jpg', caption: '麻辣烫香锅' },
-                                        { src: 'images/通灌校区/食堂/美食广场/通灌校区_美食广场_小碗牛肉面.jpg', caption: '小碗牛肉面' },
-                                    ],
-                                    specialty: ['中式快餐', '鸡肉饭', '拌面', '香锅'],
-                                    priceRange: '待补充',
-                                    openingHours: '待补充',
-                                    notes: '年轻人喜爱的地方，营业时间长，适合休闲和夜宵。'
-                                }
-                            ]
-                        },
-                        '民族风味餐厅': {
-                            name: '民族风味餐厅',
-                            image: 'images/通灌校区/食堂/民族风味餐厅.jpg',
-                            summary: '汇集多种风味美食，提供多样化选择。',
-                            details: [
-                                {
-                                    area: '民族风味餐厅',
-                                    images: [
-                                        { src: 'images/通灌校区/食堂/民族风味餐厅/通灌校区_民族风味餐厅_番茄鸡排饭.jpg', caption: '番茄鸡排饭' },
-                                        { src: 'images/通灌校区/食堂/民族风味餐厅/通灌校区_民族风味餐厅_酸菜牛肉炒饭.jpg', caption: '酸菜牛肉炒饭' },
-                                        { src: 'images/通灌校区/食堂/民族风味餐厅/通灌校区_民族风味餐厅_鸡排烤冷面.jpg', caption: '鸡排烤冷面' }
-                                    ],
-                                    specialty: ['黄焖鸡', '粉丝', '鸡排饭',],
-                                    priceRange: '待补充',
-                                    openingHours: '待补充',
-                                    notes: '年轻人喜爱的地方，营业时间长，适合休闲和夜宵。'
-                                }
-                            ]
-                        }
-                    }
-                }
-            },
-            songtiao: {
-                name: "宋跳校区",
-                dormitory: {
-                    title: "宋跳校区宿舍介绍",
-                    items: {
-                        'songtiao_dorm': {
-                            name: '宋跳校区宿舍',
-                            image: 'images/宋跳校区/宿舍/宋跳宿舍.jpg',
-                            summary: '宋跳校区学生生活区。',
-                            details: [
-                                {
-                                    building: '1，2号楼',
-                                    images: [
-                                        { src: 'images/宋跳校区/宿舍/1,2号楼/1,2号楼宿舍内景.jpg', caption: '四人间（上床下桌）' },
-                                    ],
-                                    roomType: '四人间',
-                                    layout: '上床下桌',
-                                    bathroom: '无独立卫生间，楼内有公共卫生间。大澡堂洗澡',
-                                    ac: '有',
-                                    balcony: '无',
-                                    network: '周日至周四24:00断网，周五周六不断网',
-                                    laundry: '阳台可自行安装洗衣机',
-                                    waterHeater: '宿舍内独立热水器',
-                                    price: '1000元/年',
-                                    notes: '宿舍条件较好，均为标准四人间配置，生活舒适。新改造的卫生间有自洁功能'
-                                },
-                                {
-                                    building: '3，6号楼(六人间)',
-                                    images: [{ src: 'images/宋跳校区/宿舍/3,6号楼/3,6号楼宿舍内景.jpg', caption: '六人间宿舍内景' }],
-                                    roomType: '六人间',
-                                    layout: '上下铺',
-                                    bathroom: '有独立卫生间，有公共卫生间，大澡堂洗澡',
-                                    ac: '有',
-                                    balcony: '未知',
-                                    network: '周日至周四24:00断网，周五周六不断网',
-                                    laundry: '有',
-                                    waterHeater: '未知',
-                                    price: '1000元/年',
-                                    notes: '宿舍条件较好，均为标准六人间配置，生活舒适。'
-                                },
-                                {
-                                    building: '6号楼(四人间)，7，8号楼',
-                                    images: [{ src: 'images/宋跳校区/宿舍/6,7,8号楼/6,7,8号楼宿舍内景.jpg', caption: '宽敞的四人间宿舍' }],
-                                    roomType: '四人间',
-                                    layout: '上床下桌',
-                                    bathroom: '有独立卫生间和公共卫生间，大澡堂洗澡',
-                                    ac: '有',
-                                    balcony: '有',
-                                    network: '周日至周四24:00断网，周五周六不断网',
-                                    laundry: '未知',
-                                    waterHeater: '未知',
-                                    price: '1200元/年',
-                                    notes: '宿舍条件较好，均为标准四人间配置，生活舒适。宿舍空间大。'
-                                }
-                            ]
-                        }
-                    }
-                },
-                canteen: {
-                    title: "宋跳校区食堂介绍",
-                    items: {
-                        'donggang_canteen': {
-                            name: '东港餐厅',
-                            image: 'images/宋跳校区/食堂/东港餐厅.jpg',
-                            summary: '校区内唯一的学生食堂。',
-                            details: [
-                                {
-                                    area: '综合食堂',
-                                    images: [
-                                        { src: 'images/宋跳校区/食堂/东港餐厅/宋跳校区_东港餐厅_兰州拉面.jpg', caption: '兰州拉面' },
-                                        { src: 'images/宋跳校区/食堂/东港餐厅/宋跳校区_东港餐厅_新疆炒米粉.jpg', caption: '新疆炒米粉' },
-                                        { src: 'images/宋跳校区/食堂/东港餐厅/宋跳校区_东港餐厅_中式快餐.jpg', caption: '中式快餐' },
-                                        { src: 'images/宋跳校区/食堂/东港餐厅/宋跳校区_东港餐厅_川味小炒.jpg', caption: '川味小炒' },
-                                    ],
-                                    specialty: ['新疆炒米粉', '兰州拉面', '盖浇饭', '川味小炒'],
-                                    priceRange: '待补充',
-                                    openingHours: '待补充',
-                                    notes: '虽然选择不如主校区多，但能满足日常基本用餐需求，口味不错。'
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        };
-
-        // 新增: 用于填充专业和年份下拉菜单的数据
-        const campusInfoData = {
-            "苍梧校区": [
-                { college: "海洋科学与水产学院", majors: ["海洋资源与环境", "海洋科学", "生物技术", "水产养殖学"] },
-                { college: "电子工程学院", majors: ["电子信息工程", "通信工程", "自动化", "电气工程及其自动化"] },
-                { college: "环境与化学工程学院", majors: ["环境工程", "化学工程与工艺", "高分子材料与工程", "安全工程"] },
-                { college: "计算机工程学院", majors: ["计算机科学与技术", "软件工程", "数据科学与大数据技术", "网络工程"] },
-                { college: "药学院", majors: ["制药工程", "药物制剂", "药物分析"] },
-                { college: "体育学院", majors: ["休闲体育"] },
-                { college: "马可夫洛夫海洋工程学院", majors: ["机器人工程", "船舶与海洋工程"] }
-            ],
-            "通灌校区": [
-                { college: "海洋食品与生物工程学", majors: ["食品科学与工程", "生物工程"] },
-                { college: "海洋工程学院", majors: ["船舶与海洋工程", "海洋资源开发技术"] },
-                { college: "机械工程学院", majors: ["机械设计制造及其自动化", "机械电子工程", "机器人工程"] },
-                { college: "土木与港海工程学院", majors: ["土木工程", "建筑学", "港口航道与海岸工程", "工程管理"] },
-                { college: "海洋技术与测绘学院", majors: ["测绘工程", "海洋技术", "地理信息科学", "遥感科学与技术"] },
-                { college: "理学院", majors: ["信息与计算科学", "光电信息科学与工程", "新能源科学与工程", "数学与应用数学"] },
-                { college: "商学院", majors: ["金融学", "国际经济与贸易", "工商管理", "会计学", "财务管理", "物流管理"] },
-                { college: "文法学院", majors: ["汉语言文学", "新闻学", "法学", "行政管理"] },
-                { college: "外国语学院", majors: ["英语", "日语", "俄语"] },
-                { college: "艺术设计学院", majors: ["视觉传达设计", "环境设计", "产品设计", "数字媒体艺术"] }
-            ]
-        };
-
-        /**
-         * 指南应用类
-         */
         class GuideApp {
             constructor(commonData, specificData) {
                 this.guideData = commonData;
@@ -1372,8 +590,8 @@
                 this.observer = null;
                 this.isScrollingProgrammatically = false;
                 this.scrollTimeout = null;
-                this.currentUserData = null; // 新增: 存储当前用户的完整数据
-                this.unsubscribeUserDoc = null; // 新增: 用于取消文档监听
+                this.currentUserData = null;
+                this.unsubscribeUserDoc = null;
 
                 // 缓存DOM元素
                 this.loadingOverlay = document.getElementById('loading-overlay');
@@ -1389,19 +607,13 @@
                 this.campusDialog = document.getElementById('campus-selector-dialog');
                 this.changeCampusBtn = document.getElementById('change-campus-btn');
                 this.currentCampusDisplay = document.getElementById('current-campus-display');
-
-                // 详情页元素
                 this.detailView = document.getElementById('detail-view');
                 this.detailTitle = document.getElementById('detail-title');
                 this.detailContent = document.getElementById('detail-content');
                 this.backToMainBtn = document.getElementById('back-to-main-btn');
-
-                // 桌面端搜索元素
                 this.searchForm = document.getElementById('search-form');
                 this.searchInput = document.getElementById('search-input');
                 this.liveSearchResultsContainer = document.getElementById('live-search-results');
-
-                // 移动端优化元素
                 this.bottomNav = document.getElementById('bottom-nav');
                 this.bottomNavHome = document.getElementById('bottom-nav-home');
                 this.bottomNavMenu = document.getElementById('bottom-nav-menu');
@@ -1411,9 +623,6 @@
                 this.mobileSearchInput = document.getElementById('mobile-search-input');
                 this.mobileSearchResultsContainer = document.getElementById('mobile-search-results-container');
                 this.closeMobileSearchBtn = document.getElementById('close-mobile-search-btn');
-
-
-                // 功能元素
                 this.themeToggleBtn = document.getElementById('theme-toggle-btn');
                 this.feedbackBtn = document.getElementById('feedback-btn');
                 this.feedbackModal = document.getElementById('feedback-modal');
@@ -1421,29 +630,22 @@
                 this.closeFeedbackBtn = document.getElementById('close-feedback-btn');
                 this.feedbackForm = document.getElementById('feedback-form');
                 this.feedbackSuccessMsg = document.getElementById('feedback-success-msg');
-
-                // 认证相关UI元素
                 this.authModal = document.getElementById('auth-modal');
                 this.authDialog = document.getElementById('auth-dialog');
                 this.loginPromptBtn = document.getElementById('login-prompt-btn');
                 this.userProfileBtn = document.getElementById('user-profile-btn');
                 this.closeAuthBtn = document.getElementById('close-auth-btn');
                 this.authTitle = document.getElementById('auth-title');
-
                 this.loginFormContainer = document.getElementById('login-form-container');
                 this.registerFormContainer = document.getElementById('register-form-container');
                 this.resetPasswordFormContainer = document.getElementById('reset-password-form-container');
-
                 this.loginForm = document.getElementById('login-form');
                 this.registerForm = document.getElementById('register-form');
                 this.resetPasswordForm = document.getElementById('reset-password-form');
-
                 this.forgotPasswordLink = document.getElementById('forgot-password-link');
                 this.goToRegisterLink = document.getElementById('go-to-register');
                 this.goToLoginFromRegisterLink = document.getElementById('go-to-login-from-register');
                 this.goToLoginFromResetLink = document.getElementById('go-to-login-from-reset');
-
-                // 新增: 用户中心UI元素
                 this.profileModal = document.getElementById('profile-modal');
                 this.profileDialog = document.getElementById('profile-dialog');
                 this.closeProfileBtn = document.getElementById('close-profile-btn');
@@ -1451,10 +653,8 @@
                 this.editProfileBtn = document.getElementById('edit-profile-btn');
                 this.cancelEditBtn = document.getElementById('cancel-edit-btn');
                 this.saveProfileBtn = document.getElementById('save-profile-btn');
-
                 this.profileViewContainer = document.getElementById('profile-view-container');
                 this.profileEditContainer = document.getElementById('profile-edit-container');
-
                 this.sidebarAvatar = document.getElementById('sidebar-avatar');
                 this.sidebarNickname = document.getElementById('sidebar-nickname');
                 this.profileAvatarLarge = document.getElementById('profile-avatar-large');
@@ -1462,14 +662,13 @@
                 this.profileEmail = document.getElementById('profile-email');
                 this.profileMajorYear = document.getElementById('profile-major-year').querySelector('span');
                 this.profileBio = document.getElementById('profile-bio');
-
                 this.avatarSelectionGrid = document.getElementById('avatar-selection-grid');
                 this.editNickname = document.getElementById('edit-nickname');
                 this.editBio = document.getElementById('edit-bio');
                 this.editEnrollmentYear = document.getElementById('edit-enrollment-year');
                 this.editMajor = document.getElementById('edit-major');
-
             }
+
             _showToast(message, type = 'info') {
                 const container = document.getElementById('toast-container');
                 const toast = document.createElement('div');
@@ -1487,23 +686,21 @@
                 container.appendChild(toast);
                 lucide.createIcons({ nodes: [toast.querySelector('.toast-icon')] });
 
-                // Animate in
                 setTimeout(() => {
                     toast.classList.add('show');
                 }, 100);
 
-                // Animate out and remove
                 setTimeout(() => {
                     toast.classList.remove('show');
                     toast.addEventListener('transitionend', () => toast.remove());
-                }, 4000); // 4秒后自动消失
+                }, 4000);
             }
 
             init() {
                 this._determineAndApplyInitialTheme();
                 this._setupEventListeners();
-                this._listenForAuthStateChanges(); // 启动认证状态监听
-                this._populateProfileEditDropdowns(); // 新增: 填充编辑资料的下拉菜单
+                this._listenForAuthStateChanges();
+                this._populateProfileEditDropdowns();
                 this.selectedCampus = localStorage.getItem('selectedCampus');
 
                 if (this.selectedCampus) {
@@ -1512,7 +709,6 @@
                     this._showCampusSelector();
                 }
 
-                // 隐藏加载动画
                 setTimeout(() => {
                     this.loadingOverlay.style.opacity = '0';
                     setTimeout(() => this.loadingOverlay.style.display = 'none', 500);
@@ -1528,7 +724,7 @@
             }
 
             _createNav() {
-                this.navMenu.innerHTML = ''; // 清空旧菜单
+                this.navMenu.innerHTML = '';
                 for (const categoryKey in this.guideData) {
                     const categoryData = this.guideData[categoryKey];
                     const categoryDiv = document.createElement('div');
@@ -1605,9 +801,9 @@
                         } else if (page.type === 'clubs') {
                             section.innerHTML = this._createClubsHtml(page.data);
                             this._addClubTabListeners(section);
-                        } else if (page.type === 'campus-query-tool') { // 新增: 处理校区查询工具
+                        } else if (page.type === 'campus-query-tool') {
                             section.innerHTML = this._createCampusQueryToolHtml();
-                            this._initCampusQueryTool(section); // 初始化其JS逻辑
+                            this._initCampusQueryTool(section);
                         } else {
                             section.innerHTML = page.content;
                         }
@@ -1646,7 +842,6 @@
             }
 
             _createClubsHtml(data) {
-                // "全部" 选项卡
                 const allTabHtml = `
                     <button class="tab-button px-4 py-3 text-base md:text-lg text-gray-600 dark:text-gray-400" data-level="all">
                         <i data-lucide="layout-grid" class="inline-block w-5 h-5 mr-2 text-blue-500"></i>
@@ -1654,7 +849,6 @@
                     </button>
                 `;
 
-                // 各星级选项卡
                 const tabsHtml = data.clubs.map((group, index) => `
                     <button class="tab-button px-4 py-3 text-base md:text-lg text-gray-600 dark:text-gray-400 ${index === 0 ? 'active' : ''}" data-level="${group.level}">
                         <i data-lucide="${group.icon}" class="inline-block w-5 h-5 mr-2 ${group.color}"></i>
@@ -1662,7 +856,6 @@
                     </button>
                 `).join('');
 
-                // "全部" 内容面板
                 let allClubsListHtml = '';
                 data.clubs.forEach(group => {
                     allClubsListHtml += group.list.map(clubName => `
@@ -1680,7 +873,6 @@
                     </div>
                 `;
 
-                // 各星级内容面板
                 const panesHtml = data.clubs.map((group, index) => {
                     const clubListHtml = group.list.map(clubName => `
                         <div class="bg-white dark:bg-gray-800/50 p-4 rounded-lg shadow-md flex items-center space-x-3 transform hover:scale-105 hover:shadow-xl transition-all duration-300">
@@ -1728,12 +920,9 @@
                     if (!button) return;
 
                     const level = button.dataset.level;
-
-                    // 更新按钮激活状态
                     tabContainer.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
                     button.classList.add('active');
 
-                    // 更新内容面板的激活状态
                     const paneContainer = container.querySelector('.club-panes-container');
                     paneContainer.querySelectorAll('.club-pane').forEach(pane => {
                         pane.classList.remove('active');
@@ -1754,24 +943,19 @@
                 this.sidebarOverlay.addEventListener('click', this._toggleSidebar.bind(this));
                 this.campusModal.addEventListener('click', this._handleCampusSelection.bind(this));
                 this.changeCampusBtn.addEventListener('click', this._showCampusSelector.bind(this));
-
                 this.contentArea.addEventListener('click', this._handleCardClick.bind(this));
                 this.backToMainBtn.addEventListener('click', this._hideDetailView.bind(this));
-
                 this.searchForm.addEventListener('submit', e => e.preventDefault());
                 this.searchInput.addEventListener('input', this._handleLiveSearch.bind(this));
                 document.addEventListener('click', this._handleGlobalClick.bind(this));
                 this.liveSearchResultsContainer.addEventListener('click', this._handleSearchResultClick.bind(this));
-
                 this.bottomNavHome.addEventListener('click', this._handleHomeClick.bind(this));
                 this.bottomNavMenu.addEventListener('click', this._toggleSidebar.bind(this));
                 this.bottomNavSearch.addEventListener('click', this._showMobileSearch.bind(this));
                 this.bottomNavCampus.addEventListener('click', this._showCampusSelector.bind(this));
-
                 this.closeMobileSearchBtn.addEventListener('click', this._hideMobileSearch.bind(this));
                 this.mobileSearchInput.addEventListener('input', this._handleMobileLiveSearch.bind(this));
                 this.mobileSearchResultsContainer.addEventListener('click', this._handleSearchResultClick.bind(this));
-
                 this.themeToggleBtn.addEventListener('click', this._handleThemeToggle.bind(this));
                 this.feedbackBtn.addEventListener('click', this._showFeedbackModal.bind(this));
                 this.closeFeedbackBtn.addEventListener('click', this._hideFeedbackModal.bind(this));
@@ -1779,22 +963,18 @@
                     if (e.target === this.feedbackModal) this._hideFeedbackModal();
                 });
                 this.feedbackForm.addEventListener('submit', this._handleFeedbackSubmit.bind(this));
-
                 this.loginPromptBtn.addEventListener('click', this._showAuthModal.bind(this));
                 this.closeAuthBtn.addEventListener('click', this._hideAuthModal.bind(this));
                 this.authModal.addEventListener('click', (e) => {
                     if (e.target === this.authModal) this._hideAuthModal();
                 });
-
                 this.registerForm.addEventListener('submit', this._handleRegisterSubmit.bind(this));
                 this.loginForm.addEventListener('submit', this._handleLoginSubmit.bind(this));
                 this.resetPasswordForm.addEventListener('submit', this._handlePasswordResetSubmit.bind(this));
-
                 this.forgotPasswordLink.addEventListener('click', (e) => { e.preventDefault(); this._handleAuthViewChange('reset'); });
                 this.goToRegisterLink.addEventListener('click', (e) => { e.preventDefault(); this._handleAuthViewChange('register'); });
                 this.goToLoginFromRegisterLink.addEventListener('click', (e) => { e.preventDefault(); this._handleAuthViewChange('login'); });
                 this.goToLoginFromResetLink.addEventListener('click', (e) => { e.preventDefault(); this._handleAuthViewChange('login'); });
-
                 this.userProfileBtn.addEventListener('click', this._showProfileModal.bind(this));
                 this.closeProfileBtn.addEventListener('click', this._hideProfileModal.bind(this));
                 this.profileModal.addEventListener('click', (e) => {
@@ -1804,16 +984,12 @@
                 this.editProfileBtn.addEventListener('click', () => this._handleProfileViewChange('edit'));
                 this.cancelEditBtn.addEventListener('click', () => this._handleProfileViewChange('view'));
                 this.saveProfileBtn.addEventListener('click', this._handleProfileSave.bind(this));
-
-                // [已修复] 移除对不存在的 .profile-tab 元素的事件监听
-
                 this.avatarSelectionGrid.addEventListener('click', e => {
                     const target = e.target.closest('.avatar-option');
                     if (!target) return;
                     this.avatarSelectionGrid.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
                     target.classList.add('selected');
                 });
-
                 document.addEventListener('touchmove', (e) => {
                     if (e.touches.length > 1) {
                         e.preventDefault();
@@ -2012,7 +1188,6 @@
                 this._hideMobileSearch();
             }
 
-            // --- 详情页方法 ---
             _handleCardClick(e) {
                 const card = e.target.closest('.detail-card');
                 if (!card) return;
@@ -2153,7 +1328,7 @@
                     const captionEl = slider.querySelector('.slider-caption');
                     const dotsContainer = slider.querySelector('.slider-dots');
 
-                    if (slides.length <= 1) return; // 如果只有一张图或没有图，则不初始化
+                    if (slides.length <= 1) return;
 
                     const imagesData = this.campusData[this.selectedCampus];
                     let currentIndex = 0;
@@ -2167,7 +1342,6 @@
                         const imgElement = slideElement.querySelector('img');
                         captionEl.textContent = imgElement.alt;
 
-                        // 更新 dots
                         dotsContainer.querySelectorAll('.dot').forEach((dot, dotIndex) => {
                             dot.classList.toggle('active', dotIndex === currentIndex);
                         });
@@ -2182,7 +1356,7 @@
                         });
                     });
 
-                    goToSlide(0); // 初始化
+                    goToSlide(0);
                 });
             }
 
@@ -2197,7 +1371,6 @@
                 }
             }
 
-            // --- 搜索功能 ---
             _handleLiveSearch(e) {
                 const query = e.target.value.trim();
                 if (query.length > 0) {
@@ -2258,7 +1431,6 @@
                 const tempDiv = document.createElement('div');
                 const queryLower = query.toLowerCase();
 
-                // 搜索通用数据
                 for (const categoryKey in this.guideData) {
                     for (const pageKey in this.guideData[categoryKey].pages) {
                         const page = this.guideData[categoryKey].pages[pageKey];
@@ -2292,7 +1464,6 @@
                     }
                 }
 
-                // 搜索校区特定数据
                 const campus = this.campusData[this.selectedCampus];
                 if (campus) {
                     ['dormitory', 'canteen'].forEach(type => {
@@ -2494,9 +1665,8 @@
                     });
             }
 
-            // --- 认证模态框方法 ---
             _showAuthModal() {
-                this._handleAuthViewChange('login'); // 默认显示登录
+                this._handleAuthViewChange('login');
                 this.authModal.classList.remove('hidden');
                 setTimeout(() => {
                     this.authModal.style.opacity = '1';
@@ -2515,12 +1685,10 @@
             }
 
             _handleAuthViewChange(viewName) {
-                // Hide all views first
                 this.loginFormContainer.classList.add('hidden');
                 this.registerFormContainer.classList.add('hidden');
                 this.resetPasswordFormContainer.classList.add('hidden');
 
-                // Show the target view
                 if (viewName === 'login') {
                     this.authTitle.textContent = "欢迎回来";
                     this.loginFormContainer.classList.remove('hidden');
@@ -2533,7 +1701,6 @@
                 }
             }
 
-            // --- Firebase 认证核心逻辑 ---
             async _handleRegisterSubmit(e) {
                 e.preventDefault();
                 const emailPrefix = this.registerForm.email_prefix.value;
@@ -2640,16 +1807,14 @@
             _listenForAuthStateChanges() {
                 onAuthStateChanged(auth, (user) => {
                     if (this.unsubscribeUserDoc) {
-                        this.unsubscribeUserDoc(); // 取消上一个用户的文档监听
+                        this.unsubscribeUserDoc();
                         this.unsubscribeUserDoc = null;
                     }
 
                     if (user && user.emailVerified) {
-                        // 用户已登录且邮箱已验证
                         this.loginPromptBtn.classList.add('hidden');
                         this.userProfileBtn.classList.remove('hidden');
 
-                        // 实时监听用户文档
                         const userDocRef = doc(db, "users", user.uid);
                         this.unsubscribeUserDoc = onSnapshot(userDocRef, (docSnap) => {
                             if (docSnap.exists()) {
@@ -2657,14 +1822,12 @@
                                 this._updateUIWithUserData();
                             } else {
                                 console.log("No such user document!");
-                                // 可以考虑创建一个默认文档
                             }
                         }, (error) => {
                             console.error("Error listening to user doc:", error);
                         });
 
                     } else {
-                        // 用户未登录或未验证
                         this.currentUserData = null;
                         this.loginPromptBtn.classList.remove('hidden');
                         this.userProfileBtn.classList.add('hidden');
@@ -2687,9 +1850,8 @@
 
             }
 
-            // --- 新增: 用户中心方法 ---
             _showProfileModal() {
-                this._handleProfileViewChange('view'); // 默认显示查看视图
+                this._handleProfileViewChange('view');
                 this.profileModal.classList.remove('hidden');
                 setTimeout(() => {
                     this.profileModal.style.opacity = '1';
@@ -2708,12 +1870,10 @@
             }
 
             _handleProfileViewChange(viewName) {
-                // 更新Tab激活状态
                 this.profileDialog.querySelectorAll('.profile-tab').forEach(tab => {
                     tab.classList.toggle('active', tab.dataset.view === viewName);
                 });
 
-                // 切换视图
                 this.profileViewContainer.classList.add('hidden');
                 this.profileEditContainer.classList.add('hidden');
 
@@ -2744,14 +1904,12 @@
             }
 
             _populateProfileEditDropdowns() {
-                // 填充年份
                 const currentYear = new Date().getFullYear();
                 for (let i = currentYear; i >= currentYear - 5; i--) {
                     const option = new Option(i + '级', i);
                     this.editEnrollmentYear.add(option);
                 }
 
-                // 填充专业
                 const allMajors = [];
                 Object.values(campusInfoData).forEach(campus => {
                     campus.forEach(college => {
@@ -2770,7 +1928,6 @@
                 e.preventDefault();
                 if (!auth.currentUser) return;
 
-                // 增加加载状态，防止重复点击
                 this.saveProfileBtn.disabled = true;
                 this.saveProfileBtn.innerHTML = `<span class="loader-small"></span> 保存中...`;
 
@@ -2792,17 +1949,12 @@
                     console.error("Error updating profile:", error);
                     this._showToast("资料更新失败，请稍后再试。", "error");
                 } finally {
-                    // 恢复按钮状态
                     this.saveProfileBtn.disabled = false;
                     this.saveProfileBtn.innerHTML = `保存更改`;
                 }
             }
 
-
-
-            // --- 校区查询工具相关方法 ---
             _createCampusQueryToolHtml() {
-                // 返回查询工具的HTML结构
                 return `
                     <div class="campus-query-tool-container w-full max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 md:p-8 mx-auto" style="font-family: 'Inter', sans-serif;">
                         <div class="text-center mb-8">
@@ -2831,14 +1983,12 @@
             }
 
             _initCampusQueryTool(container) {
-                // 在传入的容器内查找元素，实现逻辑隔离
                 const collegeSelect = container.querySelector('#college-select');
                 const majorSelect = container.querySelector('#major-select');
                 const resultDisplay = container.querySelector('#result-display');
 
                 if (!collegeSelect || !majorSelect || !resultDisplay) return;
 
-                // 填充学院下拉菜单
                 const allColleges = [];
                 for (const campus in campusInfoData) {
                     campusInfoData[campus].forEach(item => allColleges.push(item.college));
@@ -2852,7 +2002,6 @@
                     collegeSelect.appendChild(option);
                 });
 
-                // 事件处理函数
                 const handleCollegeChange = () => {
                     const selectedCollege = collegeSelect.value;
                     majorSelect.innerHTML = '<option value="">-- 请选择 --</option>';
@@ -2936,14 +2085,12 @@
                     resultDisplay.innerHTML = '<p class="text-gray-500 dark:text-gray-400">查询结果将在此处显示</p>';
                 };
 
-                // 绑定事件
                 collegeSelect.addEventListener('change', handleCollegeChange);
                 majorSelect.addEventListener('change', handleMajorChange);
             }
 
         }
 
-        // --- 应用入口点 ---
         document.addEventListener('DOMContentLoaded', () => {
             const app = new GuideApp(guideData, campusData);
             app.init();
