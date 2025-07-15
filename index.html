@@ -2,14 +2,12 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <!-- 修复: 添加 maximum-scale=1.0, user-scalable=no 来禁止用户缩放, 解决移动端缩放导致的界面异常问题 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>江苏海洋大学校园指南 (社团更新)</title>
+    <title>江苏海洋大学校园指南 (功能更新)</title>
     <!-- 引入Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Tailwind CSS 配置 -->
     <script>
-      // 明确告诉Tailwind使用 'class' 策略进行深色模式切换
       tailwind.config = {
         darkMode: 'class',
       }
@@ -22,7 +20,6 @@
     <style>
         /* 自定义样式区 */
         html, body {
-            /* 新增: 禁用滚动链和“橡皮筋”效果，防止在滚动到顶部或底部时页面出现晃动，使其更像原生应用 */
             overscroll-behavior: none;
         }
         html {
@@ -30,7 +27,6 @@
         }
         body {
             font-family: 'Inter', sans-serif;
-            /* 新增: 禁用双击缩放等非标准触摸行为，进一步提升原生体验 */
             touch-action: manipulation;
         }
         /* 美化滚动条 */
@@ -240,6 +236,16 @@
             appearance: none;
         }
 
+        /* 新增: 登录/注册 模态框的选项卡样式 */
+        .auth-tab.active {
+            border-color: #4f46e5; /* indigo-600 */
+            color: #4f46e5; /* indigo-600 */
+        }
+        html.dark .auth-tab.active {
+            border-color: #6366f1; /* indigo-500 */
+            color: #818cf8; /* indigo-400 */
+        }
+
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-950">
@@ -321,11 +327,9 @@
     <!-- 主视图 -->
     <div id="main-view" class="flex h-screen relative">
         <!-- 移动端遮罩层 -->
-        <!-- 修复: 调整 z-index 层级 -->
         <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden md:hidden"></div>
 
         <!-- 侧边栏导航 -->
-        <!-- 修复: 调整 z-index 层级, 确保在底部导航栏之上 -->
         <aside id="sidebar" class="w-72 bg-blue-900 dark:bg-gray-900 text-white p-5 overflow-y-auto transition-transform transform -translate-x-full md:translate-x-0 fixed md:relative h-full z-50 shadow-lg flex flex-col">
             <div class="text-center mb-10">
                 <h1 class="text-3xl font-bold tracking-wider">江苏海洋大学</h1>
@@ -334,6 +338,17 @@
             <nav id="nav-menu" class="flex-grow"></nav>
             <!-- 底部工具栏 -->
             <div class="mt-auto pt-4 border-t border-blue-800 dark:border-gray-700 space-y-2">
+                <!-- 登录/用户状态 -->
+                <div id="auth-container">
+                    <button id="auth-btn" class="w-full flex items-center justify-center px-4 py-2 text-sm text-blue-200 dark:text-gray-300 rounded-md hover:bg-blue-800 dark:hover:bg-gray-700 transition-colors">
+                        <i data-lucide="user-circle" class="w-4 h-4 mr-2"></i>
+                        <span>登录 / 注册</span>
+                    </button>
+                    <div id="user-dashboard" class="hidden p-2 text-center">
+                        <p class="text-sm text-blue-200 dark:text-gray-300 truncate" id="user-email-display">欢迎, user@jou.edu.cn</p>
+                        <button id="logout-button" class="mt-2 w-full text-xs text-red-300 hover:text-red-200 bg-blue-800 hover:bg-red-800/50 py-1 rounded-md transition-colors">退出登录</button>
+                    </div>
+                </div>
                 <button id="feedback-btn" class="w-full flex items-center justify-center px-4 py-2 text-sm text-blue-200 dark:text-gray-300 rounded-md hover:bg-blue-800 dark:hover:bg-gray-700 transition-colors">
                     <i data-lucide="message-square-plus" class="w-4 h-4 mr-2"></i>
                     <span>信息反馈</span>
@@ -391,7 +406,6 @@
     </div>
 
     <!-- 移动端底部导航栏 -->
-    <!-- 修复: 调整 z-index 层级 -->
     <footer id="bottom-nav" class="fixed bottom-0 left-0 right-0 h-16 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex justify-around items-center z-30 md:hidden">
         <button id="bottom-nav-home" class="nav-btn flex flex-col items-center text-gray-600 dark:text-gray-400 transition-colors">
             <i data-lucide="home" class="w-6 h-6"></i>
@@ -458,8 +472,142 @@
         </div>
     </div>
 
+    <!-- 登录/注册/重置密码 模态窗口 -->
+    <div id="auth-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-[100] p-4 hidden">
+        <div id="auth-dialog" class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md transform transition-all scale-95 opacity-0 overflow-hidden">
+            <div class="relative">
+                <!-- 关闭按钮 -->
+                <button id="close-auth-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors z-10">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
 
-    <script>
+                <!-- 动态标题 -->
+                <h2 id="auth-title" class="text-center text-2xl font-bold text-gray-900 dark:text-gray-200 pt-8">欢迎回来</h2>
+
+                <!-- 表单容器 -->
+                <div class="p-8">
+                    <!-- 登录表单 -->
+                    <div id="login-form-container">
+                        <form id="login-form" class="space-y-6">
+                            <div>
+                                <label for="login-email-prefix" class="block text-sm font-medium text-gray-700 dark:text-gray-300">校园邮箱</label>
+                                <div class="mt-1 flex">
+                                    <input id="login-email-prefix" name="email_prefix" type="text" required class="w-full px-3 py-2 rounded-l-md border-t border-b border-l bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 focus:bg-white dark:focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 z-10" placeholder="请输入学号">
+                                    <span class="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-100 text-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400 text-sm">@jou.edu.cn</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="login-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">密码</label>
+                                <div class="mt-1 relative">
+                                    <i data-lucide="lock" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none"></i>
+                                    <input id="login-password" name="password" type="password" autocomplete="current-password" required class="w-full pl-10 pr-4 py-2 rounded-md border bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 focus:bg-white dark:focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors">
+                                </div>
+                                <div class="text-right mt-2">
+                                    <a href="#" id="forgot-password-link" class="text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">忘记密码?</a>
+                                </div>
+                            </div>
+                            <div>
+                                <button type="submit" id="login-button" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">
+                                    登 录
+                                </button>
+                            </div>
+                            <p class="text-center text-sm text-gray-600 dark:text-gray-400">
+                                还没有账户? <a href="#" id="go-to-register" class="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">立即注册</a>
+                            </p>
+                        </form>
+                    </div>
+                    <!-- 注册表单 -->
+                    <div id="register-form-container" class="hidden">
+                        <form id="register-form" class="space-y-6">
+                           <div>
+                                <label for="register-email-prefix" class="block text-sm font-medium text-gray-700 dark:text-gray-300">校园邮箱</label>
+                                <div class="mt-1 flex">
+                                    <input id="register-email-prefix" name="email_prefix" type="text" required class="w-full px-3 py-2 rounded-l-md border-t border-b border-l bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 focus:bg-white dark:focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 z-10" placeholder="请输入学号">
+                                    <span class="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-100 text-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400 text-sm">@jou.edu.cn</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="register-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">设置密码</label>
+                                <div class="mt-1 relative">
+                                    <i data-lucide="lock" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none"></i>
+                                    <input id="register-password" name="password" type="password" required class="w-full pl-10 pr-4 py-2 rounded-md border bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 focus:bg-white dark:focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors" placeholder="至少8位">
+                                </div>
+                            </div>
+                            <div>
+                                <button type="submit" id="register-button" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">
+                                    注 册
+                                </button>
+                            </div>
+                             <p class="text-center text-sm text-gray-600 dark:text-gray-400">
+                                已有账户? <a href="#" id="go-to-login-from-register" class="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">返回登录</a>
+                            </p>
+                        </form>
+                    </div>
+                    <!-- 密码重置表单 -->
+                    <div id="reset-password-form-container" class="hidden">
+                        <form id="reset-password-form" class="space-y-6">
+                           <div>
+                                <label for="reset-email-prefix" class="block text-sm font-medium text-gray-700 dark:text-gray-300">校园邮箱</label>
+                                <div class="mt-1 flex">
+                                    <input id="reset-email-prefix" name="email_prefix" type="text" required class="w-full px-3 py-2 rounded-l-md border-t border-b border-l bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 focus:bg-white dark:focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 z-10" placeholder="请输入你的学号">
+                                    <span class="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-100 text-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400 text-sm">@jou.edu.cn</span>
+                                </div>
+                            </div>
+                            <div>
+                                <button type="submit" id="reset-password-button" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">
+                                    发送重置邮件
+                                </button>
+                            </div>
+                             <p class="text-center text-sm text-gray-600 dark:text-gray-400">
+                                想起来了? <a href="#" id="go-to-login-from-reset" class="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">返回登录</a>
+                            </p>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="module">
+        // ===================================================================================
+        // --- Firebase 初始化 ---
+        // ===================================================================================
+        
+        // 1. 引入 Firebase 服务模块
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import {
+            getAuth,
+            createUserWithEmailAndPassword,
+            sendEmailVerification,
+            signInWithEmailAndPassword,
+            onAuthStateChanged,
+            signOut,
+            sendPasswordResetEmail // 新增: 引入密码重置函数
+        } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import {
+            getFirestore,
+            doc,
+            setDoc
+        } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
+        // 2. 粘贴你的 Firebase 项目配置信息
+        // 重要: 请将下面的占位符替换为你自己项目中的 firebaseConfig 对象！
+        const firebaseConfig = {
+                apiKey: "FIREBASE_API_KEY",
+                authDomain: "FIREBASE_AUTH_DOMAIN",
+                projectId: "FIREBASE_PROJECT_ID",
+                storageBucket: "FIREBASE_STORAGE_BUCKET",
+                messagingSenderId: "FIREBASE_MESSAGING_SENDER_ID",
+                appId: "FIREBASE_APP_ID",
+                measurementId: "FIREBASE_MEASUREMENT_ID"
+            };
+
+        // 3. 初始化 Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
         // ===================================================================================
         // --- 数据中心 (Data Center) ---
         // ===================================================================================
@@ -761,7 +909,7 @@
                                 },
                                 {
                                     building: 'B7-B12栋',
-                                    images: [{ src: 'images/苍梧校区/宿舍/B区/B7-B12/B7-B12宿舍内景.jpg', caption: '宿舍内景（六人间）' }], 
+                                    images: [{ src: 'images/苍梧校区/宿舍/B区/B7-B12/B7-B12宿舍内景.jpg', caption: '六人间宿舍内景' }], 
                                     roomType: '六人间',
                                     layout: '上下铺',
                                     bathroom: '有独立卫生间',
@@ -1230,7 +1378,7 @@
                 this.closeMobileSearchBtn = document.getElementById('close-mobile-search-btn');
 
 
-                // 新增功能元素
+                // 功能元素
                 this.themeToggleBtn = document.getElementById('theme-toggle-btn');
                 this.feedbackBtn = document.getElementById('feedback-btn');
                 this.feedbackModal = document.getElementById('feedback-modal');
@@ -1238,11 +1386,36 @@
                 this.closeFeedbackBtn = document.getElementById('close-feedback-btn');
                 this.feedbackForm = document.getElementById('feedback-form');
                 this.feedbackSuccessMsg = document.getElementById('feedback-success-msg');
+
+                // 认证相关UI元素
+                this.authModal = document.getElementById('auth-modal');
+                this.authDialog = document.getElementById('auth-dialog');
+                this.authBtn = document.getElementById('auth-btn');
+                this.closeAuthBtn = document.getElementById('close-auth-btn');
+                this.authTitle = document.getElementById('auth-title');
+                
+                this.loginFormContainer = document.getElementById('login-form-container');
+                this.registerFormContainer = document.getElementById('register-form-container');
+                this.resetPasswordFormContainer = document.getElementById('reset-password-form-container');
+
+                this.loginForm = document.getElementById('login-form');
+                this.registerForm = document.getElementById('register-form');
+                this.resetPasswordForm = document.getElementById('reset-password-form');
+                
+                this.userDashboard = document.getElementById('user-dashboard');
+                this.userEmailDisplay = document.getElementById('user-email-display');
+                this.logoutButton = document.getElementById('logout-button');
+                
+                this.forgotPasswordLink = document.getElementById('forgot-password-link');
+                this.goToRegisterLink = document.getElementById('go-to-register');
+                this.goToLoginFromRegisterLink = document.getElementById('go-to-login-from-register');
+                this.goToLoginFromResetLink = document.getElementById('go-to-login-from-reset');
             }
 
             init() {
                 this._determineAndApplyInitialTheme();
                 this._setupEventListeners();
+                this._listenForAuthStateChanges(); // 启动认证状态监听
                 this.selectedCampus = localStorage.getItem('selectedCampus');
 
                 if (this.selectedCampus) {
@@ -1514,7 +1687,7 @@
                 this.mobileSearchInput.addEventListener('input', this._handleMobileLiveSearch.bind(this));
                 this.mobileSearchResultsContainer.addEventListener('click', this._handleSearchResultClick.bind(this));
 
-                // 新增功能事件
+                // 功能事件
                 this.themeToggleBtn.addEventListener('click', this._handleThemeToggle.bind(this));
                 this.feedbackBtn.addEventListener('click', this._showFeedbackModal.bind(this));
                 this.closeFeedbackBtn.addEventListener('click', this._hideFeedbackModal.bind(this));
@@ -1523,7 +1696,26 @@
                 });
                 this.feedbackForm.addEventListener('submit', this._handleFeedbackSubmit.bind(this));
                 
-                // 新增: 阻止多点触控缩放
+                // 认证相关事件
+                this.authBtn.addEventListener('click', this._showAuthModal.bind(this));
+                this.closeAuthBtn.addEventListener('click', this._hideAuthModal.bind(this));
+                this.authModal.addEventListener('click', (e) => {
+                    if (e.target === this.authModal) this._hideAuthModal();
+                });
+                
+                this.registerForm.addEventListener('submit', this._handleRegisterSubmit.bind(this));
+                this.loginForm.addEventListener('submit', this._handleLoginSubmit.bind(this));
+                this.resetPasswordForm.addEventListener('submit', this._handlePasswordResetSubmit.bind(this));
+                this.logoutButton.addEventListener('click', this._handleLogout.bind(this));
+
+                // 认证表单内部导航
+                this.forgotPasswordLink.addEventListener('click', (e) => { e.preventDefault(); this._handleAuthViewChange('reset'); });
+                this.goToRegisterLink.addEventListener('click', (e) => { e.preventDefault(); this._handleAuthViewChange('register'); });
+                this.goToLoginFromRegisterLink.addEventListener('click', (e) => { e.preventDefault(); this._handleAuthViewChange('login'); });
+                this.goToLoginFromResetLink.addEventListener('click', (e) => { e.preventDefault(); this._handleAuthViewChange('login'); });
+
+
+                // 阻止多点触控缩放
                 document.addEventListener('touchmove', (e) => {
                     if (e.touches.length > 1) {
                         e.preventDefault();
@@ -1734,7 +1926,7 @@
 
             _generateSliderHtml(images) {
                 if (!images || images.length === 0) {
-                    return `<img src="https://placehold.co/800x450/cccccc/ffffff?text=无图片" alt="无图片" class="w-full h-auto object-cover rounded-lg mb-4">`;
+                    return `<img src="https://placehold.co/800x450/cccccc/ffffff?text=无图片" alt="[无图片]" class="w-full h-auto object-cover rounded-lg mb-4">`;
                 }
 
                 const slidesHtml = images.map((img, index) => `
@@ -2204,7 +2396,158 @@
                 });
             }
 
-            // --- 新增: 校区查询工具相关方法 ---
+            // --- 认证模态框方法 ---
+            _showAuthModal() {
+                this._handleAuthViewChange('login'); // 默认显示登录
+                this.authModal.classList.remove('hidden');
+                setTimeout(() => {
+                    this.authModal.style.opacity = '1';
+                    this.authDialog.style.transform = 'scale(1)';
+                    this.authDialog.style.opacity = '1';
+                }, 10);
+            }
+
+            _hideAuthModal() {
+                this.authModal.style.opacity = '0';
+                this.authDialog.style.transform = 'scale(0.95)';
+                this.authDialog.style.opacity = '0';
+                setTimeout(() => {
+                    this.authModal.classList.add('hidden');
+                }, 300);
+            }
+
+            _handleAuthViewChange(viewName) {
+                // Hide all views first
+                this.loginFormContainer.classList.add('hidden');
+                this.registerFormContainer.classList.add('hidden');
+                this.resetPasswordFormContainer.classList.add('hidden');
+
+                // Show the target view
+                if (viewName === 'login') {
+                    this.authTitle.textContent = "欢迎回来";
+                    this.loginFormContainer.classList.remove('hidden');
+                } else if (viewName === 'register') {
+                    this.authTitle.textContent = "加入我们";
+                    this.registerFormContainer.classList.remove('hidden');
+                } else if (viewName === 'reset') {
+                    this.authTitle.textContent = "重置密码";
+                    this.resetPasswordFormContainer.classList.remove('hidden');
+                }
+            }
+
+            // --- Firebase 认证核心逻辑 ---
+            async _handleRegisterSubmit(e) {
+                e.preventDefault();
+                const emailPrefix = this.registerForm.email_prefix.value;
+                const password = this.registerForm.password.value;
+
+                if (!emailPrefix) {
+                    alert("请输入你的学号！");
+                    return;
+                }
+                const email = emailPrefix + '@jou.edu.cn';
+                
+                if (password.length < 8) {
+                    alert("密码长度不能少于8位！");
+                    return;
+                }
+
+                try {
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    const user = userCredential.user;
+                    
+                    await setDoc(doc(db, "users", user.uid), {
+                        email: user.email,
+                        nickname: "萌新" + emailPrefix.slice(-4), // 用学号后四位生成默认昵称
+                        joinDate: new Date()
+                    });
+
+                    await sendEmailVerification(user);
+                    alert("注册成功！验证邮件已发送至你的校园邮箱，请点击邮件中的链接完成验证后即可登录。");
+                    this._hideAuthModal();
+
+                } catch (error) {
+                    if (error.code === 'auth/email-already-in-use') {
+                        alert("该邮箱已被注册！");
+                    } else {
+                        alert("注册失败：" + error.message);
+                    }
+                }
+            }
+
+            async _handleLoginSubmit(e) {
+                e.preventDefault();
+                const emailPrefix = this.loginForm.email_prefix.value;
+                const password = this.loginForm.password.value;
+                
+                if (!emailPrefix) {
+                    alert("请输入你的学号！");
+                    return;
+                }
+                const email = emailPrefix + '@jou.edu.cn';
+
+                try {
+                    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                    const user = userCredential.user;
+
+                    if (user.emailVerified) {
+                        alert("登录成功！");
+                        this._hideAuthModal();
+                    } else {
+                        alert("请先前往你的校园邮箱，点击验证链接后再登录。");
+                        await signOut(auth);
+                    }
+                } catch (error) {
+                    alert("登录失败：学号或密码错误。");
+                }
+            }
+            
+            async _handlePasswordResetSubmit(e) {
+                e.preventDefault();
+                const emailPrefix = this.resetPasswordForm.email_prefix.value;
+                if (!emailPrefix) {
+                    alert("请输入你的学号！");
+                    return;
+                }
+                const email = emailPrefix + '@jou.edu.cn';
+
+                try {
+                    await sendPasswordResetEmail(auth, email);
+                    alert("密码重置邮件已发送至你的校园邮箱，请查收并按提示操作。");
+                    this._handleAuthViewChange('login'); // 发送后自动跳回登录页
+                } catch (error) {
+                    if (error.code === 'auth/user-not-found') {
+                        alert("发送失败：该邮箱尚未注册。");
+                    } else {
+                        alert("发送失败：" + error.message);
+                    }
+                }
+            }
+            
+            async _handleLogout() {
+                try {
+                    await signOut(auth);
+                    alert("已成功退出登录。");
+                } catch (error) {
+                    alert("退出失败：" + error.message);
+                }
+            }
+
+            _listenForAuthStateChanges() {
+                onAuthStateChanged(auth, (user) => {
+                    if (user && user.emailVerified) {
+                        this.authBtn.classList.add('hidden');
+                        this.userDashboard.classList.remove('hidden');
+                        this.userEmailDisplay.textContent = `欢迎, ${user.email}`;
+                    } else {
+                        this.authBtn.classList.remove('hidden');
+                        this.userDashboard.classList.add('hidden');
+                    }
+                });
+            }
+
+
+            // --- 校区查询工具相关方法 ---
             _createCampusQueryToolHtml() {
                 // 返回查询工具的HTML结构
                 return `
