@@ -10,37 +10,12 @@
 
 import { guideData } from './data/guideData.js';
 import { campusData, campusInfoData } from './data/campusData.js';
-import { auth, db } from './firebase.js';
 import * as renderer from './ui/renderer.js';
-import { createNavigation, handleNavigationClick, updateActiveNav } from './ui/navigation.js'; // <-- 导入新函数
-
-import {
-    createUserWithEmailAndPassword,
-    sendEmailVerification,
-    signInWithEmailAndPassword,
-    onAuthStateChanged,
-    signOut,
-    sendPasswordResetEmail
-} from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-import {
-    doc,
-    setDoc,
-    getDoc,
-    updateDoc,
-    onSnapshot,
-    Timestamp
-} from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
-
+import { createNavigation, handleNavigationClick, updateActiveNav } from './ui/navigation.js';
+import * as authUI from './ui/auth.js'; // 导入新的认证模块
 
 // ===================================================================================
-// --- 全局数据与常量 ---
-// ===================================================================================
-const AVATARS = Array.from({ length: 1 }, (_, i) => `avatar_${String(i + 1).padStart(2, '0')}`);
-const getAvatarUrl = (id) => id ? `../images/默认头像/${id}.png` : '../images/默认头像/avatar_01.png';
-
-
-// ===================================================================================
-// --- 应用主类 (持续拆分中) ---
+// --- 应用主类 (最终将被完全拆解) ---
 // ===================================================================================
 class GuideApp {
     constructor(commonData, specificData) {
@@ -51,82 +26,90 @@ class GuideApp {
         this.isScrollingProgrammatically = false;
         this.scrollTimeout = null;
         this.currentUserData = null;
-        this.unsubscribeUserDoc = null;
 
-        // 缓存DOM元素
-        this.loadingOverlay = document.getElementById('loading-overlay');
-        this.mainView = document.getElementById('main-view');
-        this.navMenu = document.getElementById('nav-menu');
-        this.contentArea = document.getElementById('content-area');
-        this.contentTitle = document.getElementById('content-title');
-        this.menuToggle = document.getElementById('menu-toggle');
-        this.sidebar = document.getElementById('sidebar');
-        this.homeButtonTop = document.getElementById('home-button-top');
-        this.sidebarOverlay = document.getElementById('sidebar-overlay');
-        this.campusModal = document.getElementById('campus-selector-modal');
-        this.campusDialog = document.getElementById('campus-selector-dialog');
-        this.changeCampusBtn = document.getElementById('change-campus-btn');
-        this.currentCampusDisplay = document.getElementById('current-campus-display');
-        this.detailView = document.getElementById('detail-view');
-        this.detailTitle = document.getElementById('detail-title');
-        this.detailContent = document.getElementById('detail-content');
-        this.backToMainBtn = document.getElementById('back-to-main-btn');
-        this.searchForm = document.getElementById('search-form');
-        this.searchInput = document.getElementById('search-input');
-        this.liveSearchResultsContainer = document.getElementById('live-search-results');
-        this.bottomNav = document.getElementById('bottom-nav');
-        this.bottomNavHome = document.getElementById('bottom-nav-home');
-        this.bottomNavMenu = document.getElementById('bottom-nav-menu');
-        this.bottomNavSearch = document.getElementById('bottom-nav-search');
-        this.bottomNavCampus = document.getElementById('bottom-nav-campus');
-        this.mobileSearchOverlay = document.getElementById('mobile-search-overlay');
-        this.mobileSearchInput = document.getElementById('mobile-search-input');
-        this.mobileSearchResultsContainer = document.getElementById('mobile-search-results-container');
-        this.closeMobileSearchBtn = document.getElementById('close-mobile-search-btn');
-        this.themeToggleBtn = document.getElementById('theme-toggle-btn');
-        this.feedbackBtn = document.getElementById('feedback-btn');
-        this.feedbackModal = document.getElementById('feedback-modal');
-        this.feedbackDialog = document.getElementById('feedback-dialog');
-        this.closeFeedbackBtn = document.getElementById('close-feedback-btn');
-        this.feedbackForm = document.getElementById('feedback-form');
-        this.feedbackSuccessMsg = document.getElementById('feedback-success-msg');
-        this.authModal = document.getElementById('auth-modal');
-        this.authDialog = document.getElementById('auth-dialog');
-        this.loginPromptBtn = document.getElementById('login-prompt-btn');
-        this.userProfileBtn = document.getElementById('user-profile-btn');
-        this.closeAuthBtn = document.getElementById('close-auth-btn');
-        this.authTitle = document.getElementById('auth-title');
-        this.loginFormContainer = document.getElementById('login-form-container');
-        this.registerFormContainer = document.getElementById('register-form-container');
-        this.resetPasswordFormContainer = document.getElementById('reset-password-form-container');
-        this.loginForm = document.getElementById('login-form');
-        this.registerForm = document.getElementById('register-form');
-        this.resetPasswordForm = document.getElementById('reset-password-form');
-        this.forgotPasswordLink = document.getElementById('forgot-password-link');
-        this.goToRegisterLink = document.getElementById('go-to-register');
-        this.goToLoginFromRegisterLink = document.getElementById('go-to-login-from-register');
-        this.goToLoginFromResetLink = document.getElementById('go-to-login-from-reset');
-        this.profileModal = document.getElementById('profile-modal');
-        this.profileDialog = document.getElementById('profile-dialog');
-        this.closeProfileBtn = document.getElementById('close-profile-btn');
-        this.logoutButton = document.getElementById('logout-button');
-        this.editProfileBtn = document.getElementById('edit-profile-btn');
-        this.cancelEditBtn = document.getElementById('cancel-edit-btn');
-        this.saveProfileBtn = document.getElementById('save-profile-btn');
-        this.profileViewContainer = document.getElementById('profile-view-container');
-        this.profileEditContainer = document.getElementById('profile-edit-container');
-        this.sidebarAvatar = document.getElementById('sidebar-avatar');
-        this.sidebarNickname = document.getElementById('sidebar-nickname');
-        this.profileAvatarLarge = document.getElementById('profile-avatar-large');
-        this.profileNickname = document.getElementById('profile-nickname');
-        this.profileEmail = document.getElementById('profile-email');
-        this.profileMajorYear = document.getElementById('profile-major-year').querySelector('span');
-        this.profileBio = document.getElementById('profile-bio');
-        this.avatarSelectionGrid = document.getElementById('avatar-selection-grid');
-        this.editNickname = document.getElementById('edit-nickname');
-        this.editBio = document.getElementById('edit-bio');
-        this.editEnrollmentYear = document.getElementById('edit-enrollment-year');
-        this.editMajor = document.getElementById('edit-major');
+        // 缓存所有需要操作的DOM元素
+        this._cacheDOMElements();
+        
+        // 将需要的DOM元素传递给认证模块
+        authUI.cacheAuthDOMElements(this.dom);
+    }
+
+    _cacheDOMElements() {
+        this.dom = {
+            loadingOverlay: document.getElementById('loading-overlay'),
+            mainView: document.getElementById('main-view'),
+            navMenu: document.getElementById('nav-menu'),
+            contentArea: document.getElementById('content-area'),
+            contentTitle: document.getElementById('content-title'),
+            menuToggle: document.getElementById('menu-toggle'),
+            sidebar: document.getElementById('sidebar'),
+            homeButtonTop: document.getElementById('home-button-top'),
+            sidebarOverlay: document.getElementById('sidebar-overlay'),
+            campusModal: document.getElementById('campus-selector-modal'),
+            campusDialog: document.getElementById('campus-selector-dialog'),
+            changeCampusBtn: document.getElementById('change-campus-btn'),
+            currentCampusDisplay: document.getElementById('current-campus-display'),
+            detailView: document.getElementById('detail-view'),
+            detailTitle: document.getElementById('detail-title'),
+            detailContent: document.getElementById('detail-content'),
+            backToMainBtn: document.getElementById('back-to-main-btn'),
+            searchForm: document.getElementById('search-form'),
+            searchInput: document.getElementById('search-input'),
+            liveSearchResultsContainer: document.getElementById('live-search-results'),
+            bottomNav: document.getElementById('bottom-nav'),
+            bottomNavHome: document.getElementById('bottom-nav-home'),
+            bottomNavMenu: document.getElementById('bottom-nav-menu'),
+            bottomNavSearch: document.getElementById('bottom-nav-search'),
+            bottomNavCampus: document.getElementById('bottom-nav-campus'),
+            mobileSearchOverlay: document.getElementById('mobile-search-overlay'),
+            mobileSearchInput: document.getElementById('mobile-search-input'),
+            mobileSearchResultsContainer: document.getElementById('mobile-search-results-container'),
+            closeMobileSearchBtn: document.getElementById('close-mobile-search-btn'),
+            themeToggleBtn: document.getElementById('theme-toggle-btn'),
+            feedbackBtn: document.getElementById('feedback-btn'),
+            feedbackModal: document.getElementById('feedback-modal'),
+            feedbackDialog: document.getElementById('feedback-dialog'),
+            closeFeedbackBtn: document.getElementById('close-feedback-btn'),
+            feedbackForm: document.getElementById('feedback-form'),
+            feedbackSuccessMsg: document.getElementById('feedback-success-msg'),
+            authModal: document.getElementById('auth-modal'),
+            authDialog: document.getElementById('auth-dialog'),
+            loginPromptBtn: document.getElementById('login-prompt-btn'),
+            userProfileBtn: document.getElementById('user-profile-btn'),
+            closeAuthBtn: document.getElementById('close-auth-btn'),
+            authTitle: document.getElementById('auth-title'),
+            loginFormContainer: document.getElementById('login-form-container'),
+            registerFormContainer: document.getElementById('register-form-container'),
+            resetPasswordFormContainer: document.getElementById('reset-password-form-container'),
+            loginForm: document.getElementById('login-form'),
+            registerForm: document.getElementById('register-form'),
+            resetPasswordForm: document.getElementById('reset-password-form'),
+            forgotPasswordLink: document.getElementById('forgot-password-link'),
+            goToRegisterLink: document.getElementById('go-to-register'),
+            goToLoginFromRegisterLink: document.getElementById('go-to-login-from-register'),
+            goToLoginFromResetLink: document.getElementById('go-to-login-from-reset'),
+            profileModal: document.getElementById('profile-modal'),
+            profileDialog: document.getElementById('profile-dialog'),
+            closeProfileBtn: document.getElementById('close-profile-btn'),
+            logoutButton: document.getElementById('logout-button'),
+            editProfileBtn: document.getElementById('edit-profile-btn'),
+            cancelEditBtn: document.getElementById('cancel-edit-btn'),
+            saveProfileBtn: document.getElementById('save-profile-btn'),
+            profileViewContainer: document.getElementById('profile-view-container'),
+            profileEditContainer: document.getElementById('profile-edit-container'),
+            sidebarAvatar: document.getElementById('sidebar-avatar'),
+            sidebarNickname: document.getElementById('sidebar-nickname'),
+            profileAvatarLarge: document.getElementById('profile-avatar-large'),
+            profileNickname: document.getElementById('profile-nickname'),
+            profileEmail: document.getElementById('profile-email'),
+            profileMajorYear: document.getElementById('profile-major-year').querySelector('span'),
+            profileBio: document.getElementById('profile-bio'),
+            avatarSelectionGrid: document.getElementById('avatar-selection-grid'),
+            editNickname: document.getElementById('edit-nickname'),
+            editBio: document.getElementById('edit-bio'),
+            editEnrollmentYear: document.getElementById('edit-enrollment-year'),
+            editMajor: document.getElementById('edit-major'),
+        };
     }
 
     _showToast(message, type = 'info') {
@@ -159,7 +142,12 @@ class GuideApp {
     init() {
         this._determineAndApplyInitialTheme();
         this._setupEventListeners();
-        this._listenForAuthStateChanges();
+        
+        // 使用认证模块来监听状态
+        authUI.listenForAuthStateChanges((userData) => {
+            this.currentUserData = userData;
+        });
+
         this._populateProfileEditDropdowns();
         this.selectedCampus = localStorage.getItem('selectedCampus');
 
@@ -170,13 +158,13 @@ class GuideApp {
         }
 
         setTimeout(() => {
-            this.loadingOverlay.style.opacity = '0';
-            setTimeout(() => this.loadingOverlay.style.display = 'none', 500);
+            this.dom.loadingOverlay.style.opacity = '0';
+            setTimeout(() => this.dom.loadingOverlay.style.display = 'none', 500);
         }, 500);
     }
 
     runApp() {
-        createNavigation(this.navMenu, this.guideData);
+        createNavigation(this.dom.navMenu, this.guideData);
         this._renderAllContent();
         this._updateCampusDisplay();
         this._setupIntersectionObserver();
@@ -185,7 +173,7 @@ class GuideApp {
 
     _renderAllContent() {
         if (this.observer) this.observer.disconnect();
-        this.contentArea.innerHTML = '';
+        this.dom.contentArea.innerHTML = '';
 
         for (const categoryKey in this.guideData) {
             const categoryData = this.guideData[categoryKey];
@@ -219,7 +207,7 @@ class GuideApp {
                 } else {
                     section.innerHTML = page.content;
                 }
-                this.contentArea.appendChild(section);
+                this.dom.contentArea.appendChild(section);
             }
         }
 
@@ -253,8 +241,7 @@ class GuideApp {
 
 
     _setupEventListeners() {
-        // 使用新的导航点击处理器
-        this.navMenu.addEventListener('click', (e) => handleNavigationClick(e, (category, page) => {
+        this.dom.navMenu.addEventListener('click', (e) => handleNavigationClick(e, (category, page) => {
             this._hideAllViews();
             this._updateActiveState(category, page);
             const targetElement = document.getElementById(`page-${category}-${page}`);
@@ -262,58 +249,63 @@ class GuideApp {
             if (window.innerWidth < 768) this._toggleSidebar();
         }));
 
-        this.homeButtonTop.addEventListener('click', this._handleHomeClick.bind(this));
-        this.menuToggle.addEventListener('click', this._toggleSidebar.bind(this));
-        this.sidebarOverlay.addEventListener('click', this._toggleSidebar.bind(this));
-        this.campusModal.addEventListener('click', this._handleCampusSelection.bind(this));
-        this.changeCampusBtn.addEventListener('click', this._showCampusSelector.bind(this));
-        this.contentArea.addEventListener('click', this._handleCardClick.bind(this));
-        this.backToMainBtn.addEventListener('click', this._hideDetailView.bind(this));
-        this.searchForm.addEventListener('submit', e => e.preventDefault());
-        this.searchInput.addEventListener('input', this._handleLiveSearch.bind(this));
+        this.dom.homeButtonTop.addEventListener('click', this._handleHomeClick.bind(this));
+        this.dom.menuToggle.addEventListener('click', this._toggleSidebar.bind(this));
+        this.dom.sidebarOverlay.addEventListener('click', this._toggleSidebar.bind(this));
+        this.dom.campusModal.addEventListener('click', this._handleCampusSelection.bind(this));
+        this.dom.changeCampusBtn.addEventListener('click', this._showCampusSelector.bind(this));
+        this.dom.contentArea.addEventListener('click', this._handleCardClick.bind(this));
+        this.dom.backToMainBtn.addEventListener('click', this._hideDetailView.bind(this));
+        this.dom.searchForm.addEventListener('submit', e => e.preventDefault());
+        this.dom.searchInput.addEventListener('input', this._handleLiveSearch.bind(this));
         document.addEventListener('click', this._handleGlobalClick.bind(this));
-        this.liveSearchResultsContainer.addEventListener('click', this._handleSearchResultClick.bind(this));
-        this.bottomNavHome.addEventListener('click', this._handleHomeClick.bind(this));
-        this.bottomNavMenu.addEventListener('click', this._toggleSidebar.bind(this));
-        this.bottomNavSearch.addEventListener('click', this._showMobileSearch.bind(this));
-        this.bottomNavCampus.addEventListener('click', this._showCampusSelector.bind(this));
-        this.closeMobileSearchBtn.addEventListener('click', this._hideMobileSearch.bind(this));
-        this.mobileSearchInput.addEventListener('input', this._handleMobileLiveSearch.bind(this));
-        this.mobileSearchResultsContainer.addEventListener('click', this._handleSearchResultClick.bind(this));
-        this.themeToggleBtn.addEventListener('click', this._handleThemeToggle.bind(this));
-        this.feedbackBtn.addEventListener('click', this._showFeedbackModal.bind(this));
-        this.closeFeedbackBtn.addEventListener('click', this._hideFeedbackModal.bind(this));
-        this.feedbackModal.addEventListener('click', (e) => {
-            if (e.target === this.feedbackModal) this._hideFeedbackModal();
+        this.dom.liveSearchResultsContainer.addEventListener('click', this._handleSearchResultClick.bind(this));
+        this.dom.bottomNavHome.addEventListener('click', this._handleHomeClick.bind(this));
+        this.dom.bottomNavMenu.addEventListener('click', this._toggleSidebar.bind(this));
+        this.dom.bottomNavSearch.addEventListener('click', this._showMobileSearch.bind(this));
+        this.dom.bottomNavCampus.addEventListener('click', this._showCampusSelector.bind(this));
+        this.dom.closeMobileSearchBtn.addEventListener('click', this._hideMobileSearch.bind(this));
+        this.dom.mobileSearchInput.addEventListener('input', this._handleMobileLiveSearch.bind(this));
+        this.dom.mobileSearchResultsContainer.addEventListener('click', this._handleSearchResultClick.bind(this));
+        this.dom.themeToggleBtn.addEventListener('click', this._handleThemeToggle.bind(this));
+        this.dom.feedbackBtn.addEventListener('click', this._showFeedbackModal.bind(this));
+        this.dom.closeFeedbackBtn.addEventListener('click', this._hideFeedbackModal.bind(this));
+        this.dom.feedbackModal.addEventListener('click', (e) => {
+            if (e.target === this.dom.feedbackModal) this._hideFeedbackModal();
         });
-        this.feedbackForm.addEventListener('submit', this._handleFeedbackSubmit.bind(this));
-        this.loginPromptBtn.addEventListener('click', this._showAuthModal.bind(this));
-        this.closeAuthBtn.addEventListener('click', this._hideAuthModal.bind(this));
-        this.authModal.addEventListener('click', (e) => {
-            if (e.target === this.authModal) this._hideAuthModal();
+        this.dom.feedbackForm.addEventListener('submit', this._handleFeedbackSubmit.bind(this));
+        
+        // 认证相关的事件监听
+        this.dom.loginPromptBtn.addEventListener('click', this._showAuthModal.bind(this));
+        this.dom.closeAuthBtn.addEventListener('click', this._hideAuthModal.bind(this));
+        this.dom.authModal.addEventListener('click', (e) => {
+            if (e.target === this.dom.authModal) this._hideAuthModal();
         });
-        this.registerForm.addEventListener('submit', this._handleRegisterSubmit.bind(this));
-        this.loginForm.addEventListener('submit', this._handleLoginSubmit.bind(this));
-        this.resetPasswordForm.addEventListener('submit', this._handlePasswordResetSubmit.bind(this));
-        this.forgotPasswordLink.addEventListener('click', (e) => { e.preventDefault(); this._handleAuthViewChange('reset'); });
-        this.goToRegisterLink.addEventListener('click', (e) => { e.preventDefault(); this._handleAuthViewChange('register'); });
-        this.goToLoginFromRegisterLink.addEventListener('click', (e) => { e.preventDefault(); this._handleAuthViewChange('login'); });
-        this.goToLoginFromResetLink.addEventListener('click', (e) => { e.preventDefault(); this._handleAuthViewChange('login'); });
-        this.userProfileBtn.addEventListener('click', this._showProfileModal.bind(this));
-        this.closeProfileBtn.addEventListener('click', this._hideProfileModal.bind(this));
-        this.profileModal.addEventListener('click', (e) => {
-            if (e.target === this.profileModal) this._hideProfileModal();
+        this.dom.registerForm.addEventListener('submit', (e) => authUI.handleRegisterSubmit(e, this._showToast, this._hideAuthModal.bind(this)));
+        this.dom.loginForm.addEventListener('submit', (e) => authUI.handleLoginSubmit(e, this._showToast, this._hideAuthModal.bind(this)));
+        this.dom.resetPasswordForm.addEventListener('submit', (e) => authUI.handlePasswordResetSubmit(e, this._showToast, this._handleAuthViewChange.bind(this)));
+        this.dom.forgotPasswordLink.addEventListener('click', (e) => { e.preventDefault(); this._handleAuthViewChange('reset'); });
+        this.dom.goToRegisterLink.addEventListener('click', (e) => { e.preventDefault(); this._handleAuthViewChange('register'); });
+        this.dom.goToLoginFromRegisterLink.addEventListener('click', (e) => { e.preventDefault(); this._handleAuthViewChange('login'); });
+        this.dom.goToLoginFromResetLink.addEventListener('click', (e) => { e.preventDefault(); this._handleAuthViewChange('login'); });
+        
+        // 用户中心相关的事件监听
+        this.dom.userProfileBtn.addEventListener('click', this._showProfileModal.bind(this));
+        this.dom.closeProfileBtn.addEventListener('click', this._hideProfileModal.bind(this));
+        this.dom.profileModal.addEventListener('click', (e) => {
+            if (e.target === this.dom.profileModal) this._hideProfileModal();
         });
-        this.logoutButton.addEventListener('click', this._handleLogout.bind(this));
-        this.editProfileBtn.addEventListener('click', () => this._handleProfileViewChange('edit'));
-        this.cancelEditBtn.addEventListener('click', () => this._handleProfileViewChange('view'));
-        this.saveProfileBtn.addEventListener('click', this._handleProfileSave.bind(this));
-        this.avatarSelectionGrid.addEventListener('click', e => {
+        this.dom.logoutButton.addEventListener('click', () => authUI.handleLogout(this._showToast, this._hideProfileModal.bind(this)));
+        this.dom.editProfileBtn.addEventListener('click', () => this._handleProfileViewChange('edit'));
+        this.dom.cancelEditBtn.addEventListener('click', () => this._handleProfileViewChange('view'));
+        this.dom.saveProfileBtn.addEventListener('click', (e) => authUI.handleProfileSave(e, this.currentUserData, this._showToast, this._handleProfileViewChange.bind(this)));
+        this.dom.avatarSelectionGrid.addEventListener('click', e => {
             const target = e.target.closest('.avatar-option');
             if (!target) return;
-            this.avatarSelectionGrid.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
+            this.dom.avatarSelectionGrid.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
             target.classList.add('selected');
         });
+
         document.addEventListener('touchmove', (e) => {
             if (e.touches.length > 1) {
                 e.preventDefault();
@@ -322,11 +314,11 @@ class GuideApp {
     }
 
     _showCampusSelector() {
-        this.campusModal.classList.remove('hidden');
+        this.dom.campusModal.classList.remove('hidden');
         setTimeout(() => {
-            this.campusModal.style.opacity = '1';
-            this.campusDialog.style.transform = 'scale(1)';
-            this.campusDialog.style.opacity = '1';
+            this.dom.campusModal.style.opacity = '1';
+            this.dom.campusDialog.style.transform = 'scale(1)';
+            this.dom.campusDialog.style.opacity = '1';
         }, 10);
     }
 
@@ -338,27 +330,27 @@ class GuideApp {
         localStorage.setItem('selectedCampus', campus);
         this.selectedCampus = campus;
 
-        this.campusModal.style.opacity = '0';
-        this.campusDialog.style.transform = 'scale(0.95)';
-        this.campusDialog.style.opacity = '0';
+        this.dom.campusModal.style.opacity = '0';
+        this.dom.campusDialog.style.transform = 'scale(0.95)';
+        this.dom.campusDialog.style.opacity = '0';
 
         setTimeout(() => {
-            this.campusModal.classList.add('hidden');
+            this.dom.campusModal.classList.add('hidden');
             this.runApp();
         }, 300);
     }
 
     _updateCampusDisplay() {
         if (this.selectedCampus && this.campusData[this.selectedCampus]) {
-            this.currentCampusDisplay.textContent = `当前: ${this.campusData[this.selectedCampus].name}`;
+            this.dom.currentCampusDisplay.textContent = `当前: ${this.campusData[this.selectedCampus].name}`;
         }
     }
 
     _setupIntersectionObserver() {
         const options = {
-            root: this.contentArea,
+            root: this.dom.contentArea,
             threshold: 0,
-            rootMargin: `-${document.querySelector('header').offsetHeight}px 0px -${this.contentArea.clientHeight - document.querySelector('header').offsetHeight - 1}px 0px`
+            rootMargin: `-${document.querySelector('header').offsetHeight}px 0px -${this.dom.contentArea.clientHeight - document.querySelector('header').offsetHeight - 1}px 0px`
         };
 
         this.observer = new IntersectionObserver((entries) => {
@@ -384,17 +376,17 @@ class GuideApp {
                 let titleKey = '';
                 if (pageKey === '宿舍介绍') titleKey = 'dormitory';
                 if (pageKey === '食堂介绍') titleKey = 'canteen';
-                this.contentTitle.textContent = this.campusData[this.selectedCampus]?.[titleKey]?.title || pageData.title;
+                this.dom.contentTitle.textContent = this.campusData[this.selectedCampus]?.[titleKey]?.title || pageData.title;
             } else {
-                this.contentTitle.textContent = pageData.title;
+                this.dom.contentTitle.textContent = pageData.title;
             }
         }
         
-        updateActiveNav(categoryKey, pageKey); // 使用新的导航更新函数
+        updateActiveNav(categoryKey, pageKey);
 
-        this.bottomNav.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+        this.dom.bottomNav.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
         if (categoryKey === '主页') {
-            this.bottomNavHome.classList.add('active');
+            this.dom.bottomNavHome.classList.add('active');
         }
     }
     
@@ -409,19 +401,19 @@ class GuideApp {
     }
 
     _toggleSidebar() {
-        const isHidden = this.sidebar.classList.contains('-translate-x-full');
-        this.sidebar.classList.toggle('-translate-x-full');
-        this.sidebarOverlay.classList.toggle('hidden', !isHidden);
-        this.bottomNavMenu.classList.toggle('active', !isHidden);
+        const isHidden = this.dom.sidebar.classList.contains('-translate-x-full');
+        this.dom.sidebar.classList.toggle('-translate-x-full');
+        this.dom.sidebarOverlay.classList.toggle('hidden', !isHidden);
+        this.dom.bottomNavMenu.classList.toggle('active', !isHidden);
     }
 
     _scrollToElement(targetElement, keyword = null) {
         this.isScrollingProgrammatically = true;
         const topOffset = document.querySelector('header').offsetHeight;
         const elementPosition = targetElement.getBoundingClientRect().top;
-        const offsetPosition = elementPosition + this.contentArea.scrollTop - topOffset;
+        const offsetPosition = elementPosition + this.dom.contentArea.scrollTop - topOffset;
 
-        this.contentArea.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+        this.dom.contentArea.scrollTo({ top: offsetPosition, behavior: 'smooth' });
 
         if (keyword) {
             setTimeout(() => this._highlightKeywordInSection(targetElement, keyword), 500);
@@ -452,7 +444,7 @@ class GuideApp {
                 this._scrollToElement(nextSection);
             }
         });
-        this.contentArea.querySelectorAll('.nav-card').forEach(card => {
+        this.dom.contentArea.querySelectorAll('.nav-card').forEach(card => {
             card.addEventListener('click', (e) => {
                 e.preventDefault();
                 const navData = JSON.parse(card.dataset.navlink);
@@ -483,7 +475,7 @@ class GuideApp {
         const itemData = this.campusData[this.selectedCampus]?.[type]?.items?.[itemKey];
         if (!itemData) return;
 
-        this.detailTitle.textContent = itemData.name;
+        this.dom.detailTitle.textContent = itemData.name;
 
         let detailsHtml = '';
         if (Array.isArray(itemData.details)) {
@@ -496,7 +488,7 @@ class GuideApp {
             detailsHtml = `<div class="prose dark:prose-invert max-w-none">${itemData.details}</div>`;
         }
 
-        this.detailContent.innerHTML = `
+        this.dom.detailContent.innerHTML = `
             <div class="max-w-4xl mx-auto">
                 <img src="../${itemData.image}" alt="[${itemData.name}的图片]" class="w-full h-auto max-h-[450px] object-cover rounded-xl shadow-lg mb-8">
                 <div class="bg-gray-100 dark:bg-gray-800/50 p-4 sm:p-8 rounded-xl">
@@ -506,14 +498,14 @@ class GuideApp {
             </div>
         `;
 
-        this.mainView.classList.add('hidden');
-        this.detailView.classList.remove('hidden', 'translate-x-full');
-        this.detailView.classList.add('flex');
+        this.dom.mainView.classList.add('hidden');
+        this.dom.detailView.classList.remove('hidden', 'translate-x-full');
+        this.dom.detailView.classList.add('flex');
         setTimeout(() => {
-            this.detailView.classList.remove('translate-x-full');
+            this.dom.detailView.classList.remove('translate-x-full');
         }, 10);
         lucide.createIcons();
-        this._initAllSliders(this.detailContent);
+        this._initAllSliders(this.dom.detailContent);
     }
 
     _initAllSliders(container) {
@@ -559,12 +551,12 @@ class GuideApp {
     }
 
     _hideDetailView() {
-        if (!this.detailView.classList.contains('hidden')) {
-            this.detailView.classList.add('translate-x-full');
+        if (!this.dom.detailView.classList.contains('hidden')) {
+            this.dom.detailView.classList.add('translate-x-full');
             setTimeout(() => {
-                this.detailView.classList.add('hidden');
-                this.detailView.classList.remove('flex');
-                this.mainView.classList.remove('hidden');
+                this.dom.detailView.classList.add('hidden');
+                this.dom.detailView.classList.remove('flex');
+                this.dom.mainView.classList.remove('hidden');
             }, 300);
         }
     }
@@ -573,7 +565,7 @@ class GuideApp {
         const query = e.target.value.trim();
         if (query.length > 0) {
             const results = this._performSearch(query);
-            this._displayLiveSearchResults(results, query, this.liveSearchResultsContainer);
+            this._displayLiveSearchResults(results, query, this.dom.liveSearchResultsContainer);
         } else {
             this._hideLiveSearchResults();
         }
@@ -583,9 +575,9 @@ class GuideApp {
         const query = e.target.value.trim();
         if (query.length > 0) {
             const results = this._performSearch(query);
-            this._displayLiveSearchResults(results, query, this.mobileSearchResultsContainer);
+            this._displayLiveSearchResults(results, query, this.dom.mobileSearchResultsContainer);
         } else {
-            this.mobileSearchResultsContainer.innerHTML = '';
+            this.dom.mobileSearchResultsContainer.innerHTML = '';
         }
     }
 
@@ -609,17 +601,17 @@ class GuideApp {
                 `;
             }).join('');
         }
-        if (container === this.liveSearchResultsContainer) {
+        if (container === this.dom.liveSearchResultsContainer) {
             container.classList.remove('hidden');
         }
     }
 
     _hideLiveSearchResults() {
-        this.liveSearchResultsContainer.classList.add('hidden');
+        this.dom.liveSearchResultsContainer.classList.add('hidden');
     }
 
     _handleGlobalClick(e) {
-        if (!this.searchForm.contains(e.target)) {
+        if (!this.dom.searchForm.contains(e.target)) {
             this._hideLiveSearchResults();
         }
     }
@@ -700,14 +692,14 @@ class GuideApp {
 
         this._hideLiveSearchResults();
         this._hideMobileSearch();
-        this.searchInput.value = '';
-        this.mobileSearchInput.value = '';
+        this.dom.searchInput.value = '';
+        this.dom.mobileSearchInput.value = '';
 
         const { isDetail, detailType, detailKey, categoryKey, pageKey, keyword } = item.dataset;
 
         if (isDetail === 'true') {
             this._showDetailView(detailType, detailKey);
-            setTimeout(() => this._highlightKeywordInSection(this.detailContent, keyword), 500);
+            setTimeout(() => this._highlightKeywordInSection(this.dom.detailContent, keyword), 500);
         } else {
             const targetElement = document.getElementById(`page-${categoryKey}-${pageKey}`);
             if (targetElement) {
@@ -762,19 +754,19 @@ class GuideApp {
     }
 
     _showMobileSearch() {
-        this.mobileSearchOverlay.classList.remove('hidden');
+        this.dom.mobileSearchOverlay.classList.remove('hidden');
         setTimeout(() => {
-            this.mobileSearchOverlay.classList.remove('translate-y-full');
-            this.mobileSearchInput.focus();
+            this.dom.mobileSearchOverlay.classList.remove('translate-y-full');
+            this.dom.mobileSearchInput.focus();
         }, 10);
     }
 
     _hideMobileSearch() {
-        this.mobileSearchOverlay.classList.add('translate-y-full');
+        this.dom.mobileSearchOverlay.classList.add('translate-y-full');
         setTimeout(() => {
-            this.mobileSearchOverlay.classList.add('hidden');
-            this.mobileSearchInput.value = '';
-            this.mobileSearchResultsContainer.innerHTML = '';
+            this.dom.mobileSearchOverlay.classList.add('hidden');
+            this.dom.mobileSearchInput.value = '';
+            this.dom.mobileSearchResultsContainer.innerHTML = '';
         }, 300);
     }
 
@@ -818,23 +810,23 @@ class GuideApp {
     }
 
     _showFeedbackModal() {
-        this.feedbackModal.classList.remove('hidden');
+        this.dom.feedbackModal.classList.remove('hidden');
         setTimeout(() => {
-            this.feedbackModal.style.opacity = '1';
-            this.feedbackDialog.style.transform = 'scale(1)';
-            this.feedbackDialog.style.opacity = '1';
+            this.dom.feedbackModal.style.opacity = '1';
+            this.dom.feedbackDialog.style.transform = 'scale(1)';
+            this.dom.feedbackDialog.style.opacity = '1';
         }, 10);
     }
 
     _hideFeedbackModal() {
-        this.feedbackModal.style.opacity = '0';
-        this.feedbackDialog.style.transform = 'scale(0.95)';
-        this.feedbackDialog.style.opacity = '0';
+        this.dom.feedbackModal.style.opacity = '0';
+        this.dom.feedbackDialog.style.transform = 'scale(0.95)';
+        this.dom.feedbackDialog.style.opacity = '0';
         setTimeout(() => {
-            this.feedbackModal.classList.add('hidden');
-            this.feedbackForm.classList.remove('hidden');
-            this.feedbackSuccessMsg.classList.add('hidden');
-            this.feedbackForm.reset();
+            this.dom.feedbackModal.classList.add('hidden');
+            this.dom.feedbackForm.classList.remove('hidden');
+            this.dom.feedbackSuccessMsg.classList.add('hidden');
+            this.dom.feedbackForm.reset();
         }, 300);
     }
 
@@ -849,8 +841,8 @@ class GuideApp {
             body: new URLSearchParams(formData).toString()
         })
             .then(() => {
-                this.feedbackForm.classList.add('hidden');
-                this.feedbackSuccessMsg.classList.remove('hidden');
+                this.dom.feedbackForm.classList.add('hidden');
+                this.dom.feedbackSuccessMsg.classList.remove('hidden');
                 setTimeout(() => {
                     this._hideFeedbackModal();
                 }, 2000);
@@ -865,247 +857,80 @@ class GuideApp {
 
     _showAuthModal() {
         this._handleAuthViewChange('login');
-        this.authModal.classList.remove('hidden');
+        this.dom.authModal.classList.remove('hidden');
         setTimeout(() => {
-            this.authModal.style.opacity = '1';
-            this.authDialog.style.transform = 'scale(1)';
-            this.authDialog.style.opacity = '1';
+            this.dom.authModal.style.opacity = '1';
+            this.dom.authDialog.style.transform = 'scale(1)';
+            this.dom.authDialog.style.opacity = '1';
         }, 10);
     }
 
     _hideAuthModal() {
-        this.authModal.style.opacity = '0';
-        this.authDialog.style.transform = 'scale(0.95)';
-        this.authDialog.style.opacity = '0';
+        this.dom.authModal.style.opacity = '0';
+        this.dom.authDialog.style.transform = 'scale(0.95)';
+        this.dom.authDialog.style.opacity = '0';
         setTimeout(() => {
-            this.authModal.classList.add('hidden');
+            this.dom.authModal.classList.add('hidden');
         }, 300);
     }
 
     _handleAuthViewChange(viewName) {
-        this.loginFormContainer.classList.add('hidden');
-        this.registerFormContainer.classList.add('hidden');
-        this.resetPasswordFormContainer.classList.add('hidden');
+        this.dom.loginFormContainer.classList.add('hidden');
+        this.dom.registerFormContainer.classList.add('hidden');
+        this.dom.resetPasswordFormContainer.classList.add('hidden');
 
         if (viewName === 'login') {
-            this.authTitle.textContent = "欢迎回来";
-            this.loginFormContainer.classList.remove('hidden');
+            this.dom.authTitle.textContent = "欢迎回来";
+            this.dom.loginFormContainer.classList.remove('hidden');
         } else if (viewName === 'register') {
-            this.authTitle.textContent = "加入我们";
-            this.registerFormContainer.classList.remove('hidden');
+            this.dom.authTitle.textContent = "加入我们";
+            this.dom.registerFormContainer.classList.remove('hidden');
         } else if (viewName === 'reset') {
-            this.authTitle.textContent = "重置密码";
-            this.resetPasswordFormContainer.classList.remove('hidden');
+            this.dom.authTitle.textContent = "重置密码";
+            this.dom.resetPasswordFormContainer.classList.remove('hidden');
         }
     }
-
-    async _handleRegisterSubmit(e) {
-        e.preventDefault();
-        const emailPrefix = this.registerForm.email_prefix.value;
-        const password = this.registerForm.password.value;
-
-        if (!emailPrefix) {
-            this._showToast("请输入你的学号！", "error");
-            return;
-        }
-        const email = emailPrefix + '@jou.edu.cn';
-
-        if (password.length < 8) {
-            this._showToast("密码长度不能少于8位！", "error");
-            return;
-        }
-
-        try {
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            const user = userCredential.user;
-
-            const newUserDoc = {
-                email: user.email,
-                nickname: "萌新" + emailPrefix.slice(-4),
-                bio: "这位同学很酷，什么都还没留下~",
-                avatarId: AVATARS[Math.floor(Math.random() * AVATARS.length)],
-                major: "",
-                enrollmentYear: new Date().getFullYear(),
-                joinDate: Timestamp.fromDate(new Date())
-            };
-            await setDoc(doc(db, "users", user.uid), newUserDoc);
-
-            await sendEmailVerification(user);
-            this._showToast("注册成功！验证邮件已发送，请查收。", "success");
-            this._hideAuthModal();
-
-        } catch (error) {
-            if (error.code === 'auth/email-already-in-use') {
-                this._showToast("该邮箱已被注册！", "error");
-            } else {
-                this._showToast("注册失败：" + error.message, "error");
-            }
-        }
-    }
-
-    async _handleLoginSubmit(e) {
-        e.preventDefault();
-        const emailPrefix = this.loginForm.email_prefix.value;
-        const password = this.loginForm.password.value;
-
-        if (!emailPrefix) {
-            this._showToast("请输入你的学号！", "error");
-            return;
-        }
-        const email = emailPrefix + '@jou.edu.cn';
-
-        try {
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            const user = userCredential.user;
-
-            if (user.emailVerified) {
-                this._showToast("登录成功！", "success");
-                this._hideAuthModal();
-            } else {
-                this._showToast("请先前往邮箱完成验证再登录。", "info");
-                await signOut(auth);
-            }
-        } catch (error) {
-            this._showToast("登录失败：学号或密码错误。", "error");
-        }
-    }
-
-    async _handlePasswordResetSubmit(e) {
-        e.preventDefault();
-        const emailPrefix = this.resetPasswordForm.email_prefix.value;
-        if (!emailPrefix) {
-            this._showToast("请输入你的学号！", "error");
-            return;
-        }
-        const email = emailPrefix + '@jou.edu.cn';
-
-        try {
-            await sendPasswordResetEmail(auth, email);
-            this._showToast("密码重置邮件已发送，请查收。", "success");
-            this._handleAuthViewChange('login');
-        } catch (error) {
-            if (error.code === 'auth/user-not-found') {
-                this._showToast("发送失败：该邮箱尚未注册。", "error");
-            } else {
-                this._showToast("发送失败：" + error.message, "error");
-            }
-        }
-    }
-
-    async _handleLogout() {
-        try {
-            await signOut(auth);
-            this._hideProfileModal();
-            this._showToast("已成功退出登录。", "info");
-        } catch (error) {
-            this._showToast("退出失败：" + error.message, "error");
-        }
-    }
-
-    _listenForAuthStateChanges() {
-        onAuthStateChanged(auth, (user) => {
-            if (this.unsubscribeUserDoc) {
-                this.unsubscribeUserDoc();
-                this.unsubscribeUserDoc = null;
-            }
-
-            if (user && user.emailVerified) {
-                this.loginPromptBtn.classList.add('hidden');
-                this.userProfileBtn.classList.remove('hidden');
-
-                const userDocRef = doc(db, "users", user.uid);
-                this.unsubscribeUserDoc = onSnapshot(userDocRef, (docSnap) => {
-                    if (docSnap.exists()) {
-                        this.currentUserData = docSnap.data();
-                        this._updateUIWithUserData();
-                    } else {
-                        console.log("No such user document!");
-                    }
-                }, (error) => {
-                    console.error("Error listening to user doc:", error);
-                });
-
-            } else {
-                this.currentUserData = null;
-                this.loginPromptBtn.classList.remove('hidden');
-                this.userProfileBtn.classList.add('hidden');
-            }
-        });
-    }
-
-    _updateUIWithUserData() {
-        if (!this.currentUserData) return;
-
-        const avatarUrl = getAvatarUrl(this.currentUserData.avatarId);
-        this.sidebarAvatar.src = avatarUrl;
-        this.sidebarNickname.textContent = this.currentUserData.nickname || '未设置昵称';
-
-        this.profileAvatarLarge.src = avatarUrl;
-        this.profileNickname.textContent = this.currentUserData.nickname || '未设置昵称';
-        this.profileEmail.textContent = this.currentUserData.email || '';
-        this.profileMajorYear.textContent = `${this.currentUserData.enrollmentYear || '未知年份'}级 ${this.currentUserData.major || '未设置专业'}`;
-        this.profileBio.textContent = this.currentUserData.bio || '这位同学很酷，什么都还没留下~';
-
-    }
-
+    
     _showProfileModal() {
         this._handleProfileViewChange('view');
-        this.profileModal.classList.remove('hidden');
+        this.dom.profileModal.classList.remove('hidden');
         setTimeout(() => {
-            this.profileModal.style.opacity = '1';
-            this.profileDialog.style.transform = 'scale(1)';
-            this.profileDialog.style.opacity = '1';
+            this.dom.profileModal.style.opacity = '1';
+            this.dom.profileDialog.style.transform = 'scale(1)';
+            this.dom.profileDialog.style.opacity = '1';
         }, 10);
     }
 
     _hideProfileModal() {
-        this.profileModal.style.opacity = '0';
-        this.profileDialog.style.transform = 'scale(0.95)';
-        this.profileDialog.style.opacity = '0';
+        this.dom.profileModal.style.opacity = '0';
+        this.dom.profileDialog.style.transform = 'scale(0.95)';
+        this.dom.profileDialog.style.opacity = '0';
         setTimeout(() => {
-            this.profileModal.classList.add('hidden');
+            this.dom.profileModal.classList.add('hidden');
         }, 300);
     }
 
     _handleProfileViewChange(viewName) {
-        this.profileDialog.querySelectorAll('.profile-tab').forEach(tab => {
+        this.dom.profileDialog.querySelectorAll('.profile-tab').forEach(tab => {
             tab.classList.toggle('active', tab.dataset.view === viewName);
         });
 
-        this.profileViewContainer.classList.add('hidden');
-        this.profileEditContainer.classList.add('hidden');
+        this.dom.profileViewContainer.classList.add('hidden');
+        this.dom.profileEditContainer.classList.add('hidden');
 
         if (viewName === 'view') {
-            this.profileViewContainer.classList.remove('hidden');
+            this.dom.profileViewContainer.classList.remove('hidden');
         } else if (viewName === 'edit') {
-            this._populateProfileEditForm();
-            this.profileEditContainer.classList.remove('hidden');
+            authUI.populateProfileEditForm(this.currentUserData);
+            this.dom.profileEditContainer.classList.remove('hidden');
         }
     }
-
-    _populateProfileEditForm() {
-        if (!this.currentUserData) return;
-
-        this.avatarSelectionGrid.innerHTML = AVATARS.map(id => `
-    <img src="${getAvatarUrl(id)}" data-avatar-id="${id}" class="avatar-option w-12 h-12" alt="[头像${id}]">
-`).join('');
-
-        const currentAvatar = this.avatarSelectionGrid.querySelector(`[data-avatar-id="${this.currentUserData.avatarId}"]`);
-        if (currentAvatar) {
-            currentAvatar.classList.add('selected');
-        }
-
-        this.editNickname.value = this.currentUserData.nickname || '';
-        this.editBio.value = this.currentUserData.bio || '';
-        this.editEnrollmentYear.value = this.currentUserData.enrollmentYear || new Date().getFullYear();
-        this.editMajor.value = this.currentUserData.major || '';
-    }
-
+    
     _populateProfileEditDropdowns() {
         const currentYear = new Date().getFullYear();
         for (let i = currentYear; i >= currentYear - 5; i--) {
             const option = new Option(i + '级', i);
-            this.editEnrollmentYear.add(option);
+            this.dom.editEnrollmentYear.add(option);
         }
 
         const allMajors = [];
@@ -1118,38 +943,8 @@ class GuideApp {
 
         uniqueMajors.forEach(major => {
             const option = new Option(major, major);
-            this.editMajor.add(option);
+            this.dom.editMajor.add(option);
         });
-    }
-
-    async _handleProfileSave(e) {
-        e.preventDefault();
-        if (!auth.currentUser) return;
-
-        this.saveProfileBtn.disabled = true;
-        this.saveProfileBtn.innerHTML = `<span class="loader-small"></span> 保存中...`;
-
-        const selectedAvatar = this.avatarSelectionGrid.querySelector('.selected');
-        const updatedData = {
-            nickname: this.editNickname.value.trim(),
-            bio: this.editBio.value.trim(),
-            avatarId: selectedAvatar ? selectedAvatar.dataset.avatarId : this.currentUserData.avatarId,
-            enrollmentYear: parseInt(this.editEnrollmentYear.value),
-            major: this.editMajor.value
-        };
-
-        try {
-            const userDocRef = doc(db, "users", auth.currentUser.uid);
-            await updateDoc(userDocRef, updatedData);
-            this._showToast("资料更新成功！", "success");
-            this._handleProfileViewChange('view');
-        } catch (error) {
-            console.error("Error updating profile:", error);
-            this._showToast("资料更新失败，请稍后再试。", "error");
-        } finally {
-            this.saveProfileBtn.disabled = false;
-            this.saveProfileBtn.innerHTML = `保存更改`;
-        }
     }
 
     _initCampusQueryTool(container) {
@@ -1258,7 +1053,6 @@ class GuideApp {
         collegeSelect.addEventListener('change', handleCollegeChange);
         majorSelect.addEventListener('change', handleMajorChange);
     }
-
 }
 
 // ===================================================================================
