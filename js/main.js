@@ -8,17 +8,12 @@
 // --- 模块导入 ---
 // ===================================================================================
 
-// 导入数据模块
 import { guideData } from './data/guideData.js';
 import { campusData, campusInfoData } from './data/campusData.js';
-
-// 导入Firebase服务实例
 import { auth, db } from './firebase.js';
-
-// 导入UI渲染模块
 import * as renderer from './ui/renderer.js';
+import { createNavigation, handleNavigationClick, updateActiveNav } from './ui/navigation.js'; // <-- 导入新函数
 
-// 从Firebase SDK导入后续会用到的具体函数
 import {
     createUserWithEmailAndPassword,
     sendEmailVerification,
@@ -45,7 +40,7 @@ const getAvatarUrl = (id) => id ? `../images/默认头像/${id}.png` : '../image
 
 
 // ===================================================================================
-// --- 应用主类 (未来将被进一步拆分) ---
+// --- 应用主类 (持续拆分中) ---
 // ===================================================================================
 class GuideApp {
     constructor(commonData, specificData) {
@@ -181,59 +176,11 @@ class GuideApp {
     }
 
     runApp() {
-        this._createNav();
+        createNavigation(this.navMenu, this.guideData);
         this._renderAllContent();
         this._updateCampusDisplay();
         this._setupIntersectionObserver();
         this._updateActiveState("主页", "home");
-    }
-
-    _createNav() {
-        this.navMenu.innerHTML = '';
-        for (const categoryKey in this.guideData) {
-            const categoryData = this.guideData[categoryKey];
-            const categoryDiv = document.createElement('div');
-            categoryDiv.className = 'nav-category';
-
-            if (categoryData.isHomePage) {
-                const link = this._createNavLink(categoryKey, 'home', categoryData.icon, categoryKey, true);
-                this.navMenu.appendChild(link);
-                continue;
-            }
-
-            const categoryHeader = document.createElement('button');
-            categoryHeader.className = 'category-header w-full flex items-center justify-between px-4 py-2 text-sm font-semibold text-blue-200 dark:text-gray-300 rounded-md hover:bg-blue-800 dark:hover:bg-gray-700 transition-colors';
-            categoryHeader.innerHTML = `<span class="flex items-center"><i data-lucide="${categoryData.icon}" class="w-4 h-4 mr-3"></i>${categoryKey}</span><i data-lucide="chevron-down" class="accordion-icon w-4 h-4"></i>`;
-            categoryDiv.appendChild(categoryHeader);
-
-            const pageList = document.createElement('ul');
-            pageList.className = 'submenu mt-1';
-            for (const pageKey in categoryData.pages) {
-                const page = categoryData.pages[pageKey];
-                const listItem = document.createElement('li');
-                const link = this._createNavLink(categoryKey, pageKey, null, page.title, false);
-                listItem.appendChild(link);
-                pageList.appendChild(listItem);
-            }
-            categoryDiv.appendChild(pageList);
-            this.navMenu.appendChild(categoryDiv);
-        }
-        lucide.createIcons();
-    }
-
-    _createNavLink(categoryKey, pageKey, icon, text, isHeader) {
-        const link = document.createElement('a');
-        link.href = `#page-${categoryKey}-${pageKey}`;
-        if (isHeader) {
-            link.className = 'sidebar-link flex items-center px-4 py-3 text-base font-semibold rounded-lg hover:bg-blue-700 dark:hover:bg-gray-700 transition-colors mb-4';
-            link.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5 mr-3"></i> ${text}`;
-        } else {
-            link.className = 'sidebar-link block pl-11 pr-4 py-2.5 text-sm rounded-md hover:bg-blue-700 dark:hover:bg-gray-700 transition-colors';
-            link.textContent = text;
-        }
-        link.dataset.category = categoryKey;
-        link.dataset.page = pageKey;
-        return link;
     }
 
     _renderAllContent() {
@@ -306,7 +253,15 @@ class GuideApp {
 
 
     _setupEventListeners() {
-        this.navMenu.addEventListener('click', this._handleNavClick.bind(this));
+        // 使用新的导航点击处理器
+        this.navMenu.addEventListener('click', (e) => handleNavigationClick(e, (category, page) => {
+            this._hideAllViews();
+            this._updateActiveState(category, page);
+            const targetElement = document.getElementById(`page-${category}-${page}`);
+            if (targetElement) this._scrollToElement(targetElement);
+            if (window.innerWidth < 768) this._toggleSidebar();
+        }));
+
         this.homeButtonTop.addEventListener('click', this._handleHomeClick.bind(this));
         this.menuToggle.addEventListener('click', this._toggleSidebar.bind(this));
         this.sidebarOverlay.addEventListener('click', this._toggleSidebar.bind(this));
@@ -434,48 +389,15 @@ class GuideApp {
                 this.contentTitle.textContent = pageData.title;
             }
         }
+        
+        updateActiveNav(categoryKey, pageKey); // 使用新的导航更新函数
 
-        document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
-        const activeLink = document.querySelector(`.sidebar-link[data-category="${categoryKey}"][data-page="${pageKey}"]`);
-        if (activeLink) {
-            activeLink.classList.add('active');
-            const submenu = activeLink.closest('.submenu');
-            if (submenu && !submenu.classList.contains('open')) {
-                document.querySelectorAll('.submenu.open').forEach(s => {
-                    s.classList.remove('open');
-                    s.previousElementSibling.classList.remove('open');
-                });
-                submenu.classList.add('open');
-                submenu.previousElementSibling.classList.add('open');
-            }
-        }
         this.bottomNav.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
         if (categoryKey === '主页') {
             this.bottomNavHome.classList.add('active');
         }
     }
-
-    _handleNavClick(e) {
-        const link = e.target.closest('.sidebar-link');
-        const header = e.target.closest('.category-header');
-        if (link) {
-            e.preventDefault();
-            this._hideAllViews();
-            const href = link.getAttribute('href');
-            if (href && href.startsWith('#')) {
-                const { category, page } = link.dataset;
-                this._updateActiveState(category, page);
-                const targetElement = document.getElementById(href.substring(1));
-                if (targetElement) this._scrollToElement(targetElement);
-                if (window.innerWidth < 768) this._toggleSidebar();
-            }
-        } else if (header) {
-            const submenu = header.nextElementSibling;
-            header.classList.toggle('open');
-            submenu.classList.toggle('open');
-        }
-    }
-
+    
     _handleHomeClick(e) {
         e.preventDefault();
         this._hideAllViews();
