@@ -24,7 +24,7 @@ import { auth, db } from '../firebase.js';
 
 // --- 全局常量 ---
 const AVATARS = Array.from({ length: 1 }, (_, i) => `avatar_${String(i + 1).padStart(2, '0')}`);
-const getAvatarUrl = (id) => id ? `../images/默认头像/${id}.png` : '../images/默认头像/avatar_01.png';
+const getAvatarUrl = (id) => id ? `images/默认头像/${id}.png` : 'images/默认头像/avatar_01.png';
 
 // --- DOM 元素缓存 ---
 let domElements = {};
