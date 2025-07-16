@@ -15,7 +15,8 @@ import { createNavigation, handleNavigationClick, updateActiveNav } from './ui/n
 import * as authUI from './ui/auth.js';
 import * as modals from './ui/modals.js';
 import * as search from './ui/search.js';
-import * as viewManager from './ui/viewManager.js'; // 导入新的视图管理模块
+import * as viewManager from './ui/viewManager.js';
+import * as theme from './ui/theme.js'; // 导入新的主题模块
 
 // ===================================================================================
 // --- 应用主类 (最终将被完全拆解) ---
@@ -148,7 +149,7 @@ class GuideApp {
     }
 
     init() {
-        this._determineAndApplyInitialTheme();
+        theme.init(this.dom); // 初始化主题模块
         this._setupEventListeners();
         
         authUI.listenForAuthStateChanges((userData) => {
@@ -279,8 +280,6 @@ class GuideApp {
         this.dom.bottomNavSearch.addEventListener('click', viewManager.showMobileSearch);
         this.dom.bottomNavCampus.addEventListener('click', modals.showCampusSelector);
         this.dom.closeMobileSearchBtn.addEventListener('click', viewManager.hideMobileSearch);
-        
-        this.dom.themeToggleBtn.addEventListener('click', this._handleThemeToggle.bind(this));
         
         // Modal Event Listeners
         this.dom.feedbackBtn.addEventListener('click', modals.showFeedbackModal);
@@ -481,35 +480,6 @@ class GuideApp {
                 this._scrollToElement(targetElement, keyword);
             }
         }
-    }
-
-    _determineAndApplyInitialTheme() {
-        const savedTheme = localStorage.getItem('theme');
-        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-        if (savedTheme) {
-            this._applyTheme(savedTheme);
-        } else {
-            this._applyTheme(systemPrefersDark ? 'dark' : 'light');
-        }
-    }
-
-    _applyTheme(theme) {
-        if (theme === 'dark') {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-        localStorage.setItem('theme', theme);
-
-        const isDark = theme === 'dark';
-        document.getElementById('theme-icon-sun').classList.toggle('hidden', isDark);
-        document.getElementById('theme-icon-moon').classList.toggle('hidden', !isDark);
-    }
-
-    _handleThemeToggle() {
-        const currentIsDark = document.documentElement.classList.contains('dark');
-        this._applyTheme(currentIsDark ? 'light' : 'dark');
     }
 
     _handleFeedbackSubmit(e) {
