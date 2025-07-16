@@ -16,7 +16,7 @@ function generateSliderHtml(images) {
 
     const slidesHtml = images.map((img, index) => `
         <div class="slider-slide" data-index="${index}">
-            <img src="../${img.src}" alt="${img.caption}" onerror="this.onerror=null;this.src='https://placehold.co/800x450/fecaca/991b1b?text=图片加载失败';">
+            <img src="${img.src}" alt="${img.caption}" onerror="this.onerror=null;this.src='https://placehold.co/800x450/fecaca/991b1b?text=图片加载失败';">
         </div>
     `).join('');
 
@@ -117,7 +117,7 @@ export function generateCampusCards(items, type) {
         return `
              <a href="#" class="detail-card bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 group" data-type="${type}" data-key="${key}">
                  <div class="h-56 overflow-hidden">
-                     <img src="../${item.image}" alt="[${item.name}的图片]" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                     <img src="${item.image}" alt="[${item.name}的图片]" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" onerror="this.onerror=null;this.src='https://placehold.co/600x400/fecaca/991b1b?text=图片加载失败';">
                  </div>
                  <div class="p-6">
                      <h4 class="font-bold text-xl text-gray-900 dark:text-gray-100">${item.name}</h4>

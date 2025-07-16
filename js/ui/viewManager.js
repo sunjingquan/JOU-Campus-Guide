@@ -86,7 +86,7 @@ export function showDetailView(type, itemKey) {
 
     dom.detailContent.innerHTML = `
         <div class="max-w-4xl mx-auto">
-            <img src="../${itemData.image}" alt="[${itemData.name}的图片]" class="w-full h-auto max-h-[450px] object-cover rounded-xl shadow-lg mb-8" onerror="this.onerror=null;this.src='https://placehold.co/1200x675/fecaca/991b1b?text=图片加载失败';">
+            <img src="${itemData.image}" alt="[${itemData.name}的图片]" class="w-full h-auto max-h-[450px] object-cover rounded-xl shadow-lg mb-8" onerror="this.onerror=null;this.src='https://placehold.co/1200x675/fecaca/991b1b?text=图片加载失败';">
             <div class="bg-gray-100 dark:bg-gray-800/50 p-4 sm:p-8 rounded-xl">
                 <h3 class="text-2xl font-bold mb-6 border-b pb-4 dark:border-gray-700 text-gray-800 dark:text-gray-100">详细情况概览</h3>
                 ${detailsHtml}
