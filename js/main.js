@@ -13,10 +13,12 @@ import { campusData, campusInfoData } from './data/campusData.js';
 import * as renderer from './ui/renderer.js';
 import { createNavigation, handleNavigationClick, updateActiveNav } from './ui/navigation.js';
 import * as authUI from './ui/auth.js';
-import * as modals from './ui/modals.js'; // 导入新的模态框模块
+import * as modals from './ui/modals.js';
+import * as search from './ui/search.js';
+import * as viewManager from './ui/viewManager.js'; // 导入新的视图管理模块
 
 // ===================================================================================
-// --- 应用主类 (持续拆分中) ---
+// --- 应用主类 (最终将被完全拆解) ---
 // ===================================================================================
 class GuideApp {
     constructor(commonData, specificData) {
@@ -34,6 +36,10 @@ class GuideApp {
         // 初始化依赖DOM的模块
         authUI.cacheAuthDOMElements(this.dom);
         modals.init(this.dom);
+        viewManager.init({
+            domElements: this.dom,
+            cData: this.campusData
+        });
     }
 
     _cacheDOMElements() {
@@ -170,6 +176,16 @@ class GuideApp {
         this._updateCampusDisplay();
         this._setupIntersectionObserver();
         this._updateActiveState("主页", "home");
+        
+        search.init({
+            domElements: this.dom,
+            gData: this.guideData,
+            cData: this.campusData,
+            campus: this.selectedCampus,
+            onResultClick: this._handleSearchResultClick.bind(this)
+        });
+        
+        viewManager.updateCampus(this.selectedCampus);
     }
 
     _renderAllContent() {
@@ -243,31 +259,27 @@ class GuideApp {
 
     _setupEventListeners() {
         this.dom.navMenu.addEventListener('click', (e) => handleNavigationClick(e, (category, page) => {
-            this._hideAllViews();
+            viewManager.hideAllViews();
             this._updateActiveState(category, page);
             const targetElement = document.getElementById(`page-${category}-${page}`);
             if (targetElement) this._scrollToElement(targetElement);
-            if (window.innerWidth < 768) this._toggleSidebar();
+            if (window.innerWidth < 768) viewManager.toggleSidebar();
         }));
 
         this.dom.homeButtonTop.addEventListener('click', this._handleHomeClick.bind(this));
-        this.dom.menuToggle.addEventListener('click', this._toggleSidebar.bind(this));
-        this.dom.sidebarOverlay.addEventListener('click', this._toggleSidebar.bind(this));
+        this.dom.menuToggle.addEventListener('click', viewManager.toggleSidebar);
+        this.dom.sidebarOverlay.addEventListener('click', viewManager.toggleSidebar);
         this.dom.campusModal.addEventListener('click', this._handleCampusSelection.bind(this));
         this.dom.changeCampusBtn.addEventListener('click', modals.showCampusSelector);
         this.dom.contentArea.addEventListener('click', this._handleCardClick.bind(this));
-        this.dom.backToMainBtn.addEventListener('click', this._hideDetailView.bind(this));
-        this.dom.searchForm.addEventListener('submit', e => e.preventDefault());
-        this.dom.searchInput.addEventListener('input', this._handleLiveSearch.bind(this));
-        document.addEventListener('click', this._handleGlobalClick.bind(this));
-        this.dom.liveSearchResultsContainer.addEventListener('click', this._handleSearchResultClick.bind(this));
+        this.dom.backToMainBtn.addEventListener('click', viewManager.hideDetailView);
+        
         this.dom.bottomNavHome.addEventListener('click', this._handleHomeClick.bind(this));
-        this.dom.bottomNavMenu.addEventListener('click', this._toggleSidebar.bind(this));
-        this.dom.bottomNavSearch.addEventListener('click', this._showMobileSearch.bind(this));
+        this.dom.bottomNavMenu.addEventListener('click', viewManager.toggleSidebar);
+        this.dom.bottomNavSearch.addEventListener('click', viewManager.showMobileSearch);
         this.dom.bottomNavCampus.addEventListener('click', modals.showCampusSelector);
-        this.dom.closeMobileSearchBtn.addEventListener('click', this._hideMobileSearch.bind(this));
-        this.dom.mobileSearchInput.addEventListener('input', this._handleMobileLiveSearch.bind(this));
-        this.dom.mobileSearchResultsContainer.addEventListener('click', this._handleSearchResultClick.bind(this));
+        this.dom.closeMobileSearchBtn.addEventListener('click', viewManager.hideMobileSearch);
+        
         this.dom.themeToggleBtn.addEventListener('click', this._handleThemeToggle.bind(this));
         
         // Modal Event Listeners
@@ -325,6 +337,8 @@ class GuideApp {
         const campus = button.dataset.campus;
         localStorage.setItem('selectedCampus', campus);
         this.selectedCampus = campus;
+        search.updateCampus(campus);
+        viewManager.updateCampus(campus);
 
         modals.hideCampusSelector(() => {
             this.runApp();
@@ -383,19 +397,12 @@ class GuideApp {
     
     _handleHomeClick(e) {
         e.preventDefault();
-        this._hideAllViews();
+        viewManager.hideAllViews();
         const homeElement = document.getElementById('page-主页-home');
         if (homeElement) {
             this._updateActiveState("主页", "home");
             this._scrollToElement(homeElement);
         }
-    }
-
-    _toggleSidebar() {
-        const isHidden = this.dom.sidebar.classList.contains('-translate-x-full');
-        this.dom.sidebar.classList.toggle('-translate-x-full');
-        this.dom.sidebarOverlay.classList.toggle('hidden', !isHidden);
-        this.dom.bottomNavMenu.classList.toggle('active', !isHidden);
     }
 
     _scrollToElement(targetElement, keyword = null) {
@@ -407,7 +414,7 @@ class GuideApp {
         this.dom.contentArea.scrollTo({ top: offsetPosition, behavior: 'smooth' });
 
         if (keyword) {
-            setTimeout(() => this._highlightKeywordInSection(targetElement, keyword), 500);
+            setTimeout(() => search.highlightKeywordInSection(targetElement, keyword), 500);
         }
 
         clearTimeout(this.scrollTimeout);
@@ -448,249 +455,25 @@ class GuideApp {
         });
     }
 
-    _hideAllViews() {
-        this._hideDetailView();
-        this._hideMobileSearch();
-    }
-
     _handleCardClick(e) {
         const card = e.target.closest('.detail-card');
         if (!card) return;
         e.preventDefault();
 
         const { type, key } = card.dataset;
-        this._showDetailView(type, key);
+        viewManager.showDetailView(type, key);
     }
 
-    _showDetailView(type, itemKey) {
-        const itemData = this.campusData[this.selectedCampus]?.[type]?.items?.[itemKey];
-        if (!itemData) return;
-
-        this.dom.detailTitle.textContent = itemData.name;
-
-        let detailsHtml = '';
-        if (Array.isArray(itemData.details)) {
-            if (type === 'dormitory') {
-                detailsHtml = renderer.generateDormitoryDetailsHtml(itemData.details);
-            } else if (type === 'canteen') {
-                detailsHtml = renderer.generateCanteenDetailsHtml(itemData.details);
-            }
-        } else {
-            detailsHtml = `<div class="prose dark:prose-invert max-w-none">${itemData.details}</div>`;
-        }
-
-        this.dom.detailContent.innerHTML = `
-            <div class="max-w-4xl mx-auto">
-                <img src="../${itemData.image}" alt="[${itemData.name}的图片]" class="w-full h-auto max-h-[450px] object-cover rounded-xl shadow-lg mb-8">
-                <div class="bg-gray-100 dark:bg-gray-800/50 p-4 sm:p-8 rounded-xl">
-                    <h3 class="text-2xl font-bold mb-6 border-b pb-4 dark:border-gray-700 text-gray-800 dark:text-gray-100">详细情况概览</h3>
-                    ${detailsHtml}
-                </div>
-            </div>
-        `;
-
-        this.dom.mainView.classList.add('hidden');
-        this.dom.detailView.classList.remove('hidden', 'translate-x-full');
-        this.dom.detailView.classList.add('flex');
-        setTimeout(() => {
-            this.dom.detailView.classList.remove('translate-x-full');
-        }, 10);
-        lucide.createIcons();
-        this._initAllSliders(this.dom.detailContent);
-    }
-
-    _initAllSliders(container) {
-        const sliders = container.querySelectorAll('.image-slider');
-        sliders.forEach(slider => {
-            const wrapper = slider.querySelector('.slider-wrapper');
-            const slides = slider.querySelectorAll('.slider-slide');
-            const prevBtn = slider.querySelector('.slider-nav.prev');
-            const nextBtn = slider.querySelector('.slider-nav.next');
-            const captionEl = slider.querySelector('.slider-caption');
-            const dotsContainer = slider.querySelector('.slider-dots');
-
-            if (slides.length <= 1) return;
-
-            const imagesData = this.campusData[this.selectedCampus];
-            let currentIndex = 0;
-            const totalSlides = slides.length;
-
-            const goToSlide = (index) => {
-                currentIndex = (index + totalSlides) % totalSlides;
-                wrapper.style.transform = `translateX(-${currentIndex * 100}%)`;
-
-                const slideElement = slides[currentIndex];
-                const imgElement = slideElement.querySelector('img');
-                captionEl.textContent = imgElement.alt;
-
-                dotsContainer.querySelectorAll('.dot').forEach((dot, dotIndex) => {
-                    dot.classList.toggle('active', dotIndex === currentIndex);
-                });
-            };
-
-            prevBtn.addEventListener('click', () => goToSlide(currentIndex - 1));
-            nextBtn.addEventListener('click', () => goToSlide(currentIndex + 1));
-
-            dotsContainer.querySelectorAll('.dot').forEach(dot => {
-                dot.addEventListener('click', (e) => {
-                    goToSlide(parseInt(e.target.dataset.index));
-                });
-            });
-
-            goToSlide(0);
-        });
-    }
-
-    _hideDetailView() {
-        if (!this.dom.detailView.classList.contains('hidden')) {
-            this.dom.detailView.classList.add('translate-x-full');
-            setTimeout(() => {
-                this.dom.detailView.classList.add('hidden');
-                this.dom.detailView.classList.remove('flex');
-                this.dom.mainView.classList.remove('hidden');
-            }, 300);
-        }
-    }
-
-    _handleLiveSearch(e) {
-        const query = e.target.value.trim();
-        if (query.length > 0) {
-            const results = this._performSearch(query);
-            this._displayLiveSearchResults(results, query, this.dom.liveSearchResultsContainer);
-        } else {
-            this._hideLiveSearchResults();
-        }
-    }
-
-    _handleMobileLiveSearch(e) {
-        const query = e.target.value.trim();
-        if (query.length > 0) {
-            const results = this._performSearch(query);
-            this._displayLiveSearchResults(results, query, this.dom.mobileSearchResultsContainer);
-        } else {
-            this.dom.mobileSearchResultsContainer.innerHTML = '';
-        }
-    }
-
-    _displayLiveSearchResults(results, query, container) {
-        if (results.length === 0) {
-            container.innerHTML = `<p class="text-center text-gray-500 dark:text-gray-400 p-4">未能找到与“${this._escapeHtml(query)}”相关的内容。</p>`;
-        } else {
-            container.innerHTML = results.map(result => {
-                const snippet = this._createSnippet(result.text, query);
-                const highlightedSnippet = snippet.replace(new RegExp(this._escapeRegExp(query), 'gi'), (match) => `<mark class="search-highlight">${this._escapeHtml(match)}</mark>`);
-
-                const dataAttrs = result.isDetail
-                    ? `data-is-detail="true" data-detail-type="${result.detailType}" data-detail-key="${result.detailKey}"`
-                    : `data-category-key="${result.categoryKey}" data-page-key="${result.pageKey}"`;
-
-                return `
-                    <a href="#" class="search-result-item block p-4 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700 last:border-b-0" ${dataAttrs} data-keyword="${this._escapeHtml(query)}">
-                        <h4 class="font-semibold text-base text-blue-700 dark:text-blue-400 truncate">${this._escapeHtml(result.title)}</h4>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">...${highlightedSnippet}...</p>
-                    </a>
-                `;
-            }).join('');
-        }
-        if (container === this.dom.liveSearchResultsContainer) {
-            container.classList.remove('hidden');
-        }
-    }
-
-    _hideLiveSearchResults() {
-        this.dom.liveSearchResultsContainer.classList.add('hidden');
-    }
-
-    _handleGlobalClick(e) {
-        if (!this.dom.searchForm.contains(e.target)) {
-            this._hideLiveSearchResults();
-        }
-    }
-
-    _performSearch(query) {
-        const results = [];
-        const tempDiv = document.createElement('div');
-        const queryLower = query.toLowerCase();
-
-        for (const categoryKey in this.guideData) {
-            for (const pageKey in this.guideData[categoryKey].pages) {
-                const page = this.guideData[categoryKey].pages[pageKey];
-
-                let searchableText = page.title;
-
-                if (page.type === 'clubs') {
-                    const clubData = page.data;
-                    searchableText += ' ' + clubData.introduction;
-                    clubData.clubs.forEach(group => {
-                        searchableText += ' ' + group.list.join(' ');
-                    });
-                    searchableText += ' ' + clubData.organizations.title + ' ' + clubData.organizations.content;
-                } else if (page.content) {
-                    tempDiv.innerHTML = page.content;
-                    searchableText += ' ' + tempDiv.textContent;
-                } else if (page.type === 'faq') {
-                    page.items.forEach(item => {
-                        searchableText += ' ' + item.q + ' ' + item.a;
-                    });
-                }
-
-                if (searchableText.toLowerCase().includes(queryLower)) {
-                    results.push({
-                        title: page.title,
-                        text: searchableText,
-                        categoryKey,
-                        pageKey
-                    });
-                }
-            }
-        }
-
-        const campus = this.campusData[this.selectedCampus];
-        if (campus) {
-            ['dormitory', 'canteen'].forEach(type => {
-                if (campus[type] && campus[type].items) {
-                    for (const itemKey in campus[type].items) {
-                        const item = campus[type].items[itemKey];
-                        let searchableText = `${item.name} ${item.summary}`;
-                        if (Array.isArray(item.details)) {
-                            searchableText += item.details.map(d => Object.values(d).join(' ')).join(' ');
-                        } else if (typeof item.details === 'string') {
-                            tempDiv.innerHTML = item.details;
-                            searchableText += ' ' + tempDiv.textContent;
-                        }
-
-                        if (searchableText.toLowerCase().includes(queryLower)) {
-                            results.push({
-                                title: item.name,
-                                text: searchableText,
-                                isDetail: true,
-                                detailType: type,
-                                detailKey: itemKey
-                            });
-                        }
-                    }
-                }
-            });
-        }
-
-        return results;
-    }
-
-    _handleSearchResultClick(e) {
-        const item = e.target.closest('.search-result-item');
-        if (!item) return;
-        e.preventDefault();
-
-        this._hideLiveSearchResults();
-        this._hideMobileSearch();
+    _handleSearchResultClick(dataset) {
+        viewManager.hideAllViews();
         this.dom.searchInput.value = '';
         this.dom.mobileSearchInput.value = '';
 
-        const { isDetail, detailType, detailKey, categoryKey, pageKey, keyword } = item.dataset;
+        const { isDetail, detailType, detailKey, categoryKey, pageKey, keyword } = dataset;
 
         if (isDetail === 'true') {
-            this._showDetailView(detailType, detailKey);
-            setTimeout(() => this._highlightKeywordInSection(this.dom.detailContent, keyword), 500);
+            viewManager.showDetailView(detailType, detailKey);
+            setTimeout(() => search.highlightKeywordInSection(this.dom.detailContent, keyword), 500);
         } else {
             const targetElement = document.getElementById(`page-${categoryKey}-${pageKey}`);
             if (targetElement) {
@@ -698,77 +481,6 @@ class GuideApp {
                 this._scrollToElement(targetElement, keyword);
             }
         }
-    }
-
-    _createSnippet(text, query) {
-        const index = text.toLowerCase().indexOf(query.toLowerCase());
-        if (index === -1) return this._escapeHtml(text.substring(0, 100));
-
-        const start = Math.max(0, index - 30);
-        const end = Math.min(text.length, index + query.length + 70);
-        return this._escapeHtml(text.substring(start, end));
-    }
-
-    _highlightKeywordInSection(sectionElement, keyword) {
-        const regex = new RegExp(this._escapeRegExp(keyword), 'gi');
-        const walker = document.createTreeWalker(sectionElement, NodeFilter.SHOW_TEXT, null, false);
-        let node;
-        const nodesToReplace = [];
-
-        while (node = walker.nextNode()) {
-            if (node.textContent.toLowerCase().includes(keyword.toLowerCase())) {
-                nodesToReplace.push(node);
-            }
-        }
-
-        nodesToReplace.forEach(textNode => {
-            const parent = textNode.parentNode;
-            if (!parent || parent.nodeName === 'MARK' || parent.nodeName === 'SCRIPT' || parent.nodeName === 'STYLE') return;
-
-            const parts = textNode.textContent.split(regex);
-            const matches = textNode.textContent.match(regex);
-
-            if (!matches) return;
-
-            const fragment = document.createDocumentFragment();
-            parts.forEach((part, index) => {
-                fragment.appendChild(document.createTextNode(part));
-                if (index < matches.length) {
-                    const mark = document.createElement('mark');
-                    mark.className = 'temp-highlight';
-                    mark.textContent = matches[index];
-                    fragment.appendChild(mark);
-                }
-            });
-            parent.replaceChild(fragment, textNode);
-        });
-    }
-
-    _showMobileSearch() {
-        this.dom.mobileSearchOverlay.classList.remove('hidden');
-        setTimeout(() => {
-            this.dom.mobileSearchOverlay.classList.remove('translate-y-full');
-            this.dom.mobileSearchInput.focus();
-        }, 10);
-    }
-
-    _hideMobileSearch() {
-        this.dom.mobileSearchOverlay.classList.add('translate-y-full');
-        setTimeout(() => {
-            this.dom.mobileSearchOverlay.classList.add('hidden');
-            this.dom.mobileSearchInput.value = '';
-            this.dom.mobileSearchResultsContainer.innerHTML = '';
-        }, 300);
-    }
-
-    _escapeHtml(str) {
-        const div = document.createElement('div');
-        div.appendChild(document.createTextNode(str));
-        return div.innerHTML;
-    }
-
-    _escapeRegExp(string) {
-        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
     _determineAndApplyInitialTheme() {
