@@ -35,7 +35,7 @@ export function cacheAuthDOMElements(elements) {
  * @param {Object|null} userData - 从CloudBase数据库获取的用户数据，如果未登录则为null。
  */
 function updateUIWithUserData(userData) {
-    console.log('[UI Update] a_updateUIWithUserData is called. userData:', userData);
+    console.log('[UI Update] updateUIWithUserData is called. userData:', userData);
     
     if (userData && userData._id) { 
         console.log('[UI Update] User is logged in. Updating sidebar to show profile.');
@@ -59,85 +59,110 @@ function updateUIWithUserData(userData) {
 }
 
 /**
- * [最终修正] 监听CloudBase认证状态的改变，并立即更新UI。
+ * [优化版] 监听CloudBase认证状态的改变，并立即更新UI。
+ * 增加了更详细的日志记录，以便于调试。
  * @param {function} onStateChange - 状态改变时的回调函数，接收 user data 作为参数。
  */
 export function listenForAuthStateChanges(onStateChange) {
-    auth.onLoginStateChanged(async () => {
-        console.log('[Auth State] onLoginStateChanged has been triggered. Now checking auth.currentUser...');
+    auth.onLoginStateChanged(async (loginState) => {
+        console.log('[Auth State] onLoginStateChanged triggered. New login state:', loginState);
 
+        // 登出或状态改变时，先确保关闭旧的监听器
         if (userDocWatcher) {
             console.log('[Auth State] Closing previous database watcher.');
             userDocWatcher.close();
             userDocWatcher = null;
         }
 
+        // 使用最新的 loginState 或 auth.currentUser 来获取当前用户
         const currentUser = auth.currentUser;
         console.log('[Auth State] auth.currentUser is:', currentUser);
 
         if (currentUser && currentUser.uid) {
-            console.log(`[Auth State] User is logged in with UID: ${currentUser.uid}. Fetching data...`);
+            console.log(`[Auth State] User is logged in with UID: ${currentUser.uid}. Proceeding to fetch/create profile.`);
             const userDocRef = db.collection('users').doc(currentUser.uid);
-            let userData;
-
+            
             try {
-                let userDoc = await userDocRef.get();
-                console.log('[DB] userDocRef.get() result:', userDoc);
+                console.log(`[DB] Attempting to get document for UID: ${currentUser.uid}`);
+                const userDoc = await userDocRef.get();
+                console.log('[DB] Successfully received response from userDocRef.get():', userDoc);
 
-                if (!userDoc.data || userDoc.data.length === 0) {
-                    console.log(`[DB] User document for ${currentUser.uid} not found. Creating one...`);
+                let userData;
+
+                // CloudBase SDK 在文档不存在时返回 { data: [] }
+                if (userDoc.data && userDoc.data.length > 0) {
+                    // --- 文档已存在 ---
+                    userData = userDoc.data[0];
+                    console.log('[DB] User document found. Data:', userData);
+
+                } else {
+                    // --- 文档不存在，创建新文档 ---
+                    console.log(`[DB] User document for ${currentUser.uid} not found. Preparing to create one.`);
                     const emailPrefix = currentUser.email.split('@')[0];
                     const newUserDoc = {
-                        _id: currentUser.uid,
+                        // [关键修复] 移除 _id 字段。文档ID已由 doc(currentUser.uid) 指定，不应在数据体中重复。
                         email: currentUser.email,
                         nickname: "萌新" + emailPrefix.slice(-4),
                         bio: "这位同学很酷，什么都还没留下~",
                         avatarId: AVATARS[Math.floor(Math.random() * AVATARS.length)],
                         major: "",
                         enrollmentYear: new Date().getFullYear(),
-                        joinDate: new Date()
+                        joinDate: new Date().toISOString()
                     };
                     
-                    await userDocRef.set(newUserDoc);
-                    console.log('[DB] New user document created successfully.');
-                    userData = newUserDoc;
-                } else {
-                    userData = userDoc.data[0];
-                    console.log('[DB] Found existing user document:', userData);
+                    console.log('[DB] New user data to be set:', newUserDoc);
+                    
+                    try {
+                        const setResult = await userDocRef.set(newUserDoc);
+                        console.log('[DB] userDocRef.set() successfully resolved. Result:', setResult);
+                        // 为了前端UI能立刻使用，手动将 uid 添加到本地的 userData 对象中
+                        userData = { ...newUserDoc, _id: currentUser.uid };
+                    } catch (setError) {
+                        console.error('[DB FATAL] FAILED TO CREATE new user document!', setError);
+                        // 如果创建失败，这是一个严重问题，直接返回，不进行后续操作
+                        onStateChange(null);
+                        updateUIWithUserData(null);
+                        return;
+                    }
                 }
 
-                console.log('[Final Step] Calling updateUIWithUserData with:', userData);
+                // --- 更新UI并设置实时监听 ---
+                console.log('[Final Step] Calling updateUIWithUserData with final user data:', userData);
                 updateUIWithUserData(userData);
                 onStateChange(userData);
 
-                console.log('[Final Step] Setting up database watcher for subsequent changes.');
+                console.log('[Final Step] Setting up database watcher for real-time updates.');
                 userDocWatcher = userDocRef.watch({
                     onChange: (snapshot) => {
-                        console.log('[DB Watch] Data changed:', snapshot);
-                        if (snapshot.docs.length > 0) {
+                        console.log('[DB Watch] Data changed, snapshot:', snapshot);
+                        if (snapshot.docs && snapshot.docs.length > 0) {
                             const updatedUserData = snapshot.docs[0];
+                            console.log('[DB Watch] Updating UI with new data:', updatedUserData);
                             updateUIWithUserData(updatedUserData);
                             onStateChange(updatedUserData);
                         }
                     },
                     onError: (error) => {
-                        console.error("[DB Watch] Error:", error);
+                        console.error("[DB Watch] Real-time listener error:", error);
                     }
                 });
 
             } catch (dbError) {
-                console.error('[Auth State] A database error occurred:', dbError);
+                console.error('[Auth State] A critical database error occurred during get/set process:', dbError);
+                // 发生错误，UI回滚到未登录状态
                 updateUIWithUserData(null);
                 onStateChange(null);
             }
 
         } else {
-            console.log('[Auth State] auth.currentUser is null. User is logged out.');
+            // --- 用户未登录 ---
+            console.log('[Auth State] User is logged out or currentUser is invalid.');
             updateUIWithUserData(null);
             onStateChange(null);
         }
     });
 }
+
 
 /**
  * 处理发送邮箱验证码的逻辑
@@ -303,21 +328,21 @@ export function populateProfileEditForm(currentUserData) {
     if (!currentUserData) return;
 
     domElements.avatarSelectionGrid.innerHTML = AVATARS.map(id => `
-        <img src="${getAvatarUrl(id)}" data-avatar-id="${id}" class="avatar-option w-12 h-12" alt="[头像${id}]">
+        <img src="${getAvatarUrl(id)}" data-avatar-id="${id}" class="avatar-option w-12 h-12 rounded-full cursor-pointer border-2 border-transparent hover:border-blue-500" alt="头像${id}">
     `).join('');
 
     const currentAvatar = domElements.avatarSelectionGrid.querySelector(`[data-avatar-id="${currentUserData.avatarId}"]`);
     if (currentAvatar) {
-        currentAvatar.classList.add('selected');
+        currentAvatar.classList.add('selected', 'border-blue-500');
     } else {
         const firstAvatar = domElements.avatarSelectionGrid.querySelector('.avatar-option');
-        if(firstAvatar) firstAvatar.classList.add('selected');
+        if(firstAvatar) firstAvatar.classList.add('selected', 'border-blue-500');
     }
     
     domElements.avatarSelectionGrid.addEventListener('click', (e) => {
         if (e.target.classList.contains('avatar-option')) {
-            domElements.avatarSelectionGrid.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
-            e.target.classList.add('selected');
+            domElements.avatarSelectionGrid.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected', 'border-blue-500'));
+            e.target.classList.add('selected', 'border-blue-500');
         }
     });
 
@@ -341,7 +366,7 @@ export async function handleProfileSave(e, currentUserData, showToast, switchPro
         bio: domElements.editBio.value.trim(),
         avatarId: selectedAvatar ? selectedAvatar.dataset.avatarId : currentUserData.avatarId,
         enrollmentYear: parseInt(domElements.editEnrollmentYear.value),
-        major: domElements.editMajor.value
+        major: domElements.editMajor.value.trim()
     };
 
     try {
