@@ -316,7 +316,8 @@
                 </button>
 
                 <!-- 动态标题 -->
-                <h2 id="auth-title" class="text-center text-2xl font-bold text-gray-900 dark:text-gray-200 pt-8">欢迎回来</h2>
+                <h2 id="auth-title" class="text-center text-2xl font-bold text-gray-900 dark:text-gray-200 pt-8">欢迎回来
+                </h2>
 
                 <!-- 表单容器 -->
                 <div class="p-8">
@@ -363,7 +364,8 @@
                     </div>
                     <!-- 注册表单 -->
                     <div id="register-form-container" class="hidden">
-                        <form id="register-form" class="space-y-6">
+                        <form id="register-form" class="space-y-4">
+                            <!-- 学号输入 -->
                             <div>
                                 <label for="register-email-prefix"
                                     class="block text-sm font-medium text-gray-700 dark:text-gray-300">校园邮箱</label>
@@ -375,6 +377,7 @@
                                         class="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-100 text-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400 text-sm">@jou.edu.cn</span>
                                 </div>
                             </div>
+                            <!-- 密码输入 -->
                             <div>
                                 <label for="register-password"
                                     class="block text-sm font-medium text-gray-700 dark:text-gray-300">设置密码</label>
@@ -386,6 +389,21 @@
                                         placeholder="至少8位">
                                 </div>
                             </div>
+                            <!-- [新增] 验证码输入 -->
+                            <div>
+                                <label for="register-verification-code"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">邮箱验证码</label>
+                                <div class="mt-1 flex space-x-2">
+                                    <input id="register-verification-code" name="verification_code" type="text" required
+                                        class="w-full px-3 py-2 rounded-md border bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 focus:bg-white dark:focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        placeholder="6位数字验证码">
+                                    <button type="button" id="send-verification-code-btn"
+                                        class="flex-shrink-0 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                                        发送验证码
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- [修改] 注册按钮 -->
                             <div>
                                 <button type="submit" id="register-button"
                                     class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">
@@ -398,6 +416,7 @@
                             </p>
                         </form>
                     </div>
+
                     <!-- 密码重置表单 -->
                     <div id="reset-password-form-container" class="hidden">
                         <form id="reset-password-form" class="space-y-6">
@@ -525,6 +544,10 @@
             </div>
         </div>
     </div>
+
+    <!-- 引入 CloudBase SDK -->
+    <!-- !! 重要 !! 请将下面的地址替换为你自己项目环境的 Web SDK 地址 -->
+    <script src="https://static.cloudbase.net/cloudbase-js-sdk/2.17.3/cloudbase.full.js"></script>
 
     <!-- 主应用脚本入口 -->
     <script type="module" src="js/main.js"></script>
