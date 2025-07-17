@@ -16,10 +16,10 @@ import * as authUI from './ui/auth.js';
 import * as modals from './ui/modals.js';
 import * as search from './ui/search.js';
 import * as viewManager from './ui/viewManager.js';
-import * as theme from './ui/theme.js'; // 导入新的主题模块
+import * as theme from './ui/theme.js'; 
 
 // ===================================================================================
-// --- 应用主类 (最终将被完全拆解) ---
+// --- 应用主类 ---
 // ===================================================================================
 class GuideApp {
     constructor(commonData, specificData) {
@@ -34,8 +34,10 @@ class GuideApp {
         // 缓存所有需要操作的DOM元素
         this._cacheDOMElements();
         
-        // 初始化依赖DOM的模块
+        // [修正] 将 showToast 函数绑定到 this，并传递给 authUI
+        this.dom.showToast = this._showToast.bind(this);
         authUI.cacheAuthDOMElements(this.dom);
+
         modals.init(this.dom);
         viewManager.init({
             domElements: this.dom,
@@ -149,7 +151,7 @@ class GuideApp {
     }
 
     init() {
-        theme.init(this.dom); // 初始化主题模块
+        theme.init(this.dom); 
         this._setupEventListeners();
         
         authUI.listenForAuthStateChanges((userData) => {
@@ -281,7 +283,6 @@ class GuideApp {
         this.dom.bottomNavCampus.addEventListener('click', modals.showCampusSelector);
         this.dom.closeMobileSearchBtn.addEventListener('click', viewManager.hideMobileSearch);
         
-        // Modal Event Listeners
         this.dom.feedbackBtn.addEventListener('click', modals.showFeedbackModal);
         this.dom.closeFeedbackBtn.addEventListener('click', modals.hideFeedbackModal);
         this.dom.feedbackModal.addEventListener('click', (e) => {
@@ -308,19 +309,19 @@ class GuideApp {
         });
 
         // Auth Form Event Listeners
-        this.dom.registerForm.addEventListener('submit', (e) => authUI.handleRegisterSubmit(e, this._showToast, modals.hideAuthModal));
-        this.dom.loginForm.addEventListener('submit', (e) => authUI.handleLoginSubmit(e, this._showToast, modals.hideAuthModal));
-        this.dom.resetPasswordForm.addEventListener('submit', (e) => authUI.handlePasswordResetSubmit(e, this._showToast, this._handleAuthViewChange.bind(this)));
+        this.dom.registerForm.addEventListener('submit', (e) => authUI.handleRegisterSubmit(e, this._showToast.bind(this), modals.hideAuthModal));
+        this.dom.loginForm.addEventListener('submit', (e) => authUI.handleLoginSubmit(e, this._showToast.bind(this), modals.hideAuthModal));
+        this.dom.resetPasswordForm.addEventListener('submit', (e) => authUI.handlePasswordResetSubmit(e, this._showToast.bind(this), this._handleAuthViewChange.bind(this)));
         this.dom.forgotPasswordLink.addEventListener('click', (e) => { e.preventDefault(); this._handleAuthViewChange('reset'); });
         this.dom.goToRegisterLink.addEventListener('click', (e) => { e.preventDefault(); this._handleAuthViewChange('register'); });
         this.dom.goToLoginFromRegisterLink.addEventListener('click', (e) => { e.preventDefault(); this._handleAuthViewChange('login'); });
         this.dom.goToLoginFromResetLink.addEventListener('click', (e) => { e.preventDefault(); this._handleAuthViewChange('login'); });
         
         // User Profile Event Listeners
-        this.dom.logoutButton.addEventListener('click', () => authUI.handleLogout(this._showToast, modals.hideProfileModal));
+        this.dom.logoutButton.addEventListener('click', () => authUI.handleLogout(this._showToast.bind(this), modals.hideProfileModal));
         this.dom.editProfileBtn.addEventListener('click', () => this._handleProfileViewChange('edit'));
         this.dom.cancelEditBtn.addEventListener('click', () => this._handleProfileViewChange('view'));
-        this.dom.saveProfileBtn.addEventListener('click', (e) => authUI.handleProfileSave(e, this.currentUserData, this._showToast, this._handleProfileViewChange.bind(this)));
+        this.dom.saveProfileBtn.addEventListener('click', (e) => authUI.handleProfileSave(e, this.currentUserData, this._showToast.bind(this), this._handleProfileViewChange.bind(this)));
         
         document.addEventListener('touchmove', (e) => {
             if (e.touches.length > 1) {

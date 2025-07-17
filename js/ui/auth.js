@@ -1,26 +1,11 @@
 /**
- * @file 认证与用户界面模块
+ * @file 认证与用户界面模块 (CloudBase Version - Final V3 Logic)
  * @description 该模块处理所有与用户认证（登录、注册、登出、重置密码）、
  * 用户资料管理以及根据认证状态更新UI相关的功能。
  */
 
-import {
-    createUserWithEmailAndPassword,
-    sendEmailVerification,
-    signInWithEmailAndPassword,
-    onAuthStateChanged,
-    signOut,
-    sendPasswordResetEmail
-} from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-import {
-    doc,
-    setDoc,
-    updateDoc,
-    onSnapshot,
-    Timestamp
-} from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
-
-import { auth, db } from '../firebase.js';
+// 从我们创建的 cloudbase.js 模块中导入实例
+import { auth, db } from '../cloudbase.js';
 
 // --- 全局常量 ---
 const AVATARS = Array.from({ length: 1 }, (_, i) => `avatar_${String(i + 1).padStart(2, '0')}`);
@@ -28,6 +13,10 @@ const getAvatarUrl = (id) => id ? `images/默认头像/${id}.png` : 'images/默�
 
 // --- DOM 元素缓存 ---
 let domElements = {};
+// 用于存储数据库监听器，以便在用户登出时取消监听
+let userDocWatcher = null;
+// 用于存储验证码发送后的信息
+let verificationInfo = null;
 
 /**
  * 缓存此模块需要操作的DOM元素。
@@ -35,15 +24,21 @@ let domElements = {};
  */
 export function cacheAuthDOMElements(elements) {
     domElements = elements;
+    const sendCodeBtn = document.getElementById('send-verification-code-btn');
+    if (sendCodeBtn) {
+        sendCodeBtn.addEventListener('click', () => handleSendVerificationCode(domElements.showToast));
+    }
 }
 
 /**
  * 更新UI以反映当前用户的登录状态和数据。
- * @param {Object|null} userData - 从Firestore获取的用户数据，如果未登录则为null。
+ * @param {Object|null} userData - 从CloudBase数据库获取的用户数据，如果未登录则为null。
  */
 function updateUIWithUserData(userData) {
-    if (userData) {
-        // 已登录状态
+    console.log('[UI Update] a_updateUIWithUserData is called. userData:', userData);
+    
+    if (userData && userData._id) { 
+        console.log('[UI Update] User is logged in. Updating sidebar to show profile.');
         domElements.loginPromptBtn.classList.add('hidden');
         domElements.userProfileBtn.classList.remove('hidden');
 
@@ -57,42 +52,87 @@ function updateUIWithUserData(userData) {
         domElements.profileMajorYear.textContent = `${userData.enrollmentYear || '未知年份'}级 ${userData.major || '未设置专业'}`;
         domElements.profileBio.textContent = userData.bio || '这位同学很酷，什么都还没留下~';
     } else {
-        // 未登录状态
+        console.log('[UI Update] User is logged out or data is invalid. Showing login prompt.');
         domElements.loginPromptBtn.classList.remove('hidden');
         domElements.userProfileBtn.classList.add('hidden');
     }
 }
 
 /**
- * 监听Firebase认证状态的改变。
- * @param {function} onStateChange - 状态改变时的回调函数，接收 user a's data 作为参数。
+ * [最终修正] 监听CloudBase认证状态的改变，并立即更新UI。
+ * @param {function} onStateChange - 状态改变时的回调函数，接收 user data 作为参数。
  */
 export function listenForAuthStateChanges(onStateChange) {
-    let unsubscribeUserDoc = null;
+    auth.onLoginStateChanged(async () => {
+        console.log('[Auth State] onLoginStateChanged has been triggered. Now checking auth.currentUser...');
 
-    onAuthStateChanged(auth, (user) => {
-        if (unsubscribeUserDoc) {
-            unsubscribeUserDoc(); // 取消上一个用户的文档监听
-            unsubscribeUserDoc = null;
+        if (userDocWatcher) {
+            console.log('[Auth State] Closing previous database watcher.');
+            userDocWatcher.close();
+            userDocWatcher = null;
         }
 
-        if (user && user.emailVerified) {
-            const userDocRef = doc(db, "users", user.uid);
-            unsubscribeUserDoc = onSnapshot(userDocRef, (docSnap) => {
-                let userData = null;
-                if (docSnap.exists()) {
-                    userData = docSnap.data();
+        const currentUser = auth.currentUser;
+        console.log('[Auth State] auth.currentUser is:', currentUser);
+
+        if (currentUser && currentUser.uid) {
+            console.log(`[Auth State] User is logged in with UID: ${currentUser.uid}. Fetching data...`);
+            const userDocRef = db.collection('users').doc(currentUser.uid);
+            let userData;
+
+            try {
+                let userDoc = await userDocRef.get();
+                console.log('[DB] userDocRef.get() result:', userDoc);
+
+                if (!userDoc.data || userDoc.data.length === 0) {
+                    console.log(`[DB] User document for ${currentUser.uid} not found. Creating one...`);
+                    const emailPrefix = currentUser.email.split('@')[0];
+                    const newUserDoc = {
+                        _id: currentUser.uid,
+                        email: currentUser.email,
+                        nickname: "萌新" + emailPrefix.slice(-4),
+                        bio: "这位同学很酷，什么都还没留下~",
+                        avatarId: AVATARS[Math.floor(Math.random() * AVATARS.length)],
+                        major: "",
+                        enrollmentYear: new Date().getFullYear(),
+                        joinDate: new Date()
+                    };
+                    
+                    await userDocRef.set(newUserDoc);
+                    console.log('[DB] New user document created successfully.');
+                    userData = newUserDoc;
                 } else {
-                    console.log("在Firestore中找不到该用户的文档!");
+                    userData = userDoc.data[0];
+                    console.log('[DB] Found existing user document:', userData);
                 }
+
+                console.log('[Final Step] Calling updateUIWithUserData with:', userData);
                 updateUIWithUserData(userData);
-                onStateChange(userData); // 通知主应用状态已改变
-            }, (error) => {
-                console.error("监听用户文档时出错:", error);
+                onStateChange(userData);
+
+                console.log('[Final Step] Setting up database watcher for subsequent changes.');
+                userDocWatcher = userDocRef.watch({
+                    onChange: (snapshot) => {
+                        console.log('[DB Watch] Data changed:', snapshot);
+                        if (snapshot.docs.length > 0) {
+                            const updatedUserData = snapshot.docs[0];
+                            updateUIWithUserData(updatedUserData);
+                            onStateChange(updatedUserData);
+                        }
+                    },
+                    onError: (error) => {
+                        console.error("[DB Watch] Error:", error);
+                    }
+                });
+
+            } catch (dbError) {
+                console.error('[Auth State] A database error occurred:', dbError);
                 updateUIWithUserData(null);
                 onStateChange(null);
-            });
+            }
+
         } else {
+            console.log('[Auth State] auth.currentUser is null. User is logged out.');
             updateUIWithUserData(null);
             onStateChange(null);
         }
@@ -100,57 +140,101 @@ export function listenForAuthStateChanges(onStateChange) {
 }
 
 /**
- * 处理用户注册逻辑。
+ * 处理发送邮箱验证码的逻辑
+ * @param {function} showToast - 用于显示提示消息的函数。
+ */
+async function handleSendVerificationCode(showToast) {
+    const emailPrefix = domElements.registerForm.email_prefix.value;
+    if (!emailPrefix) {
+        showToast("请先输入你的学号！", "error");
+        return;
+    }
+    const email = emailPrefix + '@jou.edu.cn';
+    const sendCodeBtn = document.getElementById('send-verification-code-btn');
+
+    sendCodeBtn.disabled = true;
+    sendCodeBtn.textContent = '发送中...';
+
+    try {
+        const result = await auth.getVerification({ email: email });
+        verificationInfo = result;
+        showToast("验证码已发送，请查收邮件！", "success");
+
+        let countdown = 60;
+        sendCodeBtn.textContent = `${countdown}s`;
+        const interval = setInterval(() => {
+            countdown--;
+            if (countdown > 0) {
+                sendCodeBtn.textContent = `${countdown}s`;
+            } else {
+                clearInterval(interval);
+                sendCodeBtn.disabled = false;
+                sendCodeBtn.textContent = '重新发送';
+            }
+        }, 1000);
+
+    } catch (error) {
+        console.error("Send verification code error:", error);
+        showToast("验证码发送失败：" + (error.message || "请稍后再试"), "error");
+        sendCodeBtn.disabled = false;
+        sendCodeBtn.textContent = '发送验证码';
+    }
+}
+
+/**
+ * 处理用户注册的最终提交逻辑
  * @param {Event} e - 表单提交事件。
  * @param {function} showToast - 用于显示提示消息的函数。
  * @param {function} hideAuthModal - 用于关闭认证模态框的函数。
  */
 export async function handleRegisterSubmit(e, showToast, hideAuthModal) {
     e.preventDefault();
+    
     const emailPrefix = domElements.registerForm.email_prefix.value;
     const password = domElements.registerForm.password.value;
+    const verificationCode = domElements.registerForm.verification_code.value;
 
-    if (!emailPrefix) {
-        showToast("请输入你的学号！", "error");
+    if (!emailPrefix || !password || !verificationCode) {
+        showToast("请填写所有注册信息！", "error");
         return;
     }
-    const email = emailPrefix + '@jou.edu.cn';
-
-    if (password.length < 8) {
-        showToast("密码长度不能少于8位！", "error");
+    if (!verificationInfo) {
+        showToast("请先发送并获取邮箱验证码！", "error");
         return;
     }
+
+    const validUsername = 'u' + emailPrefix;
 
     try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
+        const verificationTokenRes = await auth.verify({
+            verification_id: verificationInfo.verification_id,
+            verification_code: verificationCode,
+        });
 
-        const newUserDoc = {
-            email: user.email,
-            nickname: "萌新" + emailPrefix.slice(-4),
-            bio: "这位同学很酷，什么都还没留下~",
-            avatarId: AVATARS[Math.floor(Math.random() * AVATARS.length)],
-            major: "",
-            enrollmentYear: new Date().getFullYear(),
-            joinDate: Timestamp.fromDate(new Date())
-        };
-        await setDoc(doc(db, "users", user.uid), newUserDoc);
-
-        await sendEmailVerification(user);
-        showToast("注册成功！验证邮件已发送，请查收。", "success");
+        await auth.signUp({
+            username: validUsername,
+            password: password,
+            email: emailPrefix + '@jou.edu.cn',
+            verification_token: verificationTokenRes.verification_token,
+        });
+        
+        showToast("注册成功！", "success");
         hideAuthModal();
 
     } catch (error) {
-        if (error.code === 'auth/email-already-in-use') {
-            showToast("该邮箱已被注册！", "error");
+        console.error("Register error:", error);
+        if (error.error_description === 'verification code invalid') {
+            showToast("验证码错误！", "error");
+        } else if (error.code === 'auth/username-existed' || error.code === 'auth/email-existed') {
+            showToast("该学号或邮箱已被注册！", "error");
         } else {
-            showToast("注册失败：" + error.message, "error");
+            showToast("注册失败：" + (error.message || "请检查信息后重试"), "error");
         }
     }
 }
 
 /**
- * 处理用户登录逻辑。
+ * 处理用户登录逻辑
  * @param {Event} e - 表单提交事件。
  * @param {function} showToast - 用于显示提示消息的函数。
  * @param {function} hideAuthModal - 用于关闭认证模态框的函数。
@@ -160,34 +244,28 @@ export async function handleLoginSubmit(e, showToast, hideAuthModal) {
     const emailPrefix = domElements.loginForm.email_prefix.value;
     const password = domElements.loginForm.password.value;
 
-    if (!emailPrefix) {
-        showToast("请输入你的学号！", "error");
+    if (!emailPrefix || !password) {
+        showToast("请输入学号和密码！", "error");
         return;
     }
-    const email = emailPrefix + '@jou.edu.cn';
+    const validUsername = 'u' + emailPrefix;
 
     try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-
-        if (user.emailVerified) {
-            showToast("登录成功！", "success");
-            hideAuthModal();
-        } else {
-            showToast("请先前往邮箱完成验证再登录。", "info");
-            await signOut(auth);
-        }
+        await auth.signIn({
+            username: validUsername,
+            password: password
+        });
+        
+        showToast("登录成功！", "success");
+        hideAuthModal();
     } catch (error) {
+        console.error("Login error:", error);
         showToast("登录失败：学号或密码错误。", "error");
     }
 }
 
-/**
- * 处理密码重置逻辑。
- * @param {Event} e - 表单提交事件。
- * @param {function} showToast - 用于显示提示消息的函数。
- * @param {function} switchAuthView - 用于切换认证视图的函数。
- */
+// --- 以下函数无需修改 ---
+
 export async function handlePasswordResetSubmit(e, showToast, switchAuthView) {
     e.preventDefault();
     const emailPrefix = domElements.resetPasswordForm.email_prefix.value;
@@ -198,10 +276,11 @@ export async function handlePasswordResetSubmit(e, showToast, switchAuthView) {
     const email = emailPrefix + '@jou.edu.cn';
 
     try {
-        await sendPasswordResetEmail(auth, email);
+        await auth.sendPasswordResetEmail(email);
         showToast("密码重置邮件已发送，请查收。", "success");
         switchAuthView('login');
     } catch (error) {
+        console.error("Reset password error:", error);
         if (error.code === 'auth/user-not-found') {
             showToast("发送失败：该邮箱尚未注册。", "error");
         } else {
@@ -210,14 +289,9 @@ export async function handlePasswordResetSubmit(e, showToast, switchAuthView) {
     }
 }
 
-/**
- * 处理用户登出逻辑。
- * @param {function} showToast - 用于显示提示消息的函数。
- * @param {function} hideProfileModal - 用于关闭用户中心模态框的函数。
- */
 export async function handleLogout(showToast, hideProfileModal) {
     try {
-        await signOut(auth);
+        await auth.signOut();
         hideProfileModal();
         showToast("已成功退出登录。", "info");
     } catch (error) {
@@ -225,10 +299,6 @@ export async function handleLogout(showToast, hideProfileModal) {
     }
 }
 
-/**
- * 填充用户资料编辑表单。
- * @param {Object} currentUserData - 当前用户的资料。
- */
 export function populateProfileEditForm(currentUserData) {
     if (!currentUserData) return;
 
@@ -239,7 +309,17 @@ export function populateProfileEditForm(currentUserData) {
     const currentAvatar = domElements.avatarSelectionGrid.querySelector(`[data-avatar-id="${currentUserData.avatarId}"]`);
     if (currentAvatar) {
         currentAvatar.classList.add('selected');
+    } else {
+        const firstAvatar = domElements.avatarSelectionGrid.querySelector('.avatar-option');
+        if(firstAvatar) firstAvatar.classList.add('selected');
     }
+    
+    domElements.avatarSelectionGrid.addEventListener('click', (e) => {
+        if (e.target.classList.contains('avatar-option')) {
+            domElements.avatarSelectionGrid.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
+            e.target.classList.add('selected');
+        }
+    });
 
     domElements.editNickname.value = currentUserData.nickname || '';
     domElements.editBio.value = currentUserData.bio || '';
@@ -247,16 +327,10 @@ export function populateProfileEditForm(currentUserData) {
     domElements.editMajor.value = currentUserData.major || '';
 }
 
-/**
- * 处理保存用户资料的逻辑。
- * @param {Event} e - 点击事件。
- * @param {Object} currentUserData - 当前用户的旧资料。
- * @param {function} showToast - 用于显示提示消息的函数。
- * @param {function} switchProfileView - 用于切换用户中心视图的函数。
- */
 export async function handleProfileSave(e, currentUserData, showToast, switchProfileView) {
     e.preventDefault();
-    if (!auth.currentUser) return;
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
 
     domElements.saveProfileBtn.disabled = true;
     domElements.saveProfileBtn.innerHTML = `<span class="loader-small"></span> 保存中...`;
@@ -271,8 +345,8 @@ export async function handleProfileSave(e, currentUserData, showToast, switchPro
     };
 
     try {
-        const userDocRef = doc(db, "users", auth.currentUser.uid);
-        await updateDoc(userDocRef, updatedData);
+        const userDocRef = db.collection('users').doc(currentUser.uid);
+        await userDocRef.update(updatedData);
         showToast("资料更新成功！", "success");
         switchProfileView('view');
     } catch (error) {
