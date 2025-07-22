@@ -58,7 +58,7 @@ export const guideData = {
 <h3 class="text-2xl font-bold text-blue-800 dark:text-blue-400 mb-6 border-l-4 border-blue-700 dark:border-blue-500 pl-4">证件及文件类 (最重要！)</h3>
 <ul class="list-none space-y-4 text-gray-700 dark:text-gray-300">
     <li class="flex items-start"><i data-lucide="check-circle-2" class="text-green-500 w-5 h-5 mr-3 mt-1 flex-shrink-0"></i><div><strong>录取通知书、高考准考证、身份证：</strong>最重要的身份证明，务必随身携带，妥善保管。</div></li>
-    <li class="flex items-start"><i data-lucide="check-circle-2" class="text-green-500 w-5 h-5 mr-3 mt-1 flex-shrink-0"></i><div><strong>身份证复印件：</strong>正反面复印在同一张A4纸上，建议准备3-4份，部分手续需要。</div></li>
+    <li class="flex items-start"><i data-lucide="check-circle-2" class="text-green-500 w-5 h-5 mr-3 mt-1 flex-shrink-0"></i><div><strong>身份证复印件：</strong>正反面复印在同一张A4纸上，建议准备1~2份，部分手续需要。</div></li>
     <li class="flex items-start"><i data-lucide="check-circle-2" class="text-green-500 w-5 h-5 mr-3 mt-1 flex-shrink-0"></i><div><strong>户口本本人页复印件：</strong>申请助学金或办理户口迁移时可能需要。</div></li>
     <li class="flex items-start"><i data-lucide="check-circle-2" class="text-green-500 w-5 h-5 mr-3 mt-1 flex-shrink-0"></i><div><strong>一寸/两寸证件照：</strong>红蓝白底各准备一版（约8-16张），用于办理学生证、体检、社团申请等。</div></li>
     <li class="flex items-start"><i data-lucide="check-circle-2" class="text-green-500 w-5 h-5 mr-3 mt-1 flex-shrink-0"></i><div><strong>党/团组织关系材料：</strong>团员证及相关档案，按学校要求办理转接手续。</div></li>
