@@ -1,77 +1,99 @@
 /**
- * @file UI 渲染器 (UI Renderer) - 重构版
- * @description 该模块是所有UI渲染的核心。它导入模板函数，
- * 接收纯净的JSON数据，然后调用模板生成HTML。
- * 它本身不包含任何HTML结构。
- * @version 2.0.0
+ * @file UI 渲染器 (UI Renderer)
+ * @description 该模块是所有UI渲染的核心。它接收从后端获取的纯净页面数据，
+ * 并根据页面的唯一标识 (pageKey) 调用相应的模板函数来生成HTML。
+ * @version 3.0.0
  */
 
-// 从我们新建的模板文件中，导入所有导出的模板函数
+// 导入所有模板函数
 import * as tpl from './templates.js';
 
 /**
- * 渲染一个通用页面。
- * 这是渲染逻辑的主要入口，它会根据页面数据的 `type` 字段或内容结构来决定使用哪个模板。
- * @param {object} page - 从 guideData 中获取的单个页面对象。
+ * 渲染页面内容的核心函数。
+ * @param {object} page - 从 guide_data.json 的 pages 数组中获取的单个页面对象。
  * @returns {string} 渲染好的 HTML 字符串。
  */
 export function renderPageContent(page) {
-    // 确保 page 和 structuredContent 存在
-    if (!page || !page.structuredContent) {
-        // 检查是否有特殊页面类型
-        if (page && page.type === 'campus-query-tool') {
-            return tpl.createCampusQueryToolHtml();
-        }
-        // 对于没有内容或结构不符的页面，返回提示
-        return '<p class="text-center p-8">此页面内容待添加或格式不正确。</p>';
+    // 如果页面数据或其唯一标识不存在，则返回错误提示
+    if (!page || !page.pageKey) {
+        return '<p class="text-center p-8">页面数据无效，缺少 pageKey。</p>';
     }
 
-    const content = page.structuredContent;
+    // 从页面数据中获取结构化内容，如果不存在则使用空对象
+    const content = page.structuredContent || {};
 
-    // 根据页面类型或内容特征调用不同的模板
-    switch (page.type) {
-        case 'faq':
-            return tpl.createFaqHtml(content.items);
-        case 'clubs':
-            return tpl.createClubsHtml(content);
-        case 'campus-query-tool':
+    // 根据页面的唯一标识 (pageKey) 来决定调用哪个模板函数
+    // 这种方法精准、健壮，且易于扩展
+    switch (page.pageKey) {
+        // --- 主页 ---
+        case 'home':
+            return tpl.createHomePage(content);
+
+        // --- 入学准备 ---
+        case 'campusQuery':
             return tpl.createCampusQueryToolHtml();
+        case 'checklist':
+            return tpl.createChecklistHtml(content);
+        case 'enrollmentProcess':
+            return tpl.createStepsHtml(content);
+        case 'mustKnow':
+            return tpl.createPointsHtml(content);
+        case 'militaryTraining':
+            return tpl.createMilitaryTrainingPage(content);
+
+        // --- 校园生活 ---
+        case 'supermarketAndBike':
+            return tpl.createMultiSectionPage(content);
+        case 'clubsAndOrgs':
+            // 注意：旧数据中此页面有 type: 'clubs' 和一个 data 属性
+            // 新数据中是 structuredContent，我们将它直接传入
+            return tpl.createClubsHtml(content);
+
+        // --- 学习科研 ---
+        case 'gpaAndCredits':
+            return tpl.createGpaAndCreditsPage(content);
+        case 'changeMajor':
+            return tpl.createSimpleInfoPage(content);
+        case 'contestsAndCerts':
+            return tpl.createSimpleInfoPage(content);
+
+        // --- 数字化校园 ---
+        case 'campusCardAndApp':
+            return tpl.createSimpleInfoPage(content);
+        case 'internetAndElectricity':
+            return tpl.createStepsListPage(content);
+        case 'webVpn':
+            return tpl.createWebVPNPage(content);
+
+        // --- 答疑与支持 ---
+        case 'faq':
+            // 注意：旧数据中此页面有 type: 'faq' 和一个 items 属性
+            // 新数据中是 structuredContent.items
+            return tpl.createFaqHtml(content.items);
+        case 'contacts':
+            return tpl.createLinkPage(content, page.title);
+
         default:
-            // 如果没有特定类型，则根据内容结构判断
-            if (content.hero && content.quickNav) {
-                return tpl.createHomePage(content.hero, content.quickNav);
-            }
-            if (content.steps) {
-                return tpl.createStepsHtml(content.steps);
-            }
-            if (content.points) {
-                return tpl.createPointsHtml(content.points);
-            }
-            if (content.sections) {
-                return tpl.createSectionsHtml(content.sections, content.tips);
-            }
-            if (content.link) {
-                return tpl.createLinkHtml(content.link, page.title);
-            }
-            // 默认回退
-            return '<p class="text-center p-8">此页面内容待添加。</p>';
+            // 如果遇到未知的 pageKey，返回提示
+            return `<p class="text-center p-8">此页面内容待添加 (未知 pageKey: ${page.pageKey})。</p>`;
     }
 }
 
+
 /**
  * 生成校区特定内容（宿舍/食堂）的卡片列表HTML。
- * 这个函数现在只是一个简单的包装，直接调用模板文件中的相应函数。
- * @param {Array<object>} items - 宿舍或食堂列表数据。
+ * @param {Array<object>} items - 从 campus_data.json 获取的宿舍或食堂列表。
  * @param {string} type - 'dormitory' 或 'canteen'。
  * @returns {string} 渲染好的HTML。
  */
 export function generateCampusCards(items, type) {
-    return tpl.createCampusCardsHtml(items, type);
+    // 将 items 对象转换为数组
+    const itemsArray = Object.keys(items).map(key => ({ id: key, ...items[key] }));
+    return tpl.createCampusCardsHtml(itemsArray, type);
 }
 
 /**
  * 生成宿舍详情页的HTML。
- * 内部实现已替换为调用模板函数。
  * @param {Array<object>} details - 宿舍楼栋的详细信息数组。
  * @returns {string} 渲染好的HTML。
  */
@@ -81,7 +103,6 @@ export function generateDormitoryDetailsHtml(details) {
 
 /**
  * 生成食堂详情页的HTML。
- * 内部实现已替换为调用模板函数。
  * @param {Array<object>} details - 食堂区域的详细信息数组。
  * @returns {string} 渲染好的HTML。
  */
