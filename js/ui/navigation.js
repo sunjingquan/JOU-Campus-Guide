@@ -30,7 +30,7 @@ function createNavLink(categoryKey, pageKey, icon, text, isHeader) {
 }
 
 /**
- * [关键修改] 创建完整的导航菜单，并将其附加到提供的DOM元素上。
+ * [关键修复] 创建完整的导航菜单，适配数组格式的数据。
  * @param {HTMLElement} navMenuElement - 需要填充的<nav>元素。
  * @param {Array<Object>} guideData - 从数据库获取的指南主数据数组。
  */
@@ -38,14 +38,13 @@ export function createNavigation(navMenuElement, guideData) {
     // 清空任何现有的菜单
     navMenuElement.innerHTML = '';
 
-    // [修改] 使用 forEach 遍历数组，因为从数据库获取的数据是数组
+    // [修复] 使用 forEach 遍历数组，因为从数据库获取的数据是数组
     guideData.forEach(categoryData => {
         const categoryDiv = document.createElement('div');
         categoryDiv.className = 'nav-category';
 
-        // isHomePage 的逻辑保持，但使用正确的 title
         if (categoryData.isHomePage) {
-            // [修复] 使用 categoryData.title 作为链接文本，而不是 categoryKey
+            // [修复] 使用 categoryData.title 作为链接文本
             const link = createNavLink(categoryData.key, 'home', categoryData.icon, categoryData.title, true);
             navMenuElement.appendChild(link);
             return; // 在 forEach 循环中，使用 return 来跳过当前项的后续处理
@@ -60,11 +59,11 @@ export function createNavigation(navMenuElement, guideData) {
         const pageList = document.createElement('ul');
         pageList.className = 'submenu mt-1';
         
-        // [修改] 同样使用 forEach 遍历 pages 数组
+        // [修复] 同样使用 forEach 遍历 pages 数组
         if (categoryData.pages && Array.isArray(categoryData.pages)) {
             categoryData.pages.forEach(page => {
                 const listItem = document.createElement('li');
-                // 使用 page.pageKey 和 page.title，这部分逻辑原本就是正确的
+                // 使用 page.pageKey 和 page.title
                 const link = createNavLink(categoryData.key, page.pageKey, null, page.title, false);
                 listItem.appendChild(link);
                 pageList.appendChild(listItem);
@@ -76,10 +75,9 @@ export function createNavigation(navMenuElement, guideData) {
     
     // 创建完所有元素后，让Lucide渲染图标
     if (window.lucide) {
-        window.lucide.createIcons();
+        lucide.createIcons();
     }
 }
-
 
 /**
  * 处理导航菜单内的点击事件，包括链接和可折叠的标题。
@@ -119,7 +117,6 @@ export function updateActiveNav(categoryKey, pageKey) {
         const submenu = activeLink.closest('.submenu');
         // 如果激活的链接位于一个折叠的子菜单内，则将其展开
         if (submenu && !submenu.classList.contains('open')) {
-            // （可选）折叠其他已展开的子菜单
             document.querySelectorAll('.submenu.open').forEach(s => {
                 s.classList.remove('open');
                 s.previousElementSibling.classList.remove('open');
