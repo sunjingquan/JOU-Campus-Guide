@@ -30,44 +30,56 @@ function createNavLink(categoryKey, pageKey, icon, text, isHeader) {
 }
 
 /**
- * 创建完整的导航菜单，并将其附加到提供的DOM元素上。
+ * [关键修改] 创建完整的导航菜单，并将其附加到提供的DOM元素上。
  * @param {HTMLElement} navMenuElement - 需要填充的<nav>元素。
- * @param {Object} guideData - 指南的主数据对象。
+ * @param {Array<Object>} guideData - 从数据库获取的指南主数据数组。
  */
 export function createNavigation(navMenuElement, guideData) {
     // 清空任何现有的菜单
     navMenuElement.innerHTML = '';
-    for (const categoryKey in guideData) {
-        const categoryData = guideData[categoryKey];
+
+    // [修改] 使用 forEach 遍历数组，因为从数据库获取的数据是数组
+    guideData.forEach(categoryData => {
         const categoryDiv = document.createElement('div');
         categoryDiv.className = 'nav-category';
 
+        // isHomePage 的逻辑保持，但使用正确的 title
         if (categoryData.isHomePage) {
-            const link = createNavLink(categoryKey, 'home', categoryData.icon, categoryKey, true);
+            // [修复] 使用 categoryData.title 作为链接文本，而不是 categoryKey
+            const link = createNavLink(categoryData.key, 'home', categoryData.icon, categoryData.title, true);
             navMenuElement.appendChild(link);
-            continue;
+            return; // 在 forEach 循环中，使用 return 来跳过当前项的后续处理
         }
 
         const categoryHeader = document.createElement('button');
         categoryHeader.className = 'category-header w-full flex items-center justify-between px-4 py-2 text-sm font-semibold text-blue-200 dark:text-gray-300 rounded-md hover:bg-blue-800 dark:hover:bg-gray-700 transition-colors';
-        categoryHeader.innerHTML = `<span class="flex items-center"><i data-lucide="${categoryData.icon}" class="w-4 h-4 mr-3"></i>${categoryKey}</span><i data-lucide="chevron-down" class="accordion-icon w-4 h-4"></i>`;
+        // [修复] 使用 categoryData.title 作为分类标题
+        categoryHeader.innerHTML = `<span class="flex items-center"><i data-lucide="${categoryData.icon}" class="w-4 h-4 mr-3"></i>${categoryData.title}</span><i data-lucide="chevron-down" class="accordion-icon w-4 h-4"></i>`;
         categoryDiv.appendChild(categoryHeader);
 
         const pageList = document.createElement('ul');
         pageList.className = 'submenu mt-1';
-        for (const pageKey in categoryData.pages) {
-            const page = categoryData.pages[pageKey];
-            const listItem = document.createElement('li');
-            const link = createNavLink(categoryKey, pageKey, null, page.title, false);
-            listItem.appendChild(link);
-            pageList.appendChild(listItem);
+        
+        // [修改] 同样使用 forEach 遍历 pages 数组
+        if (categoryData.pages && Array.isArray(categoryData.pages)) {
+            categoryData.pages.forEach(page => {
+                const listItem = document.createElement('li');
+                // 使用 page.pageKey 和 page.title，这部分逻辑原本就是正确的
+                const link = createNavLink(categoryData.key, page.pageKey, null, page.title, false);
+                listItem.appendChild(link);
+                pageList.appendChild(listItem);
+            });
         }
         categoryDiv.appendChild(pageList);
         navMenuElement.appendChild(categoryDiv);
-    }
+    });
+    
     // 创建完所有元素后，让Lucide渲染图标
-    lucide.createIcons();
+    if (window.lucide) {
+        window.lucide.createIcons();
+    }
 }
+
 
 /**
  * 处理导航菜单内的点击事件，包括链接和可折叠的标题。

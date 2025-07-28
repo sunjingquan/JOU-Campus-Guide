@@ -4,6 +4,158 @@
  * 它接收数据作为输入，并返回渲染后的HTML，不直接操作DOM。
  */
 
+// [新增] 增加一个辅助函数，用于安全地处理来自数据的文本内容
+function escapeHTML(str) {
+    if (typeof str !== 'string') return '';
+    return str.replace(/[&<>"']/g, function(match) {
+        return {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        }[match];
+    });
+}
+
+/**
+ * [新增] 创建通用结构化内容的HTML
+ * @description 这是我们缺失的函数。它能根据不同的内容类型（如带要点的、带步骤的、带提示的页面）生成相应的HTML。
+ * @param {Object} content - 从 guide_data 传来的 structuredContent 对象。
+ * @returns {string} 生成的 HTML 字符串。
+ */
+export function createStructuredContentHtml(content) {
+    if (!content) return '<p>内容正在加载中...</p>';
+    
+    let html = '';
+
+    if (content.hero) {
+        html += `
+            <div class="text-center p-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+                <h1 class="text-4xl md:text-5xl font-bold text-gray-800 dark:text-white mb-4">${escapeHTML(content.hero.title)}</h1>
+                <p class="text-lg text-gray-600 dark:text-gray-300 mb-6">${escapeHTML(content.hero.subtitle)}</p>
+                <button id="explore-btn" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-full hover:bg-indigo-700 transition duration-300">
+                    ${escapeHTML(content.hero.buttonText)}
+                </button>
+            </div>
+        `;
+    }
+
+    if (content.quickNav) {
+        html += '<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">';
+        content.quickNav.forEach(item => {
+            const navLinkData = JSON.stringify(item.link);
+            html += `
+                <a href="#" class="nav-card block p-4 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-xl transition-shadow duration-300 text-center" data-navlink='${escapeHTML(navLinkData)}'>
+                    <div class="flex items-center justify-center w-12 h-12 mx-auto mb-3 bg-indigo-100 dark:bg-indigo-900 rounded-full">
+                        <i data-lucide="${escapeHTML(item.icon)}" class="text-indigo-600 dark:text-indigo-300"></i>
+                    </div>
+                    <h3 class="font-semibold text-gray-800 dark:text-white">${escapeHTML(item.title)}</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">${escapeHTML(item.description)}</p>
+                </a>
+            `;
+        });
+        html += '</div>';
+    }
+    
+    if (content.points) {
+        html += '<div class="space-y-6 mt-6">';
+        content.points.forEach(point => {
+            html += `
+                <div class="flex items-start bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                    <div class="flex-shrink-0 flex items-center justify-center w-10 h-10 bg-indigo-100 dark:bg-indigo-900 rounded-full mr-4">
+                        <i data-lucide="${escapeHTML(point.icon)}" class="text-indigo-600 dark:text-indigo-300"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-lg text-gray-800 dark:text-white">${escapeHTML(point.title)}</h4>
+                        <p class="text-gray-600 dark:text-gray-300">${escapeHTML(point.description)}</p>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+    }
+
+    if (content.steps) {
+        html += '<ol class="relative border-l border-gray-200 dark:border-gray-700 mt-6 ml-4">';
+        content.steps.forEach((step, index) => {
+            html += `
+              <li class="mb-10 ml-6">            
+                  <span class="absolute flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full -left-4 ring-8 ring-white dark:ring-gray-900 dark:bg-blue-900">
+                      <span class="font-bold text-blue-800 dark:text-blue-300">${index + 1}</span>
+                  </span>
+                  <h3 class="flex items-center mb-1 text-lg font-semibold text-gray-900 dark:text-white">${escapeHTML(step.title)}</h3>
+                  <p class="mb-4 text-base font-normal text-gray-500 dark:text-gray-400">${escapeHTML(step.description)}</p>
+              </li>
+            `;
+        });
+        html += '</ol>';
+    }
+
+    if (content.sections) {
+        html += '<div class="space-y-8 mt-6">';
+        content.sections.forEach(section => {
+            if (section.title) {
+                html += `<h4 class="text-2xl font-bold text-gray-800 dark:text-white border-b-2 border-indigo-500 pb-2 mb-4">${escapeHTML(section.title)}</h4>`;
+            }
+            if (section.description) {
+                html += `<p class="text-gray-600 dark:text-gray-300 mb-4">${escapeHTML(section.description)}</p>`;
+            }
+            if (section.items) {
+                html += '<ul class="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-300">';
+                section.items.forEach(item => {
+                    html += `<li>${escapeHTML(item)}</li>`;
+                });
+                html += '</ul>';
+            }
+            if (section.steps) { 
+                 html += '<ol class="relative border-l border-gray-200 dark:border-gray-700 mt-6 ml-4">';
+                 section.steps.forEach((step, index) => {
+                     html += `
+                       <li class="mb-10 ml-6">            
+                           <span class="absolute flex items-center justify-center w-8 h-8 bg-green-100 rounded-full -left-4 ring-8 ring-white dark:ring-gray-900 dark:bg-green-900">
+                                <span class="font-bold text-green-800 dark:text-green-300">${index + 1}</span>
+                           </span>
+                           <h3 class="flex items-center mb-1 text-lg font-semibold text-gray-900 dark:text-white">${escapeHTML(step)}</h3>
+                       </li>
+                     `;
+                 });
+                 html += '</ol>';
+            }
+        });
+        html += '</div>';
+    }
+    
+    if (content.tips) {
+        html += `
+            <div class="mt-8 p-4 bg-yellow-50 border-l-4 border-yellow-400 dark:bg-gray-800 dark:border-yellow-500">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i data-lucide="lightbulb" class="h-5 w-5 text-yellow-400 dark:text-yellow-300" aria-hidden="true"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-lg font-medium text-yellow-800 dark:text-yellow-200">${escapeHTML(content.tips.title)}</h3>
+                        <div class="mt-2 text-sm text-yellow-700 dark:text-yellow-100">
+                            <ul class="list-disc list-inside space-y-1">
+                                ${content.tips.items.map(tip => `<li>${escapeHTML(tip)}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    if(content.link && content.title){
+        html += `<div class="mt-6"><p class="text-gray-600 dark:text-gray-300">${escapeHTML(content.title)} <a href="${escapeHTML(content.link)}" target="_blank" class="text-indigo-600 hover:underline">${escapeHTML(content.link)}</a></p></div>`
+    }
+
+    return html;
+}
+
+
+// --- 以下是你原有的代码，保持不变 ---
+
 /**
  * 为详情页生成图片轮播器的HTML。
  * @param {Array<Object>} images - 图片对象数组，每个对象包含 src 和 caption。
