@@ -98,10 +98,12 @@ export function listenForAuthStateChanges(onStateChange) {
                 } else {
                     // --- 文档不存在，创建新文档 ---
                     console.log(`[DB] User document for ${currentUser.uid} not found. Preparing to create one.`);
-                    const emailPrefix = currentUser.email.split('@')[0];
+                    
+                    // [关键修复] 在这里增加对 currentUser.email 的安全检查
+                    const emailPrefix = currentUser.email ? currentUser.email.split('@')[0] : `user_${currentUser.uid.slice(0,4)}`;
+
                     const newUserDoc = {
-                        // [关键修复] 移除 _id 字段。文档ID已由 doc(currentUser.uid) 指定，不应在数据体中重复。
-                        email: currentUser.email,
+                        email: currentUser.email, // 即使是 null 也记录下来
                         nickname: "萌新" + emailPrefix.slice(-4),
                         bio: "这位同学很酷，什么都还没留下~",
                         avatarId: AVATARS[Math.floor(Math.random() * AVATARS.length)],
@@ -115,11 +117,9 @@ export function listenForAuthStateChanges(onStateChange) {
                     try {
                         const setResult = await userDocRef.set(newUserDoc);
                         console.log('[DB] userDocRef.set() successfully resolved. Result:', setResult);
-                        // 为了前端UI能立刻使用，手动将 uid 添加到本地的 userData 对象中
                         userData = { ...newUserDoc, _id: currentUser.uid };
                     } catch (setError) {
                         console.error('[DB FATAL] FAILED TO CREATE new user document!', setError);
-                        // 如果创建失败，这是一个严重问题，直接返回，不进行后续操作
                         onStateChange(null);
                         updateUIWithUserData(null);
                         return;
@@ -149,7 +149,6 @@ export function listenForAuthStateChanges(onStateChange) {
 
             } catch (dbError) {
                 console.error('[Auth State] A critical database error occurred during get/set process:', dbError);
-                // 发生错误，UI回滚到未登录状态
                 updateUIWithUserData(null);
                 onStateChange(null);
             }
@@ -163,6 +162,7 @@ export function listenForAuthStateChanges(onStateChange) {
     });
 }
 
+// --- 以下是你原有的代码，保持不变 ---
 
 /**
  * 处理发送邮箱验证码的逻辑
@@ -288,8 +288,6 @@ export async function handleLoginSubmit(e, showToast, hideAuthModal) {
         showToast("登录失败：学号或密码错误。", "error");
     }
 }
-
-// --- 以下函数无需修改 ---
 
 export async function handlePasswordResetSubmit(e, showToast, switchAuthView) {
     e.preventDefault();
