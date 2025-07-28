@@ -1,27 +1,16 @@
 /**
  * @file UI 模板模块 (UI Templates)
- * @description 这个模块是所有UI组件的“HTML蓝图”。它包含一系列纯函数，
- * 每个函数接收纯净的JSON数据，并返回对应的HTML字符串。
- * 这使得视图和数据完全分离，方便独立维护。
- * @version 2.0.0
+ * @description 该模块是所有UI组件的“HTML蓝图”。它包含一系列纯函数，
+ * 每个函数接收从 guide_data.json 获取的纯净JSON数据，并返回与旧版 guideData.js 视觉效果完全一致的HTML字符串。
+ * @version 4.2.0 - 修复时间轴样式
  */
 
 // --- 辅助函数 ---
-
-/**
- * 对HTML内容进行转义，防止XSS攻击。
- * @param {string | number} str - 需要转义的字符串。
- * @returns {string} 转义后的安全HTML字符串。
- */
 function escapeHtml(str) {
     if (typeof str !== 'string' && typeof str !== 'number') return '';
     const strConv = String(str);
     return strConv.replace(/[&<>"']/g, match => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;'
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
     })[match]);
 }
 
@@ -29,19 +18,20 @@ function escapeHtml(str) {
 // --- 组件级模板 (可复用的UI片段) ---
 // ===================================================================================
 
-/**
- * 创建一个图片轮播组件。
- * @param {Array<object>} images - 图片对象数组，每个对象应包含 src 和 caption。
- * @returns {string} 轮播组件的HTML。
- */
 export function createSliderHtml(images) {
     if (!images || images.length === 0) {
-        return `<img src="https://placehold.co/800x450/cccccc/ffffff?text=无图片" alt="无图片" class="w-full h-auto object-cover rounded-lg mb-4">`;
+        return `
+            <img src="https://placehold.co/800x450/cccccc/ffffff?text=无图片" 
+                 alt="无图片" 
+                 class="w-full h-auto object-cover rounded-lg mb-4">
+        `;
     }
 
     const slidesHtml = images.map((img, index) => `
         <div class="slider-slide" data-index="${index}">
-            <img src="${escapeHtml(img.src)}" alt="${escapeHtml(img.caption)}" onerror="this.onerror=null;this.src='https://placehold.co/800x450/fecaca/991b1b?text=图片加载失败';">
+            <img src="${escapeHtml(img.src)}" 
+                 alt="${escapeHtml(img.caption)}" 
+                 onerror="this.onerror=null;this.src='https://placehold.co/800x450/fecaca/991b1b?text=图片加载失败';">
         </div>
     `).join('');
 
@@ -49,30 +39,34 @@ export function createSliderHtml(images) {
         <button class="dot" data-index="${index}"></button>
     `).join('');
 
-    const singleImageCaption = images.length === 1 ? `<p class="text-white text-center text-sm font-semibold truncate">${escapeHtml(images[0].caption)}</p>` : `<p class="slider-caption text-white text-center text-sm font-semibold truncate"></p>`;
+    const singleImageCaption = images.length === 1 
+        ? `<p class="text-white text-center text-sm font-semibold truncate">${escapeHtml(images[0].caption)}</p>` 
+        : `<p class="slider-caption text-white text-center text-sm font-semibold truncate"></p>`;
+
+    const navButtonsHtml = images.length > 1 ? `
+        <button class="slider-nav prev absolute top-1/2 -translate-y-1/2 left-3 z-10">
+            <i data-lucide="chevron-left" class="w-6 h-6"></i>
+        </button>
+        <button class="slider-nav next absolute top-1/2 -translate-y-1/2 right-3 z-10">
+            <i data-lucide="chevron-right" class="w-6 h-6"></i>
+        </button>
+    ` : '';
+    
+    const dotsContainerHtml = images.length > 1 ? `
+        <div class="slider-dots flex justify-center space-x-2 mt-2">
+            ${dotsHtml}
+        </div>
+    ` : '';
 
     return `
         <div class="image-slider relative overflow-hidden rounded-lg shadow-md mb-4">
             <div class="slider-wrapper flex">
                 ${slidesHtml}
             </div>
-            
-            ${images.length > 1 ? `
-            <button class="slider-nav prev absolute top-1/2 -translate-y-1/2 left-3 z-10">
-                <i data-lucide="chevron-left" class="w-6 h-6"></i>
-            </button>
-            <button class="slider-nav next absolute top-1/2 -translate-y-1/2 right-3 z-10">
-                <i data-lucide="chevron-right" class="w-6 h-6"></i>
-            </button>
-            ` : ''}
-            
+            ${navButtonsHtml}
             <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent z-10">
                 ${singleImageCaption}
-                ${images.length > 1 ? `
-                <div class="slider-dots flex justify-center space-x-2 mt-2">
-                    ${dotsHtml}
-                </div>
-                ` : ''}
+                ${dotsContainerHtml}
             </div>
         </div>
     `;
@@ -80,53 +74,58 @@ export function createSliderHtml(images) {
 
 
 // ===================================================================================
-// --- 页面级模板 (完整的页面或大型区块) ---
+// --- 页面级模板 (根据 pageKey 调用) ---
 // ===================================================================================
 
 /**
- * 创建主页内容 (Hero section 和 快速导航)。
- * @param {object} heroData - Hero区域的数据。
- * @param {Array<object>} quickNavData - 快速导航的数据。
- * @returns {string} 主页内容的HTML。
+ * 模板: 主页 (pageKey: 'home')
  */
-export function createHomePage(heroData, quickNavData) {
-    const navCards = (quickNavData || []).map(item => {
-        const navLinkData = JSON.stringify(item.link || {});
+export function createHomePage(content) {
+    const hero = content.hero || {};
+    const quickNav = content.quickNav || [];
+
+    const navCards = quickNav.map(item => {
         const colors = {
-            blue: { bg: 'bg-blue-100', text: 'text-blue-600', shadow: 'dark:hover:shadow-blue-500/20' },
-            green: { bg: 'bg-green-100', text: 'text-green-600', shadow: 'dark:hover:shadow-green-500/20' },
-            purple: { bg: 'bg-purple-100', text: 'text-purple-600', shadow: 'dark:hover:shadow-purple-500/20' },
-            red: { bg: 'bg-red-100', text: 'text-red-600', shadow: 'dark:hover:shadow-red-500/20' }
+            "入学流程": { bg: 'bg-blue-100', text: 'text-blue-600', shadow: 'dark:hover:shadow-blue-500/20' },
+            "宿舍介绍": { bg: 'bg-green-100', text: 'text-green-600', shadow: 'dark:hover:shadow-green-500/20' },
+            "学业发展": { bg: 'bg-purple-100', text: 'text-purple-600', shadow: 'dark:hover:shadow-purple-500/20' },
+            "常见问题": { bg: 'bg-red-100', text: 'text-red-600', shadow: 'dark:hover:shadow-red-500/20' }
         };
-        const color = colors[item.color] || colors.blue;
+        const color = colors[item.title] || { bg: 'bg-gray-100', text: 'text-gray-600', shadow: '' };
+        const navLinkData = escapeHtml(JSON.stringify(item.link));
 
         return `
-        <a href="#" data-navlink='${escapeHtml(navLinkData)}' class="nav-card bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md hover:shadow-2xl ${color.shadow} hover:-translate-y-2 transition-all duration-300 flex flex-col items-center text-center">
-            <div class="${color.bg} ${color.text} p-4 rounded-full mb-4"><i data-lucide="${escapeHtml(item.icon)}" class="w-8 h-8"></i></div>
-            <h3 class="font-semibold text-lg text-gray-900 dark:text-gray-100">${escapeHtml(item.title)}</h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">${escapeHtml(item.description)}</p>
-        </a>`;
+            <a href="#" data-navlink='${navLinkData}' class="nav-card bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md hover:shadow-2xl ${color.shadow} hover:-translate-y-2 transition-all duration-300 flex flex-col items-center text-center">
+                <div class="${color.bg} ${color.text} p-4 rounded-full mb-4">
+                    <i data-lucide="${escapeHtml(item.icon)}" class="w-8 h-8"></i>
+                </div>
+                <h3 class="font-semibold text-lg text-gray-900 dark:text-gray-100">${escapeHtml(item.title)}</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">${escapeHtml(item.description)}</p>
+            </a>
+        `;
     }).join('');
 
     return `
-    <div class="flex flex-col justify-center items-center h-full">
-        <div class="hero-bg text-white p-12 rounded-2xl text-center flex flex-col items-center justify-center shadow-xl mb-12">
-            <h1 class="text-5xl font-extrabold mb-4 drop-shadow-lg">${escapeHtml(heroData.title)}</h1>
-            <p class="text-lg max-w-2xl mb-8 drop-shadow-md">${escapeHtml(heroData.subtitle)}</p>
-            <button id="explore-btn" class="bg-white text-blue-800 font-bold py-3 px-8 rounded-full text-lg hover:bg-blue-100 transform hover:scale-105 transition-all duration-300 shadow-lg">${escapeHtml(heroData.buttonText)}</button>
-        </div>
-        <div>
-            <h2 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-8 text-center">快速导航</h2>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-                ${navCards}
+        <div class="flex flex-col justify-center items-center h-full">
+            <div class="hero-bg text-white p-12 rounded-2xl text-center flex flex-col items-center justify-center shadow-xl mb-12">
+                <h1 class="text-5xl font-extrabold mb-4 drop-shadow-lg">${escapeHtml(hero.title)}</h1>
+                <p class="text-lg max-w-2xl mb-8 drop-shadow-md">${escapeHtml(hero.subtitle)}</p>
+                <button id="explore-btn" class="bg-white text-blue-800 font-bold py-3 px-8 rounded-full text-lg hover:bg-blue-100 transform hover:scale-105 transition-all duration-300 shadow-lg">
+                    ${escapeHtml(hero.buttonText)}
+                </button>
+            </div>
+            <div>
+                <h2 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-8 text-center">快速导航</h2>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    ${navCards}
+                </div>
             </div>
         </div>
-    </div>`;
+    `;
 }
 
 /**
- * 创建校区查询工具的HTML。
- * @returns {string} 校区查询工具的HTML。
+ * 模板: 大一校区查询 (pageKey: 'campusQuery')
  */
 export function createCampusQueryToolHtml() {
     return `
@@ -157,196 +156,233 @@ export function createCampusQueryToolHtml() {
 }
 
 /**
- * 创建通用内容区块页面 (例如：开学必备清单)。
- * @param {Array<object>} sections - 内容区块的数据。
- * @param {object} [tips] - 可选的提示信息数据。
- * @returns {string} 内容区块页面的HTML。
+ * 模板: 开学必备清单 (pageKey: 'checklist')
  */
-export function createSectionsHtml(sections, tips) {
-    const sectionsHtml = (sections || []).map(section => {
-        const itemsHtml = section.items ? `<ul class="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300">${section.items.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>` : '';
-        const specialItemsHtml = section.specialItems ? `<ul class="list-none space-y-4 text-gray-700 dark:text-gray-300">${section.specialItems.map(item => `<li class="flex items-start"><i data-lucide="check-circle-2" class="text-green-500 w-5 h-5 mr-3 mt-1 flex-shrink-0"></i><div><strong>${escapeHtml(item.label)}：</strong>${escapeHtml(item.value)}</div></li>`).join('')}</ul>` : '';
-        const color = section.color || 'blue';
-        return `
+export function createChecklistHtml(content) {
+    const sections = content.sections || [];
+    const tips = content.tips || {};
+    const sectionColors = { "床上用品": "green", "洗漱用品": "cyan", "衣物鞋袜": "purple", "电子产品及其它": "orange" };
+    
+    const mainSection = sections.find(s => s.category && s.category.includes('证件'));
+    const otherSections = sections.filter(s => !s.category || !s.category.includes('证件'));
+    
+    const mainSectionHtml = mainSection ? `
         <div class="p-6 rounded-xl w-full">
-            <h3 class="text-2xl font-bold text-${color}-800 dark:text-${color}-400 mb-6 border-l-4 border-${color}-700 dark:border-${color}-500 pl-4">${escapeHtml(section.title)}</h3>
-            ${section.description ? `<p class="text-gray-700 dark:text-gray-300 mb-4">${escapeHtml(section.description)}</p>` : ''}
-            ${itemsHtml}
-            ${specialItemsHtml}
-        </div>`;
-    }).join('');
+            <h3 class="text-2xl font-bold text-blue-800 dark:text-blue-400 mb-6 border-l-4 border-blue-700 dark:border-blue-500 pl-4">${escapeHtml(mainSection.category)}</h3>
+            <ul class="list-none space-y-4 text-gray-700 dark:text-gray-300">
+                ${(mainSection.items || []).map(item => {
+                    const parts = item.split('：');
+                    const label = parts[0];
+                    const value = parts.slice(1).join('：');
+                    return `
+                        <li class="flex items-start">
+                            <i data-lucide="check-circle-2" class="text-green-500 w-5 h-5 mr-3 mt-1 flex-shrink-0"></i>
+                            <div><strong>${escapeHtml(label)}：</strong>${escapeHtml(value)}</div>
+                        </li>
+                    `;
+                }).join('')}
+            </ul>
+        </div>` : '';
 
-    const tipsHtml = tips ? `
-    <div class="bg-yellow-100 dark:bg-yellow-900/20 border-l-4 border-yellow-500 text-yellow-800 dark:text-yellow-300 p-6 rounded-lg w-full mt-10" role="alert">
-        <div class="flex">
-            <div class="py-1"><i data-lucide="alert-triangle" class="w-6 h-6 text-yellow-600 mr-4 flex-shrink-0"></i></div>
-            <div>
-                <p class="font-bold">${escapeHtml(tips.title)}</p>
-                <ul class="list-disc list-inside mt-2 text-sm">
-                    ${(tips.items || []).map(item => `<li>${escapeHtml(item)}</li>`).join('')}
+    const otherSectionsHtml = otherSections.map((section, index) => {
+        const color = sectionColors[section.category] || 'gray';
+        const itemsHtml = (section.items || []).map(item => `<li>${escapeHtml(item)}</li>`).join('');
+        return `
+            <div class="p-6 rounded-xl w-full ${index >= 2 ? 'mt-4' : ''}">
+                <h3 class="text-2xl font-bold text-${color}-800 dark:text-${color}-400 mb-6 border-l-4 border-${color}-700 dark:border-${color}-500 pl-4">${escapeHtml(section.category)}</h3>
+                <ul class="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300">
+                    ${itemsHtml}
                 </ul>
             </div>
-        </div>
-    </div>` : '';
+        `;
+    }).join('');
 
-    return `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto">${sectionsHtml}${tipsHtml}</div>`;
-}
-
-/**
- * 创建时间轴/步骤列表 (例如：入学流程)。
- * @param {Array<object>} stepsData - 步骤列表的数据。
- * @returns {string} 时间轴的HTML。
- */
-export function createStepsHtml(stepsData) {
-    const stepsHtml = (stepsData || []).map((step, index) => `
-      <div class="relative">
-          <div class="absolute w-4 h-4 bg-blue-600 rounded-full -left-2 ring-8 ring-white dark:ring-gray-800" style="top: 0.25rem;"></div>
-          <h3 class="text-xl font-bold text-blue-800 dark:text-blue-400">${escapeHtml(index + 1)}. ${escapeHtml(step.title)}</h3>
-          <p class="text-gray-600 dark:text-gray-300 mt-2">${escapeHtml(step.description)}</p>
-      </div>
-    `).join('');
-    return `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><div class="relative border-l-4 border-blue-500 pl-10 space-y-12 py-4">${stepsHtml}</div></div>`;
-}
-
-/**
- * 创建要点列表 (例如：开学须知)。
- * @param {Array<object>} pointsData - 要点列表的数据。
- * @returns {string} 要点列表的HTML。
- */
-export function createPointsHtml(pointsData) {
-    const pointsHtml = (pointsData || []).map(point => `
-    <div class="border-b dark:border-gray-700 pb-4 last:border-b-0">
-        <h4 class="font-bold text-xl text-gray-800 dark:text-gray-100 flex items-center">
-            <i data-lucide="${escapeHtml(point.icon)}" class="${escapeHtml(point.color) || 'text-indigo-500'} mr-3"></i>${escapeHtml(point.title)}
-        </h4>
-        <p class="text-gray-600 dark:text-gray-300 mt-2 pl-8">${escapeHtml(point.description)}</p>
-    </div>`).join('');
-    return `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><div class="space-y-6">${pointsHtml}</div></div>`;
-}
-
-/**
- * 创建校区特定内容（宿舍/食堂）的卡片列表。
- * @param {Array<object>} items - 项目列表数据 (宿舍或食堂)。
- * @param {string} type - 'dormitory' 或 'canteen'。
- * @returns {string} 卡片列表的HTML。
- */
-export function createCampusCardsHtml(items, type) {
-    if (!Array.isArray(items) || items.length === 0) {
-        return `<p class="text-gray-500 dark:text-gray-400 text-center p-8">该校区暂无相关信息。</p>`;
-    }
-    const cardHtml = items.map(item => `
-         <a href="#" class="detail-card bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 group" data-type="${escapeHtml(type)}" data-key="${escapeHtml(item.id)}">
-             <div class="h-56 overflow-hidden">
-                 <img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" onerror="this.onerror=null;this.src='https://placehold.co/600x400/fecaca/991b1b?text=图片加载失败';">
-             </div>
-             <div class="p-6">
-                 <h4 class="font-bold text-xl text-gray-900 dark:text-gray-100">${escapeHtml(item.name)}</h4>
-                 <p class="text-gray-600 dark:text-gray-400 text-sm mt-2">${escapeHtml(item.summary)}</p>
-             </div>
-         </a>
-     `).join('');
-
-    return `<div class="w-full max-w-6xl mx-auto">
-                 <h3 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-8 text-center">${type === 'dormitory' ? '宿舍概览' : '美食天地'}</h3>
-                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                     ${cardHtml}
-                 </div>
-             </div>`;
-}
-
-/**
- * 创建宿舍详情页的HTML。
- * @param {Array<object>} details - 宿舍楼栋的详细信息数组。
- * @returns {string} 宿舍详情页的HTML。
- */
-export function createDormitoryDetailsHtml(details) {
-    return (details || []).map(dorm => {
-        const sliderHtml = createSliderHtml(dorm.images);
-        return `
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg mb-6 shadow-md border border-gray-200 dark:border-gray-700">
-            <h4 class="font-bold text-xl text-blue-800 dark:text-blue-400 mb-4">${escapeHtml(dorm.building)}</h4>
-            ${sliderHtml}
-            <ul class="space-y-3 text-gray-700 dark:text-gray-300 mt-4">
-                <li class="flex items-center"><i data-lucide="users" class="w-5 h-5 mr-3 text-blue-500"></i><strong>房型：</strong> ${escapeHtml(dorm.roomType)}</li>
-                <li class="flex items-center"><i data-lucide="layout-grid" class="w-5 h-5 mr-3 text-blue-500"></i><strong>布局：</strong> ${escapeHtml(dorm.layout)}</li>
-                <li class="flex items-center"><i data-lucide="wallet" class="w-5 h-5 mr-3 text-blue-500"></i><strong>费用：</strong> ${escapeHtml(dorm.price)}</li>
-                <li class="flex items-center"><i data-lucide="shower-head" class="w-5 h-5 mr-3 text-blue-500"></i><strong>卫浴：</strong> ${escapeHtml(dorm.bathroom)}</li>
-                <li class="flex items-center"><i data-lucide="heater" class="w-5 h-5 mr-3 text-blue-500"></i><strong>热水：</strong> ${escapeHtml(dorm.waterHeater)}</li>
-                <li class="flex items-center"><i data-lucide="air-vent" class="w-5 h-5 mr-3 text-blue-500"></i><strong>空调：</strong> ${escapeHtml(dorm.ac)}</li>
-                <li class="flex items-center"><i data-lucide="sun" class="w-5 h-5 mr-3 text-blue-500"></i><strong>阳台：</strong> ${escapeHtml(dorm.balcony)}</li>
-                <li class="flex items-center"><i data-lucide="wifi" class="w-5 h-5 mr-3 text-blue-500"></i><strong>网络：</strong> ${escapeHtml(dorm.network)}</li>
-                <li class="flex items-center"><i data-lucide="washing-machine" class="w-5 h-5 mr-3 text-blue-500"></i><strong>洗衣：</strong> ${escapeHtml(dorm.laundry)}</li>
-                ${dorm.notes ? `<li class="flex items-start"><i data-lucide="info" class="w-5 h-5 mr-3 mt-1 text-blue-500 flex-shrink-0"></i><div><strong>备注：</strong> ${escapeHtml(dorm.notes)}</div></li>` : ''}
-            </ul>
-        </div>
-    `}).join('');
-}
-
-/**
- * 创建食堂详情页的HTML。
- * @param {Array<object>} details - 食堂区域的详细信息数组。
- * @returns {string} 食堂详情页的HTML。
- */
-export function createCanteenDetailsHtml(details) {
-    return (details || []).map(canteen => {
-        const sliderHtml = createSliderHtml(canteen.images);
-        return `
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg mb-6 shadow-md border border-gray-200 dark:border-gray-700">
-            <h4 class="font-bold text-xl text-green-800 dark:text-green-400 mb-4">${escapeHtml(canteen.area)}</h4>
-            ${sliderHtml}
-            <ul class="space-y-3 text-gray-700 dark:text-gray-300 mt-4">
-                <li class="flex items-start"><i data-lucide="sparkles" class="w-5 h-5 mr-3 mt-1 text-green-500 flex-shrink-0"></i><div><strong>特色菜品：</strong> ${escapeHtml((canteen.specialty || []).join('、 '))}</div></li>
-                <li class="flex items-center"><i data-lucide="wallet" class="w-5 h-5 mr-3 text-green-500"></i><strong>价格范围：</strong> ${escapeHtml(canteen.priceRange)}</li>
-                <li class="flex items-center"><i data-lucide="clock" class="w-5 h-5 mr-3 text-green-500"></i><strong>营业时间：</strong> ${escapeHtml(canteen.openingHours)}</li>
-                ${canteen.notes ? `<li class="flex items-start"><i data-lucide="info" class="w-5 h-5 mr-3 mt-1 text-green-500 flex-shrink-0"></i><div><strong>备注：</strong> ${escapeHtml(canteen.notes)}</div></li>` : ''}
-            </ul>
-        </div>
-    `}).join('');
-}
-
-/**
- * 创建常见问题 (FAQ) 页面的HTML。
- * @param {Array<object>} items - FAQ问答对列表。
- * @returns {string} FAQ页面的HTML。
- */
-export function createFaqHtml(items) {
-    const faqItems = (items || []).map(item => `
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
-            <div class="accordion-header w-full p-5 text-left font-semibold text-gray-800 dark:text-gray-100 flex justify-between items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                <span class="text-lg">${escapeHtml(item.q)}</span>
-                <i data-lucide="chevron-down" class="accordion-icon transition-transform duration-300 w-5 h-5"></i>
-            </div>
-            <div class="accordion-content bg-gray-50 dark:bg-gray-700/50 p-5 border-t border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300" style="display: none;">
-                <p>${escapeHtml(item.a)}</p>
+    const tipsHtml = tips.title ? `
+        <div class="bg-yellow-100 dark:bg-yellow-900/20 border-l-4 border-yellow-500 text-yellow-800 dark:text-yellow-300 p-6 rounded-lg w-full mt-10" role="alert">
+            <div class="flex">
+                <div class="py-1">
+                    <i data-lucide="alert-triangle" class="w-6 h-6 text-yellow-600 mr-4 flex-shrink-0"></i>
+                </div>
+                <div>
+                    <p class="font-bold">${escapeHtml(tips.title)}</p>
+                    <ul class="list-disc list-inside mt-2 text-sm">
+                        ${(tips.items || []).map(item => `<li>${escapeHtml(item)}</li>`).join('')}
+                    </ul>
+                </div>
             </div>
         </div>
-    `).join('');
-    return `<div class="space-y-4 w-full max-w-4xl mx-auto">${faqItems}</div>`;
+    ` : '';
+
+    return `
+        <div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto">
+            ${mainSectionHtml}
+            <div class="grid md:grid-cols-2 gap-x-8 mt-8">
+                ${otherSectionsHtml}
+            </div>
+            ${tipsHtml}
+        </div>
+    `;
+}
+
+
+/**
+ * 模板: 新生入学流程 (pageKey: 'enrollmentProcess')
+ */
+export function createStepsHtml(content) {
+    const steps = content.steps || [];
+
+    // 第一部分: 生成所有绝对定位的“圆点”
+    const dotsHtml = steps.map((_, index) => {
+        const topStyleMapping = { 0: 'top: 6px;', 1: 'top: 33.33%;', 2: 'top: 66.66%;', 3: 'bottom: 6px;' };
+        const style = topStyleMapping[index] || '';
+        const ringClass = (index === 0 || index === steps.length - 1) ? 'ring-8 ring-white dark:ring-gray-800' : '';
+        
+        return `<div class="absolute w-4 h-4 bg-blue-600 rounded-full -left-2 ${ringClass}" style="${style}"></div>`;
+    }).join('');
+
+    // 第二部分: 生成所有按顺序排列的“文本块”
+    const textBlocksHtml = steps.map((step, index) => {
+        const title = step.title.replace(/第.步：/, '');
+        return `
+            <div>
+                <h3 class="text-xl font-bold text-blue-800 dark:text-blue-400">
+                    ${index + 1}. ${escapeHtml(title)}
+                </h3>
+                <p class="text-gray-600 dark:text-gray-300 mt-2">
+                    ${escapeHtml(step.description)}
+                </p>
+            </div>
+        `;
+    }).join('');
+
+    // 第三部分: 组合成最终的HTML
+    // 外部容器是相对定位的参考系，内部包含“圆点”和“文本块容器”
+    return `
+        <div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto">
+            <div class="relative border-l-4 border-blue-500 py-6">
+                ${dotsHtml}
+                <div class="pl-10 space-y-16">
+                    ${textBlocksHtml}
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 /**
- * 创建社团与组织页面的HTML。
- * @param {object} data - 包含社团和组织信息的对象。
- * @returns {string} 社团页面的完整HTML。
+ * 模板: 开学须知 (pageKey: 'mustKnow')
  */
-export function createClubsHtml(data) {
-    if (!data) return '';
+export function createPointsHtml(content) {
+    const points = content.points || [];
+    
+    // 【样式已修复】在这里定义图标和颜色的映射关系，以还原旧版样式
+    const iconConfig = {
+        'calendar-days': { color: 'text-indigo-500' },
+        'shield-check': { color: 'text-red-500' },
+        'file-archive': { color: 'text-yellow-500' }
+    };
 
+    const pointsHtml = points.map(point => {
+        const config = iconConfig[point.icon] || { color: 'text-gray-500' };
+        return `
+            <div class="border-b dark:border-gray-700 pb-4 last:border-b-0">
+                <h4 class="font-bold text-xl text-gray-800 dark:text-gray-100 flex items-center">
+                    <i data-lucide="${escapeHtml(point.icon)}" class="mr-3 ${config.color}"></i>
+                    ${escapeHtml(point.title)}
+                </h4>
+                <p class="text-gray-600 dark:text-gray-300 mt-2 pl-8">
+                    ${escapeHtml(point.description)}
+                </p>
+            </div>
+        `;
+    }).join('');
+
+    return `
+        <div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto">
+            <div class="space-y-6">
+                ${pointsHtml}
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * 模板: 军训攻略 (pageKey: 'militaryTraining')
+ */
+export function createMilitaryTrainingPage(content) {
+    const sections = content.sections || [];
+    const sectionHtml = sections.map(section => `
+        <div class="p-6 rounded-xl">
+            <h3 class="text-2xl font-bold text-teal-800 dark:text-teal-400 mb-6 border-l-4 border-teal-700 dark:border-teal-500 pl-4">
+                ${escapeHtml(section.title)}
+            </h3>
+            <ul class="list-disc list-inside space-y-3 text-gray-700 dark:text-gray-300">
+                ${(section.items || []).map(item => `<li><strong>${escapeHtml(item)}</strong></li>`).join('')}
+            </ul>
+        </div>
+    `).join('');
+
+    return `
+        <div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-6xl mx-auto">
+            <div class="grid md:grid-cols-2 gap-8">
+                ${sectionHtml}
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * 模板: 校园超市与共享单车 (pageKey: 'supermarketAndBike')
+ */
+export function createMultiSectionPage(content) {
+    const sections = content.sections || [];
+    const sectionColors = ['purple', 'sky'];
+
+    const sectionsHtml = sections.map((section, index) => {
+        const color = sectionColors[index % sectionColors.length];
+        return `
+            <div class="p-6 rounded-xl w-full ${index > 0 ? 'mt-8' : ''}">
+                <h3 class="text-2xl font-bold text-${color}-800 dark:text-${color}-400 mb-4 border-l-4 border-${color}-700 dark:border-${color}-500 pl-4">
+                    ${escapeHtml(section.title)}
+                </h3>
+                <p class="text-gray-700 dark:text-gray-300">
+                    ${escapeHtml(section.description)}
+                </p>
+            </div>
+        `;
+    }).join('');
+
+    return `
+        <div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto">
+            ${sectionsHtml}
+        </div>
+    `;
+}
+
+/**
+ * 模板: 社团与组织 (pageKey: 'clubsAndOrgs')
+ */
+export function createClubsHtml(content) {
+    const data = content || {};
     const createClubItem = (clubName, icon, color) => `
         <div class="bg-white dark:bg-gray-800/50 p-4 rounded-lg shadow-md flex items-center space-x-3 transform hover:scale-105 hover:shadow-xl transition-all duration-300">
             <i data-lucide="${escapeHtml(icon)}" class="w-6 h-6 ${escapeHtml(color)} flex-shrink-0"></i>
             <span class="text-gray-800 dark:text-gray-200 font-medium">${escapeHtml(clubName)}</span>
-        </div>`;
+        </div>
+    `;
 
-    const tabsHtml = (data.clubs || []).map((group, index) => `
+    const iconMap = { 5: 'star', 4: 'award', 3: 'medal', 2: 'gem', 1: 'sparkle' };
+    const colorMap = { 5: 'text-yellow-400', 4: 'text-slate-400', 3: 'text-orange-400', 2: 'text-cyan-400', 1: 'text-green-400' };
+
+    const tabsHtml = (data.clubs || []).map(group => `
         <button class="tab-button px-4 py-3 text-base md:text-lg text-gray-600 dark:text-gray-400 whitespace-nowrap" data-level="${escapeHtml(String(group.level))}">
-            <i data-lucide="${escapeHtml(group.icon)}" class="inline-block w-5 h-5 mr-2 ${escapeHtml(group.color)}"></i>
+            <i data-lucide="${iconMap[group.level]}" class="inline-block w-5 h-5 mr-2 ${colorMap[group.level]}"></i>
             ${escapeHtml(group.label)}
         </button>
     `).join('');
 
-    const panesHtml = (data.clubs || []).map((group, index) => {
-        const clubListHtml = (group.list || []).map(clubName => createClubItem(clubName, group.icon, group.color)).join('');
+    const panesHtml = (data.clubs || []).map(group => {
+        const clubListHtml = (group.list || []).map(clubName => createClubItem(clubName, iconMap[group.level], colorMap[group.level])).join('');
         return `
             <div class="club-pane" data-level="${escapeHtml(String(group.level))}">
                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -356,10 +392,9 @@ export function createClubsHtml(data) {
         `;
     }).join('');
     
-    // Create 'All' tab content
-    const allClubsListHtml = (data.clubs || []).flatMap(group => 
-        (group.list || []).map(clubName => createClubItem(clubName, group.icon, group.color))
-    ).join('');
+    const allClubsListHtml = (data.clubs || [])
+        .flatMap(group => (group.list || []).map(clubName => createClubItem(clubName, iconMap[group.level], colorMap[group.level])))
+        .join('');
 
     const allPaneHtml = `
         <div class="club-pane active" data-level="all">
@@ -368,6 +403,17 @@ export function createClubsHtml(data) {
             </div>
         </div>
     `;
+
+    const organizationsHtml = data.organizations ? `
+        <div class="w-full mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+            <h3 class="text-2xl font-bold text-indigo-800 dark:text-indigo-400 mb-6 border-l-4 border-indigo-700 dark:border-indigo-500 pl-4">
+                ${escapeHtml(data.organizations.title)}
+            </h3>
+            <p class="text-gray-700 dark:text-gray-300">
+                ${data.organizations.content}
+            </p>
+        </div>
+    ` : '';
 
     return `
         <div class="bg-white dark:bg-gray-800 p-6 md:p-8 rounded-xl shadow-lg w-full max-w-6xl mx-auto">
@@ -382,25 +428,273 @@ export function createClubsHtml(data) {
                     ${tabsHtml}
                 </div>
                 <div class="club-panes-container">
-                    ${allPaneHtml}${panesHtml}
+                    ${allPaneHtml}
+                    ${panesHtml}
                 </div>
             </div>
-            ${data.organizations ? `
-            <div class="w-full mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
-                <h3 class="text-2xl font-bold text-indigo-800 dark:text-indigo-400 mb-6 border-l-4 border-indigo-700 dark:border-indigo-500 pl-4">${escapeHtml(data.organizations.title)}</h3>
-                <p class="text-gray-700 dark:text-gray-300">${escapeHtml(data.organizations.content)}</p>
-            </div>
-            ` : ''}
+            ${organizationsHtml}
         </div>
     `;
 }
 
 /**
- * 创建一个简单的链接页面。
- * @param {string} link - 链接URL。
- * @param {string} title - 页面标题。
- * @returns {string} 链接页面的HTML。
+ * 模板: 关于绩点和学分 (pageKey: 'gpaAndCredits')
  */
-export function createLinkHtml(link, title) {
-    return `<div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto"><h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">${escapeHtml(title)}</h3><div class="overflow-x-auto"><p class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 break-all"><a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">${escapeHtml(link)}</a></p></div></div>`;
+export function createGpaAndCreditsPage(content) {
+    const points = content.points || [];
+    const sectionsHtml = points.map((point, index) => {
+        const icon = point.icon || 'circle-dot';
+        const color = icon === 'star' ? 'text-yellow-500' : 'text-green-500';
+        const descriptionHtml = escapeHtml(point.description).replace(/总学分|各类课程|奖学金评定、评优评先/g, '<strong>$&</strong>');
+
+        return `
+            ${index > 0 ? `<div class="border-t my-6 dark:border-gray-700"></div>` : ''}
+            <div>
+                <h4 class="font-bold text-2xl text-gray-800 dark:text-gray-100 flex items-center mb-4">
+                    <i data-lucide="${escapeHtml(icon)}" class="${color} mr-3"></i>
+                    ${escapeHtml(point.title)}
+                </h4>
+                <p class="text-gray-600 dark:text-gray-300 text-lg">${descriptionHtml}</p>
+            </div>
+        `;
+    }).join('');
+
+    return `
+        <div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto">
+            <div class="space-y-8">
+                ${sectionsHtml}
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * 模板: 简单信息页 (pageKey: 'changeMajor', 'contestsAndCerts', 'campusCardAndApp')
+ */
+export function createSimpleInfoPage(content) {
+    return `
+        <div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto">
+            <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">${escapeHtml(content.title)}</h3>
+            <p class="text-gray-600 dark:text-gray-300">${escapeHtml(content.description)}</p>
+        </div>
+    `;
+}
+
+/**
+ * 模板: 宽带与电费 (pageKey: 'internetAndElectricity')
+ */
+export function createStepsListPage(content) {
+    const sections = content.sections || [];
+    const sectionColors = ['cyan', 'amber'];
+
+    const sectionsHtml = sections.map((section, index) => {
+        const color = sectionColors[index % sectionColors.length];
+        const stepsHtml = section.steps ? `
+            <ol class="list-decimal list-inside space-y-2 text-gray-600 dark:text-gray-400">
+                ${(section.steps || []).map(step => {
+                    const parts = step.split('：');
+                    const label = parts[0];
+                    const value = parts.slice(1).join('：');
+                    return `<li><strong>${escapeHtml(label)}：</strong>${escapeHtml(value)}</li>`;
+                }).join('')}
+            </ol>
+        ` : '';
+
+        return `
+            <div class="w-full ${index > 0 ? 'mt-8' : ''}">
+                <h3 class="text-2xl font-bold text-${color}-800 dark:text-${color}-400 mb-6 border-l-4 border-${color}-700 dark:border-${color}-500 pl-4">
+                    ${escapeHtml(section.title)}
+                </h3>
+                <p class="text-gray-700 dark:text-gray-300 mb-4">
+                    ${escapeHtml(section.description)}
+                </p>
+                ${stepsHtml}
+            </div>
+        `;
+    }).join('');
+
+    return `
+        <div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto">
+            ${sectionsHtml}
+        </div>
+    `;
+}
+
+/**
+ * 模板: WebVPN系统 (pageKey: 'webVpn')
+ */
+export function createWebVPNPage(content) {
+    const sections = content.sections || [];
+    const sectionsHtml = sections.map(section => `
+        <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">
+            ${escapeHtml(section.title)}
+        </h3>
+        <p class="text-gray-600 dark:text-gray-300">
+            ${escapeHtml(section.description)}
+        </p>
+    `).join('');
+
+    return `
+        <div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto">
+            ${sectionsHtml}
+        </div>
+    `;
+}
+
+/**
+ * 模板: 常见问题 (pageKey: 'faq')
+ */
+export function createFaqHtml(items) {
+    const faqItems = (items || []).map(item => `
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+            <div class="accordion-header w-full p-5 text-left font-semibold text-gray-800 dark:text-gray-100 flex justify-between items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                <span class="text-lg">${escapeHtml(item.q)}</span>
+                <i data-lucide="chevron-down" class="accordion-icon transition-transform duration-300 w-5 h-5"></i>
+            </div>
+            <div class="accordion-content bg-gray-50 dark:bg-gray-700/50 p-5 border-t border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300" style="display: none;">
+                <p>${escapeHtml(item.a)}</p>
+            </div>
+        </div>
+    `).join('');
+
+    return `
+        <div class="space-y-4 w-full max-w-4xl mx-auto">
+            ${faqItems}
+        </div>
+    `;
+}
+
+/**
+ * 模板: 重要部门联系方式 (pageKey: 'contacts')
+ */
+export function createLinkPage(content, pageTitle) {
+    return `
+        <div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto">
+            <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">${escapeHtml(pageTitle)}</h3>
+            <div class="overflow-x-auto">
+                <p class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 break-all">
+                    <a href="${escapeHtml(content.link)}" target="_blank" rel="noopener noreferrer">${escapeHtml(content.link)}</a>
+                </p>
+            </div>
+        </div>
+    `;
+}
+
+
+// --- 校区相关模板 ---
+
+/**
+ * 模板: 校区特定内容卡片列表 (宿舍/食堂)
+ */
+export function createCampusCardsHtml(items, type) {
+    if (!Array.isArray(items) || items.length === 0) {
+        return `<p class="text-gray-500 dark:text-gray-400 text-center p-8">该校区暂无相关信息。</p>`;
+    }
+
+    const cardHtml = items.map(item => `
+        <a href="#" class="detail-card bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 group" data-type="${escapeHtml(type)}" data-key="${escapeHtml(item.id)}">
+            <div class="h-56 overflow-hidden">
+                <img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" onerror="this.onerror=null;this.src='https://placehold.co/600x400/fecaca/991b1b?text=图片加载失败';">
+            </div>
+            <div class="p-6">
+                <h4 class="font-bold text-xl text-gray-900 dark:text-gray-100">${escapeHtml(item.name)}</h4>
+                <p class="text-gray-600 dark:text-gray-400 text-sm mt-2">${escapeHtml(item.summary)}</p>
+            </div>
+        </a>
+    `).join('');
+
+    return `
+        <div class="w-full max-w-6xl mx-auto">
+            <h3 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-8 text-center">
+                ${type === 'dormitory' ? '宿舍概览' : '美食天地'}
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                ${cardHtml}
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * 模板: 宿舍详情页
+ */
+export function createDormitoryDetailsHtml(details) {
+    return (details || []).map(dorm => {
+        const sliderHtml = createSliderHtml(dorm.images);
+        const listItems = [
+            { icon: 'users', label: '房型', value: dorm.roomType },
+            { icon: 'layout-grid', label: '布局', value: dorm.layout },
+            { icon: 'wallet', label: '费用', value: dorm.price },
+            { icon: 'shower-head', label: '卫浴', value: dorm.bathroom },
+            { icon: 'heater', label: '热水', value: dorm.waterHeater },
+            { icon: 'air-vent', label: '空调', value: dorm.ac },
+            { icon: 'sun', label: '阳台', value: dorm.balcony },
+            { icon: 'wifi', label: '网络', value: dorm.network },
+            { icon: 'washing-machine', label: '洗衣', value: dorm.laundry },
+        ];
+        
+        const listHtml = listItems.map(item => `
+            <li class="flex items-center">
+                <i data-lucide="${item.icon}" class="w-5 h-5 mr-3 text-blue-500"></i>
+                <strong>${item.label}：</strong> ${escapeHtml(item.value)}
+            </li>
+        `).join('');
+
+        const notesHtml = dorm.notes ? `
+            <li class="flex items-start">
+                <i data-lucide="info" class="w-5 h-5 mr-3 mt-1 text-blue-500 flex-shrink-0"></i>
+                <div><strong>备注：</strong> ${escapeHtml(dorm.notes)}</div>
+            </li>
+        ` : '';
+
+        return `
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg mb-6 shadow-md border border-gray-200 dark:border-gray-700">
+                <h4 class="font-bold text-xl text-blue-800 dark:text-blue-400 mb-4">${escapeHtml(dorm.building)}</h4>
+                ${sliderHtml}
+                <ul class="space-y-3 text-gray-700 dark:text-gray-300 mt-4">
+                    ${listHtml}
+                    ${notesHtml}
+                </ul>
+            </div>
+        `;
+    }).join('');
+}
+
+/**
+ * 模板: 食堂详情页
+ */
+export function createCanteenDetailsHtml(details) {
+    return (details || []).map(canteen => {
+        const sliderHtml = createSliderHtml(canteen.images);
+        const listItems = [
+            { icon: 'sparkles', label: '特色菜品', value: (canteen.specialty || []).join('、 '), isFlexStart: true },
+            { icon: 'wallet', label: '价格范围', value: canteen.priceRange },
+            { icon: 'clock', label: '营业时间', value: canteen.openingHours },
+        ];
+
+        const listHtml = listItems.map(item => `
+            <li class="flex ${item.isFlexStart ? 'items-start' : 'items-center'}">
+                <i data-lucide="${item.icon}" class="w-5 h-5 mr-3 ${item.isFlexStart ? 'mt-1' : ''} text-green-500 flex-shrink-0"></i>
+                <div><strong>${item.label}：</strong> ${escapeHtml(item.value)}</div>
+            </li>
+        `).join('');
+
+        const notesHtml = canteen.notes ? `
+             <li class="flex items-start">
+                <i data-lucide="info" class="w-5 h-5 mr-3 mt-1 text-green-500 flex-shrink-0"></i>
+                <div><strong>备注：</strong> ${escapeHtml(canteen.notes)}</div>
+            </li>
+        ` : '';
+
+        return `
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg mb-6 shadow-md border border-gray-200 dark:border-gray-700">
+                <h4 class="font-bold text-xl text-green-800 dark:text-green-400 mb-4">${escapeHtml(canteen.area)}</h4>
+                ${sliderHtml}
+                <ul class="space-y-3 text-gray-700 dark:text-gray-300 mt-4">
+                    ${listHtml}
+                    ${notesHtml}
+                </ul>
+            </div>
+        `;
+    }).join('');
 }
