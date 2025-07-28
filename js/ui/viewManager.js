@@ -63,36 +63,50 @@ export function hideMobileSearch() {
 }
 
 /**
- * 显示详情视图。
+ * [关键修复] 显示详情视图，适配新的数组数据结构。
  * @param {string} type - 'dormitory' 或 'canteen'。
- * @param {string} itemKey - 具体项目（如'a_dorm'）的键名。
+ * @param {string} key - 具体项目（如'cangwu_a_dorm'）的唯一ID。
  */
-export function showDetailView(type, itemKey) {
-    const itemData = campusData[selectedCampus]?.[type]?.items?.[itemKey];
-    if (!itemData) return;
-
-    dom.detailTitle.textContent = itemData.name;
-
-    let detailsHtml = '';
-    if (Array.isArray(itemData.details)) {
-        if (type === 'dormitory') {
-            detailsHtml = renderer.generateDormitoryDetailsHtml(itemData.details);
-        } else if (type === 'canteen') {
-            detailsHtml = renderer.generateCanteenDetailsHtml(itemData.details);
-        }
-    } else {
-        detailsHtml = `<div class="prose dark:prose-invert max-w-none">${itemData.details}</div>`;
+export function showDetailView(type, key) {
+    // 1. [修复] 根据 type 确定要搜索哪个数组 ('dormitories' 或 'canteens')
+    const dataArray = campusData[type + 's'];
+    if (!dataArray || !Array.isArray(dataArray)) {
+        console.error(`ViewManager Error: Invalid data source for type "${type}"`);
+        return;
     }
 
-    dom.detailContent.innerHTML = `
-        <div class="max-w-4xl mx-auto">
-            <img src="${itemData.image}" alt="[${itemData.name}的图片]" class="w-full h-auto max-h-[450px] object-cover rounded-xl shadow-lg mb-8" onerror="this.onerror=null;this.src='https://placehold.co/1200x675/fecaca/991b1b?text=图片加载失败';">
-            <div class="bg-gray-100 dark:bg-gray-800/50 p-4 sm:p-8 rounded-xl">
-                <h3 class="text-2xl font-bold mb-6 border-b pb-4 dark:border-gray-700 text-gray-800 dark:text-gray-100">详细情况概览</h3>
-                ${detailsHtml}
+    // 2. [修复] 使用 Array.find() 在数组中通过 id 查找匹配的项
+    const itemData = dataArray.find(item => item.id === key);
+
+    if (!itemData) {
+        console.error(`ViewManager Error: Item with key "${key}" not found in "${type}s"`);
+        dom.detailTitle.textContent = '内容未找到';
+        dom.detailContent.innerHTML = '<p class="text-center p-8">抱歉，我们没有找到您想查看的具体信息。</p>';
+    } else {
+        dom.detailTitle.textContent = itemData.name;
+
+        let detailsHtml = '';
+        if (Array.isArray(itemData.details)) {
+            if (type === 'dormitory') {
+                detailsHtml = renderer.generateDormitoryDetailsHtml(itemData.details);
+            } else if (type === 'canteen') {
+                detailsHtml = renderer.generateCanteenDetailsHtml(itemData.details);
+            }
+        } else {
+            detailsHtml = `<div class="prose dark:prose-invert max-w-none">${itemData.details}</div>`;
+        }
+        
+        // 使用与你原有代码相同的结构来填充内容
+        dom.detailContent.innerHTML = `
+            <div class="max-w-4xl mx-auto">
+                <img src="${itemData.image}" alt="[${itemData.name}的图片]" class="w-full h-auto max-h-[450px] object-cover rounded-xl shadow-lg mb-8" onerror="this.onerror=null;this.src='https://placehold.co/1200x675/fecaca/991b1b?text=图片加载失败';">
+                <div class="bg-gray-100 dark:bg-gray-800/50 p-4 sm:p-8 rounded-xl">
+                    <h3 class="text-2xl font-bold mb-6 border-b pb-4 dark:border-gray-700 text-gray-800 dark:text-gray-100">详细情况概览</h3>
+                    ${detailsHtml}
+                </div>
             </div>
-        </div>
-    `;
+        `;
+    }
 
     dom.mainView.classList.add('hidden');
     dom.detailView.classList.remove('hidden', 'translate-x-full');
@@ -103,6 +117,7 @@ export function showDetailView(type, itemKey) {
     lucide.createIcons();
     initAllSliders(dom.detailContent);
 }
+
 
 /**
  * 隐藏详情视图。

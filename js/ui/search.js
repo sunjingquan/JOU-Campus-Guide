@@ -4,7 +4,7 @@
  * 执行搜索、渲染结果和高亮显示。
  */
 
-// [关键修复] 导入 renderer 模块，以便在 performSearch 中使用它的函数
+// [新增] 导入 renderer 模块，以便在 performSearch 中使用它的函数
 import * as renderer from './renderer.js';
 
 // --- 模块内变量 ---
@@ -116,7 +116,7 @@ function hideLiveSearchResults() {
 }
 
 /**
- * [关键修改] 执行搜索的核心函数，适配新的数据结构。
+ * [关键修复] 执行搜索的核心函数，适配新的数组数据结构。
  * @param {string} query - 用户输入的搜索关键词。
  * @returns {Array<Object>} 搜索结果数组。
  */
@@ -125,18 +125,14 @@ function performSearch(query) {
     const tempDiv = document.createElement('div');
     const queryLower = query.toLowerCase();
 
-    // 1. [修改] 搜索通用数据 (guideData)
-    // 现在 guideData 是一个数组，需要用 forEach 遍历
+    // 1. [修复] 搜索通用数据 (guideData)
     guideData.forEach(category => {
-        // pages 也是一个数组
         category.pages.forEach(page => {
             let searchableText = page.title;
-
-            // [修复] 从 page.structuredContent 中读取数据
             const content = page.structuredContent;
+
             if (content) {
                 if (page.type === 'clubs') {
-                    // 安全地访问 introduction
                     searchableText += ' ' + (content.introduction || '');
                     if (content.clubs && Array.isArray(content.clubs)) {
                         content.clubs.forEach(group => {
@@ -153,9 +149,8 @@ function performSearch(query) {
                         });
                     }
                 } else {
-                    // 对于其他所有类型的结构化内容，尝试提取所有文本
-                    // 这是一个简化的通用处理方式
-                    tempDiv.innerHTML = renderer.createStructuredContentHtml(content);
+                    // 使用 renderer 将结构化内容转为HTML，再提取纯文本进行搜索
+                    tempDiv.innerHTML = renderer.renderPageContent(page);
                     searchableText += ' ' + tempDiv.textContent;
                 }
             }
@@ -171,19 +166,15 @@ function performSearch(query) {
         });
     });
 
-    // 2. [修改] 搜索校区特定数据 (campusData)
-    // campusData 的结构也变了
+    // 2. [修复] 搜索校区特定数据 (campusData)
     ['dormitories', 'canteens'].forEach(type => {
-        // type 的单数形式，用于详情页跳转
         const singularType = type.slice(0, -1); 
         if (campusData[type] && Array.isArray(campusData[type])) {
-            // 筛选出当前校区的数据
             const campusItems = campusData[type].filter(item => item.campusId === selectedCampus);
             
             campusItems.forEach(item => {
                 let searchableText = `${item.name || ''} ${item.summary || ''}`;
                 if (item.details && Array.isArray(item.details)) {
-                    // 将 details 数组中的所有值拼接成字符串
                     searchableText += item.details.map(d => Object.values(d).join(' ')).join(' ');
                 }
 
@@ -193,7 +184,7 @@ function performSearch(query) {
                         text: searchableText,
                         isDetail: true,
                         detailType: singularType,
-                        detailKey: item.id // 使用 item.id 作为 key
+                        detailKey: item.id
                     });
                 }
             });
@@ -202,7 +193,6 @@ function performSearch(query) {
 
     return results;
 }
-
 
 function createSnippet(text, query) {
     const index = text.toLowerCase().indexOf(query.toLowerCase());
