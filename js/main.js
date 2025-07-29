@@ -1,7 +1,7 @@
 /**
- * @file 应用主入口 (Main Entry Point) - 重构版
- * @description 负责应用的整体流程控制：初始化、获取数据、调用渲染器、设置事件监听。
- * @version 5.4.0 - [优化] 改为批量获取头像URL，提升性能。
+ * @file 应用主入口 (Main Entry Point) - 重构版 V2
+ * @description 负责应用的整体流程控制。个人资料编辑器的UI逻辑已移交给 auth.js。
+ * @version 6.0.0
  */
 
 // 导入重构后的模块
@@ -137,13 +137,19 @@ class GuideApp {
     init() {
         theme.init(this.dom);
         this._setupEventListeners();
+
+        // [修改] 1. 在这里一次性调用 auth.js 的初始化函数，传入所需数据
+        // 这个函数会负责准备好个人中心编辑界面的所有下拉菜单和头像选项
+        authUI.initializeProfileEditor(this.campusData);
+
         authUI.listenForAuthStateChanges((userData) => {
             this.currentUserData = userData;
-            if (userData) {
-                authUI.populateProfileEditForm(userData);
-            }
+            // 此处不再需要调用 populateProfileEditForm，
+            // 因为事件监听器中会在需要时（如点击“编辑资料”）再调用。
         });
-        this._populateProfileEditDropdowns();
+        
+        // [已删除] _populateProfileEditDropdowns 方法已被彻底移除。
+        
         this.selectedCampus = localStorage.getItem('selectedCampus');
         if (this.selectedCampus) {
             this.runApp();
@@ -267,6 +273,7 @@ class GuideApp {
             modals.hideProfileModal();
         });
         this.dom.editProfileBtn.addEventListener('click', () => {
+            // [修改] 2. 在切换到编辑视图前，确保表单填充了最新的用户数据
             authUI.populateProfileEditForm(this.currentUserData);
             authUI.handleProfileViewChange('edit');
         });
@@ -497,52 +504,7 @@ class GuideApp {
         }
     }
 
-    async _populateProfileEditDropdowns() {
-        // 填充年份
-        const yearSelect = this.dom.editEnrollmentYear;
-        const currentYear = new Date().getFullYear();
-        for (let i = 0; i < 10; i++) {
-            const year = currentYear - i;
-            const option = new Option(`${year}年`, year);
-            yearSelect.add(option);
-        }
-
-        // 填充专业
-        const majorSelect = this.dom.editMajor;
-        const allMajors = [...new Set(this.campusData.colleges.flatMap(c => c.majors))];
-        allMajors.sort((a, b) => a.localeCompare(b, 'zh-CN'));
-        majorSelect.innerHTML = '<option value="">未选择</option>';
-        allMajors.forEach(major => {
-            const option = new Option(major, major);
-            majorSelect.add(option);
-        });
-
-        const avatarGrid = this.dom.avatarSelectionGrid;
-        avatarGrid.innerHTML = ''; 
-
-        // ### 重要：请将下面的示例 File ID 替换成你自己的默认头像的真实 File ID ###
-        const defaultAvatarFileIDs = [
-            'cloud://jou-campus-guide-9f57jf08ece0812.6a6f-jou-campus-guide-9f57jf08ece0812-1327129188/默认头像/avatar_01.png',
-            'cloud://jou-campus-guide-9f57jf08ece0812.6a6f-jou-campus-guide-9f57jf08ece0812-1327129188/默认头像/avatar_02.png',
-            'cloud://jou-campus-guide-9f57jf08ece0812.6a6f-jou-campus-guide-9f57jf08ece0812-1327129188/默认头像/avatar_03.png',
-            'cloud://jou-campus-guide-9f57jf08ece0812.6a6f-jou-campus-guide-9f57jf08ece0812-1327129188/默认头像/avatar_04.png',
-        ];
-
-        // [优化] 一次性批量获取所有头像的URL
-        const urlMap = await authUI.getAvatarUrls(defaultAvatarFileIDs);
-
-        // 使用获取到的URL Map来创建头像选项
-        defaultAvatarFileIDs.forEach(fileID => {
-            const displayUrl = urlMap[fileID];
-            if (displayUrl) { // 确保URL有效再创建DOM
-                const avatarOption = document.createElement('div');
-                avatarOption.className = 'avatar-option p-1';
-                avatarOption.dataset.avatar = fileID; 
-                avatarOption.innerHTML = `<img src="${displayUrl}" alt="头像选项" class="w-full h-full rounded-full object-cover" onerror="this.style.display='none'">`;
-                avatarGrid.appendChild(avatarOption);
-            }
-        });
-    }
+    // [已删除] _populateProfileEditDropdowns 方法已从类中完全删除。
 
     _initCampusQueryTool(container) { /* ... */ }
 }
