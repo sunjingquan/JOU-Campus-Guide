@@ -2,7 +2,7 @@
  * @file UI 模板模块 (UI Templates)
  * @description 该模块是所有UI组件的“HTML蓝图”。它包含一系列纯函数，
  * 每个函数接收从 guide_data.json 获取的纯净JSON数据，并返回与旧版 guideData.js 视觉效果完全一致的HTML字符串。
- * @version 4.2.0 - 修复时间轴样式
+ * @version 4.2.1 - 修复快速导航链接
  */
 
 // --- 辅助函数 ---
@@ -92,7 +92,12 @@ export function createHomePage(content) {
             "常见问题": { bg: 'bg-red-100', text: 'text-red-600', shadow: 'dark:hover:shadow-red-500/20' }
         };
         const color = colors[item.title] || { bg: 'bg-gray-100', text: 'text-gray-600', shadow: '' };
-        const navLinkData = escapeHtml(JSON.stringify(item.link));
+        
+        // [修复] 移除了 escapeHtml 对 JSON 字符串的错误处理。
+        // 之前：const navLinkData = escapeHtml(JSON.stringify(item.link));
+        // 这会导致 JSON 中的双引号 " 被转换为 &quot;，使得 JSON.parse 解析失败。
+        // 现在：直接使用 JSON.stringify 的结果，并用单引号包裹属性值，这是正确的做法。
+        const navLinkData = JSON.stringify(item.link);
 
         return `
             <a href="#" data-navlink='${navLinkData}' class="nav-card bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md hover:shadow-2xl ${color.shadow} hover:-translate-y-2 transition-all duration-300 flex flex-col items-center text-center">

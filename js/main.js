@@ -1,7 +1,7 @@
 /**
  * @file 应用主入口 (Main Entry Point) - 重构版 V2
  * @description 负责应用的整体流程控制。个人资料编辑器的UI逻辑已移交给 auth.js。
- * @version 6.0.0
+ * @version 6.3.0 - 修复异步调用导致的数据竞争问题
  */
 
 // 导入重构后的模块
@@ -134,21 +134,29 @@ class GuideApp {
         }, 4000);
     }
 
-    init() {
+    // [修改] 1. 将 init 函数声明为 async，这样我们就可以在函数内部使用 await
+    async init() {
         theme.init(this.dom);
         this._setupEventListeners();
 
-        // [修改] 1. 在这里一次性调用 auth.js 的初始化函数，传入所需数据
-        // 这个函数会负责准备好个人中心编辑界面的所有下拉菜单和头像选项
-        authUI.initializeProfileEditor(this.campusData);
+        // [最终修复] 为防止 authUI.initializeProfileEditor 意外修改原始数据，
+        // 我们传入一个 campusData 的深拷贝副本 (deep copy)。
+        if (this.campusData && this.campusData.colleges) {
+            try {
+                const campusDataCopy = JSON.parse(JSON.stringify(this.campusData));
+                // [修改] 2. 使用 await 来确保这个异步函数执行完毕后，程序再继续
+                await authUI.initializeProfileEditor(campusDataCopy);
+            } catch (e) {
+                console.error("无法为个人中心编辑器创建数据副本:", e);
+                await authUI.initializeProfileEditor(this.campusData);
+            }
+        } else {
+            await authUI.initializeProfileEditor(this.campusData);
+        }
 
         authUI.listenForAuthStateChanges((userData) => {
             this.currentUserData = userData;
-            // 此处不再需要调用 populateProfileEditForm，
-            // 因为事件监听器中会在需要时（如点击“编辑资料”）再调用。
         });
-        
-        // [已删除] _populateProfileEditDropdowns 方法已被彻底移除。
         
         this.selectedCampus = localStorage.getItem('selectedCampus');
         if (this.selectedCampus) {
@@ -205,7 +213,7 @@ class GuideApp {
 
                 if (page.type === 'faq') this._addFaqListeners(section);
                 if (page.type === 'clubs') this._addClubTabListeners(section);
-                if (page.type === 'campus-query-tool') this._initCampusQueryTool(section);
+                if (page.pageKey === 'campusQuery') this._initCampusQueryTool(section);
             });
         });
 
@@ -273,7 +281,6 @@ class GuideApp {
             modals.hideProfileModal();
         });
         this.dom.editProfileBtn.addEventListener('click', () => {
-            // [修改] 2. 在切换到编辑视图前，确保表单填充了最新的用户数据
             authUI.populateProfileEditForm(this.currentUserData);
             authUI.handleProfileViewChange('edit');
         });
@@ -470,10 +477,28 @@ class GuideApp {
             card.addEventListener('click', (e) => {
                 e.preventDefault();
                 const navData = JSON.parse(card.dataset.navlink);
-                const targetElement = document.getElementById(`page-${navData.category}-${navData.page}`);
+                
+                const targetCategory = this.guideData.find(cat => cat.title === navData.category);
+                if (!targetCategory) {
+                    console.warn(`快速导航失败: 未找到分类 "${navData.category}"`);
+                    return;
+                }
+
+                const targetPage = targetCategory.pages.find(p => p.title.startsWith(navData.page));
+                if (!targetPage) {
+                    console.warn(`快速导航失败: 在分类 "${navData.category}" 中未找到页面 "${navData.page}"`);
+                    return;
+                }
+
+                const categoryKey = targetCategory.key;
+                const pageKey = targetPage.pageKey;
+                const targetElement = document.getElementById(`page-${categoryKey}-${pageKey}`);
+
                 if (targetElement) {
-                    this._updateActiveState(navData.category, navData.page);
+                    this._updateActiveState(categoryKey, pageKey);
                     this._scrollToElement(targetElement);
+                } else {
+                    console.warn(`快速导航失败: 找不到ID为 "page-${categoryKey}-${pageKey}" 的元素`);
                 }
             });
         });
@@ -504,9 +529,81 @@ class GuideApp {
         }
     }
 
-    // [已删除] _populateProfileEditDropdowns 方法已从类中完全删除。
+    _initCampusQueryTool(container) {
+        const collegeSelect = container.querySelector('#college-select');
+        const majorSelect = container.querySelector('#major-select');
+        const resultDisplay = container.querySelector('#result-display');
+        
+        const colleges = this.campusData.colleges || [];
+        const campuses = this.campusData.campuses || [];
 
-    _initCampusQueryTool(container) { /* ... */ }
+        if (colleges.length === 0) {
+            collegeSelect.disabled = true;
+            majorSelect.disabled = true;
+            resultDisplay.innerHTML = '<p class="text-red-500">无法加载学院数据，功能暂时无法使用。</p>';
+            return;
+        }
+
+        collegeSelect.innerHTML = '<option value="">-- 请选择学院 --</option>';
+        colleges.forEach(college => {
+            const option = new Option(college.name, college.name);
+            collegeSelect.add(option);
+        });
+
+        collegeSelect.addEventListener('change', () => {
+            const selectedCollegeName = collegeSelect.value;
+            
+            majorSelect.innerHTML = '<option value="">-- 请先选择学院 --</option>';
+            majorSelect.disabled = true;
+            resultDisplay.innerHTML = '<p class="text-gray-500 dark:text-gray-400">查询结果将在此处显示</p>';
+
+            if (selectedCollegeName) {
+                const selectedCollege = colleges.find(c => c.name === selectedCollegeName);
+                if (selectedCollege && selectedCollege.majors && selectedCollege.majors.length > 0) {
+                    majorSelect.innerHTML = '<option value="">-- 请选择专业 --</option>';
+                    selectedCollege.majors.forEach(major => {
+                        const option = new Option(major, major);
+                        majorSelect.add(option);
+                    });
+                    majorSelect.disabled = false;
+                } else {
+                    majorSelect.innerHTML = '<option value="">-- 该学院无专业数据 --</option>';
+                }
+            }
+        });
+
+        majorSelect.addEventListener('change', () => {
+            const selectedCollegeName = collegeSelect.value;
+            const selectedMajorName = majorSelect.value;
+
+            if (selectedCollegeName && selectedMajorName) {
+                const college = colleges.find(c => c.name === selectedCollegeName);
+                if (college) {
+                    const campusId = college.campusId;
+                    const campus = campuses.find(c => c.id === campusId);
+                    const campusName = campus ? campus.name : '未知校区';
+
+                    resultDisplay.innerHTML = `
+                        <div class="text-left w-full">
+                            <p class="text-gray-600 dark:text-gray-400 text-sm mb-2">查询结果:</p>
+                            <p class="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                                <span class="font-normal">${college.name}</span> - <strong>${selectedMajorName}</strong>
+                            </p>
+                            <p class="mt-4 text-2xl font-bold text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                                <i data-lucide="map-pin" class="w-6 h-6 mr-3"></i>
+                                <span>${campusName}</span>
+                            </p>
+                        </div>
+                    `;
+                    if (window.lucide) {
+                        lucide.createIcons({ nodes: [resultDisplay] });
+                    }
+                }
+            } else {
+                resultDisplay.innerHTML = '<p class="text-gray-500 dark:text-gray-400">查询结果将在此处显示</p>';
+            }
+        });
+    }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -520,7 +617,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         ]);
         console.log("Main: 应用数据获取成功。");
         const app = new GuideApp(guideData, campusData);
-        app.init();
+        // [修改] 3. 同样，在这里也使用 await 来等待 init() 函数的完成
+        await app.init();
     } catch (error) {
         console.error("Main: 初始化应用失败!", error);
         loadingOverlay.innerHTML = `<div class="text-center text-red-500 p-4"><p class="font-bold">应用加载失败</p><p class="text-sm mt-2">请检查网络连接或联系管理员。</p><p class="text-xs mt-2 text-gray-400">${error.message}</p></div>`;
