@@ -1,81 +1,119 @@
 /**
  * @file 用户认证模块 (Authentication) - 定制重构版
  * @description 负责处理所有用户登录、注册、状态管理和UI更新的逻辑。
- * 本版本基于你的原始代码进行重构，保留了学号邮箱验证流程，并修复了DOM加载时序问题。
- * @version 3.2.0 - 修复了数据库查询和UI更新的边界情况错误
+ * @version 4.1.0 - [优化] 新增批量获取头像URL的函数，提升性能。
  */
 
-// 【关键修复】直接导入在 cloudbase.js 中导出的 auth 和 db 实例
-import { auth, db } from '../cloudbase.js';
+import { app, auth, db } from '../cloudbase.js';
+import * as modals from './modals.js';
 
 // --- 模块级变量 ---
-
-// 用于存储从 main.js 传入的、已缓存的DOM元素对象。
 let dom;
-
-// 用于存储数据库的实时监听器，以便在用户登出时能够关闭它。
 let userDocWatcher = null;
-
-const DEFAULT_AVATAR = 'images/默认头像/avatar_01.png';
+// [修复] 根据你的要求，将默认头像路径修改回中文名
+const DEFAULT_AVATAR = 'images/默认头像/avatar_01.png'; 
+let verificationData = null;
 
 // --- 核心函数 ---
 
 /**
- * 缓存从 main.js 传入的 DOM 元素对象。
- * @param {object} domElements - 由 main.js 的 _cacheDOMElements 函数创建的对象。
+ * 获取单个头像的真实URL。
+ * @param {string} avatarPath - 数据库中存储的头像路径或fileID
+ * @returns {Promise<string>} - 可供<img>标签直接使用的、有效的图片URL
  */
+export async function getAvatarUrl(avatarPath) {
+    if (!avatarPath) {
+        return DEFAULT_AVATAR;
+    }
+    if (avatarPath.startsWith('cloud://')) {
+        try {
+            const { fileList } = await app.getTempFileURL({ fileList: [avatarPath] });
+            if (fileList[0] && fileList[0].tempFileURL) {
+                return fileList[0].tempFileURL;
+            }
+            console.warn("getTempFileURL调用成功，但未返回有效的URL for:", avatarPath);
+            return DEFAULT_AVATAR;
+        } catch (error) {
+            console.error("获取头像临时URL失败:", error);
+            return DEFAULT_AVATAR;
+        }
+    }
+    return avatarPath;
+}
+
+/**
+ * [新增] 批量获取一组头像的真实URL。
+ * @param {Array<string>} fileIDs - 一个包含多个云端FileID的数组
+ * @returns {Promise<Object>} - 一个映射对象，key是FileID，value是对应的公开URL
+ */
+export async function getAvatarUrls(fileIDs) {
+    const urlMap = {};
+    if (!fileIDs || fileIDs.length === 0) {
+        return urlMap;
+    }
+
+    try {
+        const { fileList } = await app.getTempFileURL({ fileList: fileIDs });
+        fileList.forEach(item => {
+            // 只有成功获取到URL的才加入map
+            if (item.tempFileURL) {
+                urlMap[item.fileID] = item.tempFileURL;
+            } else {
+                 console.warn("批量获取中，未能返回有效URL for:", item.fileID);
+            }
+        });
+        return urlMap;
+    } catch (error) {
+        console.error("批量获取头像URL失败:", error);
+        return {}; // 返回空对象，避免程序崩溃
+    }
+}
+
+
 export function cacheAuthDOMElements(domElements) {
     dom = domElements;
 }
 
-/**
- * 监听用户登录状态的改变。
- * @param {function} callback - 当用户状态改变时调用的回调函数，会传入完整的用户数据。
- */
 export function listenForAuthStateChanges(callback) {
-    // onLoginStateChanged 是一个持久的监听器
     auth.onLoginStateChanged(async (loginState) => {
         console.log('[Auth 状态] 登录状态发生改变:', loginState);
-
-        // 1. 安全地关闭旧的监听器
         if (userDocWatcher) {
-            console.log('[Auth 状态] 关闭旧的数据库监听器。');
             userDocWatcher.close();
             userDocWatcher = null;
         }
 
-        // 2. 【关键修复】使用更严格的检查，确保 loginState 和 loginState.uid 都存在
-        if (loginState && loginState.uid) {
+        if (loginState && loginState.user) {
+            const currentUser = loginState.user;
             try {
-                const userDocRef = db.collection('users').doc(loginState.uid);
+                const userDocRef = db.collection('users').doc(currentUser.uid);
                 const userDoc = await userDocRef.get();
                 let userData;
 
                 if (userDoc.data && userDoc.data.length > 0) {
-                    userData = { ...loginState, ...userDoc.data[0] };
+                    userData = { ...currentUser, ...userDoc.data[0] };
                 } else {
-                    console.log(`[DB] 未找到 UID: ${loginState.uid} 的文档，将为其创建新文档。`);
+                    console.log(`[DB] 未找到 UID: ${currentUser.uid} 的文档，将为其创建新文档。`);
                     const newUserDoc = {
-                        _id: loginState.uid,
-                        nickname: `用户_${loginState.uid.slice(0, 6)}`,
-                        email: loginState.email,
+                        _id: currentUser.uid,
+                        nickname: `用户_${currentUser.uid.slice(0, 6)}`,
+                        email: currentUser.email,
                         avatar: DEFAULT_AVATAR,
                         bio: '这个人很懒，什么都没留下...',
                         enrollmentYear: new Date().getFullYear().toString(),
                         major: ''
                     };
                     await userDocRef.set(newUserDoc);
-                    userData = { ...loginState, ...newUserDoc };
+                    userData = { ...currentUser, ...newUserDoc };
                 }
 
-                updateUIWithUserData(userData);
+                await updateUIWithUserData(userData);
                 callback(userData);
 
                 userDocWatcher = userDocRef.watch({
-                    onChange: (snapshot) => {
+                    onChange: async (snapshot) => {
                         if (snapshot.docs && snapshot.docs.length > 0) {
-                            const updatedData = { ...loginState, ...snapshot.docs[0] };
-                            updateUIWithUserData(updatedData);
+                            const updatedData = { ...currentUser, ...snapshot.docs[0] };
+                            await updateUIWithUserData(updatedData);
                             callback(updatedData);
                         }
                     },
@@ -84,106 +122,168 @@ export function listenForAuthStateChanges(callback) {
 
             } catch (dbError) {
                 console.error('[Auth 状态] 处理数据库时发生严重错误:', dbError);
-                updateUIWithUserData(null);
+                await updateUIWithUserData(null);
                 callback(null);
             }
         } else {
             console.log('[Auth 状态] 用户未登录或 loginState 无效。');
-            updateUIWithUserData(null);
+            await updateUIWithUserData(null);
             callback(null);
         }
     });
 }
 
-/**
- * 根据用户数据更新UI。
- * @param {object | null} userData - 用户数据对象，如果未登录则为 null。
- */
-function updateUIWithUserData(userData) {
-    // 【关键修复】在函数开头先检查 dom 对象是否存在
+async function updateUIWithUserData(userData) {
     if (!dom) {
         console.error("Auth DOM 元素尚未缓存! UI无法更新。");
         return;
     }
 
-    if (userData) {
-        // 用户已登录
-        // 【关键修复】为每个DOM操作添加安全检查
-        if (dom.loginPromptBtn) dom.loginPromptBtn.classList.add('hidden');
-        if (dom.userProfileBtn) dom.userProfileBtn.classList.remove('hidden');
-        
-        const avatarUrl = userData.avatar || DEFAULT_AVATAR;
-        if (dom.sidebarAvatar) dom.sidebarAvatar.src = avatarUrl;
-        if (dom.profileAvatarLarge) dom.profileAvatarLarge.src = avatarUrl;
-        if (dom.sidebarNickname) dom.sidebarNickname.textContent = userData.nickname || '设置昵称';
-        if (dom.profileNickname) dom.profileNickname.textContent = userData.nickname || '待设置';
-        if (dom.profileEmail) dom.profileEmail.textContent = userData.email || '未绑定邮箱';
-        
-        const majorYearText = (userData.enrollmentYear && userData.major) 
-            ? `${userData.enrollmentYear}级 ${userData.major}` 
-            : '待设置';
-        if (dom.profileMajorYear) dom.profileMajorYear.textContent = majorYearText;
-        if (dom.profileBio) dom.profileBio.textContent = userData.bio || '这个人很懒，什么都没留下...';
+    const isLoggedIn = !!userData;
 
+    dom.loginPromptBtn.classList.toggle('hidden', isLoggedIn);
+    dom.userProfileBtn.classList.toggle('hidden', !isLoggedIn);
+
+    if (isLoggedIn) {
+        const avatarUrl = await getAvatarUrl(userData.avatar);
+        
+        dom.sidebarAvatar.src = avatarUrl;
+        dom.profileAvatarLarge.src = avatarUrl;
+
+        dom.sidebarNickname.textContent = userData.nickname || '设置昵称';
+        dom.profileNickname.textContent = userData.nickname || '待设置';
+        dom.profileEmail.textContent = userData.email || '未绑定邮箱';
+        const majorYearText = (userData.enrollmentYear && userData.major) ?
+            `${userData.enrollmentYear}级 ${userData.major}` :
+            '待设置';
+        dom.profileMajorYear.querySelector('span').textContent = majorYearText;
+        dom.profileBio.textContent = userData.bio || '这个人很懒，什么都没留下...';
     } else {
-        // 用户未登录
-        // 【关键修复】为每个DOM操作添加安全检查
-        if (dom.loginPromptBtn) dom.loginPromptBtn.classList.remove('hidden');
-        if (dom.userProfileBtn) dom.userProfileBtn.classList.add('hidden');
-        if (dom.sidebarAvatar) dom.sidebarAvatar.src = DEFAULT_AVATAR;
-        if (dom.sidebarNickname) dom.sidebarNickname.textContent = '点击登录';
+        dom.sidebarAvatar.src = DEFAULT_AVATAR;
+        dom.sidebarNickname.textContent = '登录 / 注册';
     }
 }
 
 // --- 事件处理函数 ---
 
-/**
- * 处理用户注册。
- * @param {Event} e - 表单提交事件。
- */
+export async function handleLoginSubmit(e) {
+    e.preventDefault();
+    const button = dom.loginForm.querySelector('button[type="submit"]');
+    button.disabled = true;
+    button.textContent = '登录中...';
+
+    const emailPrefix = dom.loginForm.email_prefix.value;
+    const password = dom.loginForm.password.value;
+    const email = `${emailPrefix}@jou.edu.cn`;
+
+    try {
+        await auth.signIn({
+            username: email,
+            password: password
+        });
+
+        dom.showToast('登录成功！', 'success');
+        modals.hideAuthModal(() => {
+            modals.showProfileModal();
+        });
+    } catch (error) {
+        console.error("登录失败:", error);
+        dom.showToast(`登录失败: ${error.message || '请检查学号和密码'}`, 'error');
+    } finally {
+        button.disabled = false;
+        button.textContent = '登 录';
+    }
+}
+
 export async function handleRegisterSubmit(e) {
     e.preventDefault();
-    const email = dom.registerForm.email.value;
-    const password = dom.registerForm.password.value;
-    const confirmPassword = dom.registerForm['confirm-password'].value;
+    if (!verificationData) {
+        dom.showToast('请先发送并获取邮箱验证码', 'error');
+        return;
+    }
+    const button = dom.registerForm.querySelector('button[type="submit"]');
+    button.disabled = true;
+    button.textContent = '注册中...';
 
-    if (password !== confirmPassword) {
-        dom.showToast('两次输入的密码不一致', 'error');
+    const emailPrefix = dom.registerForm.email_prefix.value;
+    const password = dom.registerForm.password.value;
+    const verificationCode = dom.registerForm.verification_code.value;
+    const email = `${emailPrefix}@jou.edu.cn`;
+
+    if (password.length < 8) {
+        dom.showToast('密码长度至少需要8位', 'error');
+        button.disabled = false;
+        button.textContent = '注 册';
         return;
     }
 
     try {
-        await auth.signUpWithEmailAndPassword(email, password);
+        const verificationTokenRes = await auth.verify({
+            verification_id: verificationData.verification_id,
+            verification_code: verificationCode
+        });
+
+        await auth.signUp({
+            email: email,
+            verification_code: verificationCode,
+            verification_token: verificationTokenRes.verification_token,
+            password: password,
+            username: email
+        });
+
         dom.showToast('注册成功！已自动登录。', 'success');
-        // 假设 main.js 会处理模态框的关闭
+        verificationData = null;
+        modals.hideAuthModal(() => {
+            modals.showProfileModal();
+        });
+
     } catch (error) {
         console.error("注册失败:", error);
-        const message = error.code === 'auth/email-already-in-use' ? '该邮箱已被注册' : '注册失败，请稍后再试';
-        dom.showToast(message, 'error');
+        dom.showToast(`注册失败: ${error.message || '请检查信息是否正确'}`, 'error');
+    } finally {
+        button.disabled = false;
+        button.textContent = '注 册';
     }
 }
 
-/**
- * 处理用户登录。
- * @param {Event} e - 表单提交事件。
- */
-export async function handleLoginSubmit(e) {
-    e.preventDefault();
-    const email = dom.loginForm.email.value;
-    const password = dom.loginForm.password.value;
+export async function handleSendVerificationCode() {
+    const emailPrefix = dom.registerForm.email_prefix.value;
+    if (!emailPrefix) {
+        dom.showToast('请先输入学号', 'error');
+        return;
+    }
+    const email = `${emailPrefix}@jou.edu.cn`;
+    const btn = dom.sendVerificationCodeBtn;
+    btn.disabled = true;
+    btn.textContent = '发送中...';
 
     try {
-        await auth.signInWithEmailAndPassword(email, password);
-        dom.showToast('登录成功！', 'success');
+        verificationData = await auth.getVerification({
+            email: email
+        });
+        dom.showToast('验证码已发送，请检查邮箱', 'success');
+
+        let countdown = 60;
+        btn.textContent = `${countdown}秒后重发`;
+        const interval = setInterval(() => {
+            countdown--;
+            btn.textContent = `${countdown}秒后重发`;
+            if (countdown <= 0) {
+                clearInterval(interval);
+                btn.disabled = false;
+                btn.textContent = '发送验证码';
+            }
+        }, 1000);
+
     } catch (error) {
-        console.error("登录失败:", error);
-        dom.showToast('登录失败，请检查邮箱和密码', 'error');
+        console.error("验证码发送失败:", error);
+        dom.showToast(`发送失败: ${error.message}`, 'error');
+        btn.disabled = false;
+        btn.textContent = '发送验证码';
     }
 }
 
-/**
- * 处理用户登出。
- */
+
 export async function handleLogout() {
     try {
         await auth.signOut();
@@ -194,77 +294,95 @@ export async function handleLogout() {
     }
 }
 
-/**
- * 处理密码重置。
- * @param {Event} e - 表单提交事件。
- */
 export async function handlePasswordResetSubmit(e) {
     e.preventDefault();
-    const email = dom.resetPasswordForm.email.value;
+    const button = dom.resetPasswordForm.querySelector('button[type="submit"]');
+    button.disabled = true;
+    button.textContent = '发送中...';
+
+    const emailPrefix = dom.resetPasswordForm.email_prefix.value;
+    const email = `${emailPrefix}@jou.edu.cn`;
+
     try {
-        await auth.sendPasswordResetEmail(email);
+        await auth.sendPasswordResetEmail({
+            email: email
+        });
         dom.showToast('密码重置邮件已发送，请检查您的邮箱', 'success');
         handleAuthViewChange('login');
     } catch (error) {
         console.error("密码重置失败:", error);
-        dom.showToast('邮件发送失败，请检查邮箱地址', 'error');
+        dom.showToast('邮件发送失败，请检查学号是否正确', 'error');
+    } finally {
+        button.disabled = false;
+        button.textContent = '发送重置邮件';
     }
 }
 
-/**
- * 处理个人资料保存。
- * @param {Event} e - 点击事件。
- * @param {object} currentUserData - 当前用户的完整数据。
- */
+
 export async function handleProfileSave(e, currentUserData) {
     e.preventDefault();
     if (!currentUserData) {
         dom.showToast('请先登录', 'error');
         return;
     }
-
-    const updatedData = {
-        nickname: dom.editNickname.value,
-        bio: dom.editBio.value,
-        enrollmentYear: dom.editEnrollmentYear.value,
-        major: dom.editMajor.value,
-        avatar: document.querySelector('.avatar-option.selected')?.dataset.avatar || currentUserData.avatar
-    };
+    const button = dom.saveProfileBtn;
+    button.disabled = true;
+    button.textContent = '保存中...';
 
     try {
-        await db.collection('users').doc(currentUserData.uid).update(updatedData);
+        let newAvatarPath = currentUserData.avatar;
+
+        const updatedData = {
+            nickname: dom.editNickname.value.trim(),
+            bio: dom.editBio.value.trim(),
+            enrollmentYear: dom.editEnrollmentYear.value,
+            major: dom.editMajor.value,
+            avatar: dom.avatarSelectionGrid.querySelector('.avatar-option.selected')?.dataset.avatar || newAvatarPath
+        };
+
+        await db.collection('users').doc(currentUserData._id).update(updatedData);
         dom.showToast('个人资料更新成功！', 'success');
         handleProfileViewChange('view');
+
     } catch (error) {
         console.error('更新个人资料失败:', error);
         dom.showToast('资料更新失败，请稍后再试', 'error');
+    } finally {
+        button.disabled = false;
+        button.textContent = '保存更改';
     }
 }
 
-/**
- * 控制认证模态框内部的视图切换（登录/注册/重置密码）。
- * @param {string} viewName - 'login', 'register', 或 'reset'。
- */
-export function handleAuthViewChange(viewName) {
-    if (!dom) return;
-    if(dom.loginFormContainer) dom.loginFormContainer.classList.toggle('hidden', viewName !== 'login');
-    if(dom.registerFormContainer) dom.registerFormContainer.classList.toggle('hidden', viewName !== 'register');
-    if(dom.resetPasswordFormContainer) dom.resetPasswordFormContainer.classList.toggle('hidden', viewName !== 'reset');
 
-    const titles = {
-        login: '登录',
-        register: '注册',
-        reset: '重置密码'
-    };
-    if(dom.authTitle) dom.authTitle.textContent = titles[viewName];
+export function populateProfileEditForm(userData) {
+    if (!dom || !userData) return;
+    dom.editNickname.value = userData.nickname || '';
+    dom.editBio.value = userData.bio || '';
+    dom.editEnrollmentYear.value = userData.enrollmentYear || '';
+    dom.editMajor.value = userData.major || '';
+
+    dom.avatarSelectionGrid.querySelectorAll('.avatar-option').forEach(opt => {
+        opt.classList.toggle('selected', opt.dataset.avatar === userData.avatar);
+    });
 }
 
-/**
- * 控制个人资料模态框内部的视图切换（查看/编辑）。
- * @param {string} viewName - 'view' 或 'edit'。
- */
+
+export function handleAuthViewChange(viewName) {
+    if (!dom) return;
+    dom.loginFormContainer.classList.toggle('hidden', viewName !== 'login');
+    dom.registerFormContainer.classList.toggle('hidden', viewName !== 'register');
+    dom.resetPasswordFormContainer.classList.toggle('hidden', viewName !== 'reset');
+
+    const titles = {
+        login: '欢迎回来',
+        register: '创建新账户',
+        reset: '重置你的密码'
+    };
+    dom.authTitle.textContent = titles[viewName];
+}
+
 export function handleProfileViewChange(viewName) {
     if (!dom) return;
-    if(dom.profileViewContainer) dom.profileViewContainer.classList.toggle('hidden', viewName !== 'view');
-    if(dom.profileEditContainer) dom.profileEditContainer.classList.toggle('hidden', viewName !== 'edit');
+    dom.profileViewContainer.classList.toggle('hidden', viewName !== 'view');
+    dom.profileEditContainer.classList.toggle('hidden', viewName !== 'edit');
 }

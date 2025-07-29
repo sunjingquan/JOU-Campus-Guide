@@ -6,7 +6,7 @@
 
 // 1. 从你的 CloudBase 控制台获取最新的 SDK 引用地址并填入 index.html
 // 2. 初始化 CloudBase，注意：这里使用正确的 `cloudbase` 对象
-const app = cloudbase.init({
+export const app = cloudbase.init({
     // 在下方填入你的真实环境 ID
     env: "jou-campus-guide-9f57jf08ece0812" 
 });
