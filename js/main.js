@@ -1,7 +1,8 @@
 /**
- * @file 应用主入口 (Main Entry Point) - 重构版 V2
- * @description 负责应用的整体流程控制。个人资料编辑器的UI逻辑已移交给 auth.js。
- * @version 6.3.1 - [最终修复] 修正了校区查询工具中错误的属性名，从 'name' 改为 'college'。
+ * @file 应用主入口 (Main Entry Point) - 时序修复版
+ * @description 负责应用的整体流程控制。
+ * [已修复] 重构了应用的初始化流程，确保在认证状态明确（包括匿名登录）后，才开始获取数据，从而解决了启动时的竞态条件问题。
+ * @version 7.0.0
  */
 
 // 导入重构后的模块
@@ -16,9 +17,10 @@ import * as theme from './ui/theme.js';
 import { db } from './cloudbase.js';
 
 class GuideApp {
-    constructor(guideData, campusData) {
-        this.guideData = guideData;
-        this.campusData = campusData;
+    constructor() {
+        // 数据在认证成功后才会被填充
+        this.guideData = null;
+        this.campusData = null;
         this.selectedCampus = null;
         this.observer = null;
         this.isScrollingProgrammatically = false;
@@ -26,12 +28,14 @@ class GuideApp {
         this.currentUserData = null;
 
         this._cacheDOMElements();
+        // 将 showToast 方法绑定到实例，以便在其他模块中正确调用
         this.dom.showToast = this._showToast.bind(this);
         authUI.cacheAuthDOMElements(this.dom);
         modals.init(this.dom);
         viewManager.init({
             domElements: this.dom,
-            cData: this.campusData
+            // 初始时 campusData 为 null，后续会更新
+            cData: () => this.campusData 
         });
     }
 
@@ -138,6 +142,53 @@ class GuideApp {
         theme.init(this.dom);
         this._setupEventListeners();
 
+        // [关键改动] 等待认证状态明确后，再执行后续的数据加载和渲染
+        authUI.listenForAuthStateChanges(async (userData) => {
+            this.currentUserData = userData;
+
+            try {
+                console.log("Main: 认证完成，现在开始获取应用数据...");
+                // 只有在认证通过后（无论是真实用户还是匿名用户），才获取数据
+                [this.guideData, this.campusData] = await Promise.all([
+                    getGuideData(),
+                    getCampusData()
+                ]);
+
+                if (!this.guideData || this.guideData.length === 0) {
+                   throw new Error("指南数据加载失败或为空。");
+                }
+                 if (!this.campusData || !this.campusData.colleges) {
+                   throw new Error("校区数据加载失败或为空。");
+                }
+                
+                console.log("Main: 应用数据获取成功。");
+
+                // 初始化依赖于数据的模块
+                await this.initializeDataDependentModules();
+
+                // 检查是否已选择校区，然后启动应用
+                this.selectedCampus = localStorage.getItem('selectedCampus');
+                if (this.selectedCampus) {
+                    this.runApp();
+                } else {
+                    modals.showCampusSelector();
+                }
+
+                // 隐藏加载动画
+                setTimeout(() => {
+                    this.dom.loadingOverlay.style.opacity = '0';
+                    setTimeout(() => this.dom.loadingOverlay.style.display = 'none', 500);
+                }, 500);
+
+            } catch (error) {
+                console.error("Main: 获取或处理应用数据时失败!", error);
+                this.dom.loadingOverlay.innerHTML = `<div class="text-center text-red-500 p-4"><p class="font-bold">应用加载失败</p><p class="text-sm mt-2">无法连接到服务器，请检查网络后重试。</p><p class="text-xs mt-2 text-gray-400">${error.message}</p></div>`;
+            }
+        });
+    }
+
+    // 新增：一个用于初始化依赖数据的模块的辅助函数
+    async initializeDataDependentModules() {
         if (this.campusData && this.campusData.colleges) {
             try {
                 const campusDataCopy = JSON.parse(JSON.stringify(this.campusData));
@@ -146,24 +197,9 @@ class GuideApp {
                 console.error("无法为个人中心编辑器创建数据副本:", e);
                 await authUI.initializeProfileEditor(this.campusData);
             }
-        } else {
-            await authUI.initializeProfileEditor(this.campusData);
         }
-
-        authUI.listenForAuthStateChanges((userData) => {
-            this.currentUserData = userData;
-        });
-        
-        this.selectedCampus = localStorage.getItem('selectedCampus');
-        if (this.selectedCampus) {
-            this.runApp();
-        } else {
-            modals.showCampusSelector();
-        }
-        setTimeout(() => {
-            this.dom.loadingOverlay.style.opacity = '0';
-            setTimeout(() => this.dom.loadingOverlay.style.display = 'none', 500);
-        }, 500);
+        // 更新 viewManager 中的数据引用
+        viewManager.updateCampusData(this.campusData);
     }
 
     runApp() {
@@ -343,11 +379,8 @@ class GuideApp {
         search.updateCampus(campus);
         viewManager.updateCampus(campus);
         modals.hideCampusSelector(() => {
-            if (!this.guideData || this.guideData.length === 0) {
-                location.reload();
-            } else {
-                this.runApp();
-            }
+            // 此时数据必定已加载，直接运行即可
+            this.runApp();
         });
     }
 
@@ -542,7 +575,6 @@ class GuideApp {
 
         collegeSelect.innerHTML = '<option value="">-- 请选择学院 --</option>';
         colleges.forEach(college => {
-            // [修复] 使用 'college.college' 而不是 'college.name'
             const option = new Option(college.college, college.college);
             collegeSelect.add(option);
         });
@@ -555,7 +587,6 @@ class GuideApp {
             resultDisplay.innerHTML = '<p class="text-gray-500 dark:text-gray-400">查询结果将在此处显示</p>';
 
             if (selectedCollegeName) {
-                // [修复] 使用 'c.college' 而不是 'c.name'
                 const selectedCollege = colleges.find(c => c.college === selectedCollegeName);
                 if (selectedCollege && selectedCollege.majors && selectedCollege.majors.length > 0) {
                     majorSelect.innerHTML = '<option value="">-- 请选择专业 --</option>';
@@ -575,7 +606,6 @@ class GuideApp {
             const selectedMajorName = majorSelect.value;
 
             if (selectedCollegeName && selectedMajorName) {
-                // [修复] 使用 'c.college' 而不是 'c.name'
                 const college = colleges.find(c => c.college === selectedCollegeName);
                 if (college) {
                     const campusId = college.campusId;
@@ -605,20 +635,12 @@ class GuideApp {
     }
 }
 
+// [关键改动] 重构后的应用启动入口
 document.addEventListener('DOMContentLoaded', async () => {
     const loadingOverlay = document.getElementById('loading-overlay');
-    try {
-        loadingOverlay.style.display = 'flex';
-        console.log("Main: 开始获取应用数据...");
-        const [guideData, campusData] = await Promise.all([
-            getGuideData(),
-            getCampusData()
-        ]);
-        console.log("Main: 应用数据获取成功。");
-        const app = new GuideApp(guideData, campusData);
-        await app.init();
-    } catch (error) {
-        console.error("Main: 初始化应用失败!", error);
-        loadingOverlay.innerHTML = `<div class="text-center text-red-500 p-4"><p class="font-bold">应用加载失败</p><p class="text-sm mt-2">请检查网络连接或联系管理员。</p><p class="text-xs mt-2 text-gray-400">${error.message}</p></div>`;
-    }
+    loadingOverlay.style.display = 'flex';
+    
+    // 只创建应用实例并调用 init。init 方法现在将控制整个启动流程。
+    const app = new GuideApp();
+    await app.init();
 });
