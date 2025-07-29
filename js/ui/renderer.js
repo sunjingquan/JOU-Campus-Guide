@@ -2,7 +2,7 @@
  * @file UI 渲染器 (UI Renderer)
  * @description 该模块是所有UI渲染的核心。它接收从后端获取的纯净页面数据，
  * 并根据页面的唯一标识 (pageKey) 调用相应的模板函数来生成HTML。
- * @version 3.0.0
+ * @version 3.0.1 - 修复宿舍卡片点击问题
  */
 
 // 导入所有模板函数
@@ -87,9 +87,11 @@ export function renderPageContent(page) {
  * @returns {string} 渲染好的HTML。
  */
 export function generateCampusCards(items, type) {
-    // 将 items 对象转换为数组
-    const itemsArray = Object.keys(items).map(key => ({ id: key, ...items[key] }));
-    return tpl.createCampusCardsHtml(itemsArray, type);
+    // 【已修复】
+    // 传入的 items 本身就已经是正确的数组，无需再用 Object.keys 进行转换。
+    // 之前的代码错误地将数组的索引作为了卡片的ID，导致无法正确跳转。
+    // 直接将正确的 items 数组传递给模板函数即可。
+    return tpl.createCampusCardsHtml(items, type);
 }
 
 /**

@@ -1,6 +1,7 @@
 /**
  * @file 视图管理模块
  * @description 负责处理应用中不同视图（如主视图、详情页、侧边栏、移动搜索）的显示、隐藏和切换。
+ * @version 2.1.0 - 修复宿舍详情页数据源key的拼写错误
  */
 
 import * as renderer from './renderer.js';
@@ -63,23 +64,27 @@ export function hideMobileSearch() {
 }
 
 /**
- * [关键修复] 显示详情视图，适配新的数组数据结构。
+ * 显示详情视图。
  * @param {string} type - 'dormitory' 或 'canteen'。
  * @param {string} key - 具体项目（如'cangwu_a_dorm'）的唯一ID。
  */
 export function showDetailView(type, key) {
-    // 1. [修复] 根据 type 确定要搜索哪个数组 ('dormitories' 或 'canteens')
-    const dataArray = campusData[type + 's'];
+    // 【已修复】
+    // 之前的代码将 'dormitory' 错误地拼接为 'dormitorys'。
+    // 正确的数据键名应该是 'dormitories'。
+    // 此处添加了判断，确保使用正确的数据源键名。
+    const dataKey = type === 'dormitory' ? 'dormitories' : type + 's';
+    const dataArray = campusData[dataKey];
+
     if (!dataArray || !Array.isArray(dataArray)) {
-        console.error(`ViewManager Error: Invalid data source for type "${type}"`);
+        console.error(`ViewManager Error: Invalid data source for type "${type}" (key: ${dataKey})`);
         return;
     }
 
-    // 2. [修复] 使用 Array.find() 在数组中通过 id 查找匹配的项
     const itemData = dataArray.find(item => item.id === key);
 
     if (!itemData) {
-        console.error(`ViewManager Error: Item with key "${key}" not found in "${type}s"`);
+        console.error(`ViewManager Error: Item with key "${key}" not found in "${dataKey}"`);
         dom.detailTitle.textContent = '内容未找到';
         dom.detailContent.innerHTML = '<p class="text-center p-8">抱歉，我们没有找到您想查看的具体信息。</p>';
     } else {
@@ -93,10 +98,10 @@ export function showDetailView(type, key) {
                 detailsHtml = renderer.generateCanteenDetailsHtml(itemData.details);
             }
         } else {
+            // 兼容旧的纯文本 details 字段
             detailsHtml = `<div class="prose dark:prose-invert max-w-none">${itemData.details}</div>`;
         }
         
-        // 使用与你原有代码相同的结构来填充内容
         dom.detailContent.innerHTML = `
             <div class="max-w-4xl mx-auto">
                 <img src="${itemData.image}" alt="[${itemData.name}的图片]" class="w-full h-auto max-h-[450px] object-cover rounded-xl shadow-lg mb-8" onerror="this.onerror=null;this.src='https://placehold.co/1200x675/fecaca/991b1b?text=图片加载失败';">
