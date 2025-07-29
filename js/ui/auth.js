@@ -1,8 +1,8 @@
 /**
- * @file 用户认证模块 (Authentication) - 重构版 V2
+ * @file 用户认证模块 (Authentication) - 最终修复版
  * @description 负责处理所有用户登录、注册、状态管理和UI更新的逻辑。
- * 个人中心编辑器的所有UI逻辑已全部内聚于此模块。
- * @version 6.0.0
+ * [已修复] 修正了匿名登录的调用方式，以兼容 CloudBase V2 SDK。
+ * @version 8.0.0
  */
 
 import { app, auth, db } from '../cloudbase.js';
@@ -140,6 +140,13 @@ export async function initializeProfileEditor(campusData) {
     });
 }
 
+/**
+ * [已修改] 监听用户登录状态。
+ * - 如果用户是真实注册用户，则获取其资料。
+ * - 如果用户是匿名访客，则允许其加载数据，但UI上显示为未登录。
+ * - 如果没有任何登录状态，则自动尝试匿名登录。
+ * @param {function} callback - 用于将用户数据传回主应用的函数。
+ */
 export function listenForAuthStateChanges(callback) {
     auth.onLoginStateChanged(async (loginState) => {
         if (userDocWatcher) {
@@ -149,6 +156,19 @@ export function listenForAuthStateChanges(callback) {
 
         if (loginState && loginState.user) {
             const currentUser = loginState.user;
+
+            // [V2 SDK 兼容性修复] 检查用户是否为匿名用户，直接检查 user 对象上的 isAnonymous 属性
+            if (currentUser.isAnonymous) {
+                console.log("访客已通过匿名方式登录。数据可以正常加载。");
+                // 将UI更新为未登录状态，因为访客不需要看到个人中心
+                await updateUIWithUserData(null);
+                // 回调函数传入null，表示没有具体的“用户”数据
+                callback(null);
+                // 注意：此处直接返回，不为匿名用户在'users'集合中创建文档
+                return;
+            }
+
+            // --- 以下是针对真实注册用户的现有逻辑 ---
             try {
                 const userDocRef = db.collection('users').doc(currentUser.uid);
                 const userDoc = await userDocRef.get();
@@ -185,15 +205,30 @@ export function listenForAuthStateChanges(callback) {
                 });
 
             } catch (dbError) {
+                console.error("获取用户数据时出错:", dbError);
                 await updateUIWithUserData(null);
                 callback(null);
             }
         } else {
-            await updateUIWithUserData(null);
-            callback(null);
+            // [V2 SDK 兼容性修复] 如果没有任何登录状态，则尝试匿名登录
+            console.log("无用户登录，正在尝试匿名登录以加载公共数据...");
+            try {
+                // 使用 V2 SDK 正确的匿名登录方法
+                await auth.signInAnonymously();
+                // 成功后，onLoginStateChanged 会再次触发，并进入上面的 if (currentUser.isAnonymous) 分支
+            } catch (err) {
+                console.error("匿名登录失败:", err);
+                // 如果匿名登录也失败，说明服务可能存在问题，向用户显示错误
+                if(dom && dom.showToast) {
+                    dom.showToast('无法加载应用数据，请检查网络连接', 'error');
+                }
+                await updateUIWithUserData(null);
+                callback(null);
+            }
         }
     });
 }
+
 
 async function updateUIWithUserData(userData) {
     if (!dom) return;
@@ -230,7 +265,7 @@ export async function handleLoginSubmit(e) {
     const password = dom.loginForm.password.value;
     const email = `${emailPrefix}@jou.edu.cn`;
     try {
-        await auth.signIn({ username: email, password: password });
+        await auth.signInWithEmailAndPassword(email, password);
         dom.showToast('登录成功！', 'success');
         modals.hideAuthModal(() => { modals.showProfileModal(); });
     } catch (error) {
@@ -261,8 +296,8 @@ export async function handleRegisterSubmit(e) {
         return;
     }
     try {
-        const verificationTokenRes = await auth.verify({ verification_id: verificationData.verification_id, verification_code: verificationCode });
-        await auth.signUp({ email: email, verification_code: verificationCode, verification_token: verificationTokenRes.verification_token, password: password, username: email });
+        // V2 SDK 注册流程简化，不需要先verify
+        await auth.signUpWithEmailAndPassword(email, password, verificationCode, verificationData.verification_id);
         dom.showToast('注册成功！已自动登录。', 'success');
         verificationData = null;
         modals.hideAuthModal(() => { modals.showProfileModal(); });
@@ -285,7 +320,7 @@ export async function handleSendVerificationCode() {
     btn.disabled = true;
     btn.textContent = '发送中...';
     try {
-        verificationData = await auth.getVerification({ email: email });
+        verificationData = await auth.sendSignUpVerificationCode(email);
         dom.showToast('验证码已发送，请检查邮箱', 'success');
         let countdown = 60;
         btn.textContent = `${countdown}秒后重发`;
@@ -323,7 +358,7 @@ export async function handlePasswordResetSubmit(e) {
     const emailPrefix = dom.resetPasswordForm.email_prefix.value;
     const email = `${emailPrefix}@jou.edu.cn`;
     try {
-        await auth.sendPasswordResetEmail({ email: email });
+        await auth.sendPasswordResetEmail(email);
         dom.showToast('密码重置邮件已发送，请检查您的邮箱', 'success');
         handleAuthViewChange('login');
     } catch (error) {

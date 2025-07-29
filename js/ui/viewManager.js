@@ -1,26 +1,44 @@
 /**
- * @file 视图管理模块
+ * @file 视图管理模块 - 最终修复版
  * @description 负责处理应用中不同视图（如主视图、详情页、侧边栏、移动搜索）的显示、隐藏和切换。
- * @version 2.1.0 - 修复宿舍详情页数据源key的拼写错误
+ * [已修复] 添加了 main.js 需要的 updateCampusData 函数，以确保模块能接收到动态加载的数据。
+ * @version 3.0.0
  */
 
 import * as renderer from './renderer.js';
 
 // --- 模块内变量 ---
 let dom = {};
-let campusData = {};
+let campusData = {}; // 初始为空，将由 updateCampusData 函数填充
 let selectedCampus = '';
 
 /**
  * 初始化视图管理器。
  * @param {object} config - 配置对象。
  * @param {object} config.domElements - 缓存的DOM元素。
- * @param {object} config.cData - 校区特定数据。
+ * @param {function} config.cData - 一个返回校区数据的函数 (在旧版 main.js 中使用)。
  */
 export function init(config) {
     dom = config.domElements;
-    campusData = config.cData;
+    // 尝试在初始化时获取一次数据，但在我们的新流程中，它很可能为 null。
+    // 关键的数据更新将通过下面的 updateCampusData 函数完成。
+    if (typeof config.cData === 'function') {
+        campusData = config.cData();
+    } else {
+        campusData = config.cData;
+    }
 }
+
+/**
+ * [新增的关键函数] 更新模块内部的校区数据。
+ * 这个函数由 main.js 在成功从服务器获取数据后调用。
+ * @param {object} newData - 最新的校区数据。
+ */
+export function updateCampusData(newData) {
+    console.log("ViewManager: 已接收到最新的校区数据。", newData);
+    campusData = newData;
+}
+
 
 /**
  * 更新当前选择的校区。
@@ -69,14 +87,19 @@ export function hideMobileSearch() {
  * @param {string} key - 具体项目（如'cangwu_a_dorm'）的唯一ID。
  */
 export function showDetailView(type, key) {
-    // 【已修复】
-    // 之前的代码将 'dormitory' 错误地拼接为 'dormitorys'。
-    // 正确的数据键名应该是 'dormitories'。
-    // 此处添加了判断，确保使用正确的数据源键名。
     const dataKey = type === 'dormitory' ? 'dormitories' : type + 's';
+    
+    // 检查 campusData 是否已经有数据
+    if (!campusData || !campusData[dataKey]) {
+        console.error(`ViewManager Error: 校区数据尚未加载或不包含 '${dataKey}'。`);
+        dom.detailTitle.textContent = '数据加载中...';
+        dom.detailContent.innerHTML = '<p class="text-center p-8">数据正在加载，请稍候...</p>';
+        return;
+    }
+    
     const dataArray = campusData[dataKey];
 
-    if (!dataArray || !Array.isArray(dataArray)) {
+    if (!Array.isArray(dataArray)) {
         console.error(`ViewManager Error: Invalid data source for type "${type}" (key: ${dataKey})`);
         return;
     }
@@ -98,7 +121,6 @@ export function showDetailView(type, key) {
                 detailsHtml = renderer.generateCanteenDetailsHtml(itemData.details);
             }
         } else {
-            // 兼容旧的纯文本 details 字段
             detailsHtml = `<div class="prose dark:prose-invert max-w-none">${itemData.details}</div>`;
         }
         
@@ -182,8 +204,10 @@ function initAllSliders(container) {
             }
         };
 
-        prevBtn.addEventListener('click', () => goToSlide(currentIndex - 1));
-        nextBtn.addEventListener('click', () => goToSlide(currentIndex + 1));
+        if (prevBtn && nextBtn) {
+            prevBtn.addEventListener('click', () => goToSlide(currentIndex - 1));
+            nextBtn.addEventListener('click', () => goToSlide(currentIndex + 1));
+        }
 
         if (dotsContainer) {
             dotsContainer.querySelectorAll('.dot').forEach(dot => {
