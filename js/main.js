@@ -1,7 +1,7 @@
 /**
  * @file 应用主入口 (Main Entry Point) - 重构版
  * @description 负责应用的整体流程控制：初始化、获取数据、调用渲染器、设置事件监听。
- * @version 5.1.2 - 修复CloudBase服务器时间函数调用错误
+ * @version 5.4.0 - [优化] 改为批量获取头像URL，提升性能。
  */
 
 // 导入重构后的模块
@@ -13,7 +13,6 @@ import * as modals from './ui/modals.js';
 import * as search from './ui/search.js';
 import * as viewManager from './ui/viewManager.js';
 import * as theme from './ui/theme.js';
-// 导入CloudBase数据库实例
 import { db } from './cloudbase.js';
 
 class GuideApp {
@@ -36,7 +35,6 @@ class GuideApp {
         });
     }
 
-    // 缓存所有需要操作的DOM元素
     _cacheDOMElements() {
         this.dom = {
             loadingOverlay: document.getElementById('loading-overlay'),
@@ -70,16 +68,52 @@ class GuideApp {
             closeMobileSearchBtn: document.getElementById('close-mobile-search-btn'),
             themeToggleBtn: document.getElementById('theme-toggle-btn'),
             feedbackBtn: document.getElementById('feedback-btn'),
-            
             feedbackModal: document.getElementById('feedback-modal'),
             feedbackDialog: document.getElementById('feedback-dialog'),
             feedbackForm: document.getElementById('feedback-form'),
             closeFeedbackBtn: document.getElementById('close-feedback-btn'),
             feedbackSuccessMsg: document.getElementById('feedback-success-msg'),
+            authModal: document.getElementById('auth-modal'),
+            authDialog: document.getElementById('auth-dialog'),
+            closeAuthBtn: document.getElementById('close-auth-btn'),
+            authTitle: document.getElementById('auth-title'),
+            loginPromptBtn: document.getElementById('login-prompt-btn'),
+            loginFormContainer: document.getElementById('login-form-container'),
+            loginForm: document.getElementById('login-form'),
+            registerFormContainer: document.getElementById('register-form-container'),
+            registerForm: document.getElementById('register-form'),
+            resetPasswordFormContainer: document.getElementById('reset-password-form-container'),
+            resetPasswordForm: document.getElementById('reset-password-form'),
+            goToRegister: document.getElementById('go-to-register'),
+            goToLoginFromRegister: document.getElementById('go-to-login-from-register'),
+            forgotPasswordLink: document.getElementById('forgot-password-link'),
+            goToLoginFromReset: document.getElementById('go-to-login-from-reset'),
+            sendVerificationCodeBtn: document.getElementById('send-verification-code-btn'),
+            userProfileBtn: document.getElementById('user-profile-btn'),
+            sidebarAvatar: document.getElementById('sidebar-avatar'),
+            sidebarNickname: document.getElementById('sidebar-nickname'),
+            profileModal: document.getElementById('profile-modal'),
+            profileDialog: document.getElementById('profile-dialog'),
+            closeProfileBtn: document.getElementById('close-profile-btn'),
+            profileViewContainer: document.getElementById('profile-view-container'),
+            profileEditContainer: document.getElementById('profile-edit-container'),
+            profileAvatarLarge: document.getElementById('profile-avatar-large'),
+            profileNickname: document.getElementById('profile-nickname'),
+            profileEmail: document.getElementById('profile-email'),
+            profileMajorYear: document.getElementById('profile-major-year'),
+            profileBio: document.getElementById('profile-bio'),
+            editProfileBtn: document.getElementById('edit-profile-btn'),
+            logoutButton: document.getElementById('logout-button'),
+            cancelEditBtn: document.getElementById('cancel-edit-btn'),
+            saveProfileBtn: document.getElementById('save-profile-btn'),
+            avatarSelectionGrid: document.getElementById('avatar-selection-grid'),
+            editNickname: document.getElementById('edit-nickname'),
+            editBio: document.getElementById('edit-bio'),
+            editEnrollmentYear: document.getElementById('edit-enrollment-year'),
+            editMajor: document.getElementById('edit-major')
         };
     }
 
-    // 显示一个toast消息
     _showToast(message, type = 'info') {
         const container = document.getElementById('toast-container');
         if (!container) return;
@@ -100,14 +134,16 @@ class GuideApp {
         }, 4000);
     }
 
-    // 初始化应用
     init() {
         theme.init(this.dom);
         this._setupEventListeners();
         authUI.listenForAuthStateChanges((userData) => {
             this.currentUserData = userData;
+            if (userData) {
+                authUI.populateProfileEditForm(userData);
+            }
         });
-        // this._populateProfileEditDropdowns(); // 暂时注释掉，如果个人资料编辑有选项则取消注释
+        this._populateProfileEditDropdowns();
         this.selectedCampus = localStorage.getItem('selectedCampus');
         if (this.selectedCampus) {
             this.runApp();
@@ -120,7 +156,6 @@ class GuideApp {
         }, 500);
     }
 
-    // 运行主应用逻辑
     runApp() {
         createNavigation(this.dom.navMenu, this.guideData);
         this._renderAllContent();
@@ -174,7 +209,6 @@ class GuideApp {
         }
     }
 
-    // 设置所有事件监听
     _setupEventListeners() {
         this.dom.navMenu.addEventListener('click', (e) => handleNavigationClick(e, (category, page) => {
             viewManager.hideAllViews();
@@ -183,7 +217,6 @@ class GuideApp {
             if (targetElement) this._scrollToElement(targetElement);
             if (window.innerWidth < 768) viewManager.toggleSidebar();
         }));
-
         this.dom.homeButtonTop.addEventListener('click', this._handleHomeClick.bind(this));
         this.dom.menuToggle.addEventListener('click', viewManager.toggleSidebar);
         this.dom.sidebarOverlay.addEventListener('click', viewManager.toggleSidebar);
@@ -196,14 +229,60 @@ class GuideApp {
         this.dom.bottomNavSearch.addEventListener('click', viewManager.showMobileSearch);
         this.dom.bottomNavCampus.addEventListener('click', modals.showCampusSelector);
         this.dom.closeMobileSearchBtn.addEventListener('click', viewManager.hideMobileSearch);
-        
         this.dom.feedbackForm.addEventListener('submit', this._handleFeedbackSubmit.bind(this));
         this.dom.feedbackBtn.addEventListener('click', modals.showFeedbackModal);
         this.dom.closeFeedbackBtn.addEventListener('click', modals.hideFeedbackModal);
+        this.dom.loginPromptBtn.addEventListener('click', () => {
+            authUI.handleAuthViewChange('login');
+            modals.showAuthModal();
+        });
+        this.dom.closeAuthBtn.addEventListener('click', modals.hideAuthModal);
+        this.dom.loginForm.addEventListener('submit', (e) => authUI.handleLoginSubmit(e));
+        this.dom.registerForm.addEventListener('submit', (e) => authUI.handleRegisterSubmit(e));
+        this.dom.resetPasswordForm.addEventListener('submit', (e) => authUI.handlePasswordResetSubmit(e));
+        this.dom.sendVerificationCodeBtn.addEventListener('click', () => authUI.handleSendVerificationCode());
+        this.dom.goToRegister.addEventListener('click', (e) => {
+            e.preventDefault();
+            authUI.handleAuthViewChange('register');
+        });
+        this.dom.goToLoginFromRegister.addEventListener('click', (e) => {
+            e.preventDefault();
+            authUI.handleAuthViewChange('login');
+        });
+        this.dom.forgotPasswordLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            authUI.handleAuthViewChange('reset');
+        });
+        this.dom.goToLoginFromReset.addEventListener('click', (e) => {
+            e.preventDefault();
+            authUI.handleAuthViewChange('login');
+        });
+        this.dom.userProfileBtn.addEventListener('click', () => {
+            authUI.handleProfileViewChange('view');
+            modals.showProfileModal();
+        });
+        this.dom.closeProfileBtn.addEventListener('click', modals.hideProfileModal);
+        this.dom.logoutButton.addEventListener('click', () => {
+            authUI.handleLogout();
+            modals.hideProfileModal();
+        });
+        this.dom.editProfileBtn.addEventListener('click', () => {
+            authUI.populateProfileEditForm(this.currentUserData);
+            authUI.handleProfileViewChange('edit');
+        });
+        this.dom.cancelEditBtn.addEventListener('click', () => authUI.handleProfileViewChange('view'));
+        this.dom.profileEditContainer.addEventListener('submit', (e) => authUI.handleProfileSave(e, this.currentUserData));
+        this.dom.avatarSelectionGrid.addEventListener('click', (e) => {
+            const selectedAvatar = e.target.closest('.avatar-option');
+            if (selectedAvatar) {
+                this.dom.avatarSelectionGrid.querySelectorAll('.avatar-option').forEach(opt => opt.classList.remove('selected'));
+                selectedAvatar.classList.add('selected');
+            }
+        });
     }
-    
+
     async _handleFeedbackSubmit(e) {
-        e.preventDefault(); 
+        e.preventDefault();
         const submitButton = this.dom.feedbackForm.querySelector('button[type="submit"]');
         submitButton.disabled = true;
         submitButton.textContent = '提交中...';
@@ -222,16 +301,15 @@ class GuideApp {
             await db.collection('feedback').add({
                 content: content,
                 contact: contact,
-                // 【已修复】CloudBase SDK V2版本获取服务器时间的方法是 db.serverDate()
                 submittedAt: db.serverDate(),
                 userAgent: navigator.userAgent,
                 campus: this.selectedCampus,
-                userId: this.currentUserData ? this.currentUserData.uid : 'anonymous'
+                userId: this.currentUserData ? this.currentUserData._id : 'anonymous'
             });
 
             this.dom.feedbackForm.classList.add('hidden');
             this.dom.feedbackSuccessMsg.classList.remove('hidden');
-            
+
             setTimeout(() => {
                 modals.hideFeedbackModal();
             }, 3000);
@@ -255,7 +333,11 @@ class GuideApp {
         search.updateCampus(campus);
         viewManager.updateCampus(campus);
         modals.hideCampusSelector(() => {
-            this.runApp();
+            if (!this.guideData || this.guideData.length === 0) {
+                location.reload();
+            } else {
+                this.runApp();
+            }
         });
     }
 
@@ -359,7 +441,7 @@ class GuideApp {
             }
         });
     }
-    
+
     _addHomeListeners() {
         const homeSection = document.getElementById('page-home-home');
         if (!homeSection) return;
@@ -414,11 +496,55 @@ class GuideApp {
             }
         }
     }
-    
+
+    async _populateProfileEditDropdowns() {
+        // 填充年份
+        const yearSelect = this.dom.editEnrollmentYear;
+        const currentYear = new Date().getFullYear();
+        for (let i = 0; i < 10; i++) {
+            const year = currentYear - i;
+            const option = new Option(`${year}年`, year);
+            yearSelect.add(option);
+        }
+
+        // 填充专业
+        const majorSelect = this.dom.editMajor;
+        const allMajors = [...new Set(this.campusData.colleges.flatMap(c => c.majors))];
+        allMajors.sort((a, b) => a.localeCompare(b, 'zh-CN'));
+        majorSelect.innerHTML = '<option value="">未选择</option>';
+        allMajors.forEach(major => {
+            const option = new Option(major, major);
+            majorSelect.add(option);
+        });
+
+        const avatarGrid = this.dom.avatarSelectionGrid;
+        avatarGrid.innerHTML = ''; 
+
+        // ### 重要：请将下面的示例 File ID 替换成你自己的默认头像的真实 File ID ###
+        const defaultAvatarFileIDs = [
+            'cloud://jou-campus-guide-9f57jf08ece0812.6a6f-jou-campus-guide-9f57jf08ece0812-1327129188/默认头像/avatar_01.png',
+            'cloud://jou-campus-guide-9f57jf08ece0812.6a6f-jou-campus-guide-9f57jf08ece0812-1327129188/默认头像/avatar_02.png',
+            'cloud://jou-campus-guide-9f57jf08ece0812.6a6f-jou-campus-guide-9f57jf08ece0812-1327129188/默认头像/avatar_03.png',
+            'cloud://jou-campus-guide-9f57jf08ece0812.6a6f-jou-campus-guide-9f57jf08ece0812-1327129188/默认头像/avatar_04.png',
+        ];
+
+        // [优化] 一次性批量获取所有头像的URL
+        const urlMap = await authUI.getAvatarUrls(defaultAvatarFileIDs);
+
+        // 使用获取到的URL Map来创建头像选项
+        defaultAvatarFileIDs.forEach(fileID => {
+            const displayUrl = urlMap[fileID];
+            if (displayUrl) { // 确保URL有效再创建DOM
+                const avatarOption = document.createElement('div');
+                avatarOption.className = 'avatar-option p-1';
+                avatarOption.dataset.avatar = fileID; 
+                avatarOption.innerHTML = `<img src="${displayUrl}" alt="头像选项" class="w-full h-full rounded-full object-cover" onerror="this.style.display='none'">`;
+                avatarGrid.appendChild(avatarOption);
+            }
+        });
+    }
+
     _initCampusQueryTool(container) { /* ... */ }
-    _populateProfileEditDropdowns() { /* ... */ }
-    _handleAuthViewChange(viewName) { /* ... */ }
-    _handleProfileViewChange(viewName) { /* ... */ }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
