@@ -1,7 +1,7 @@
 /**
  * @file 应用主入口 (Main Entry Point) - 重构版 V2
  * @description 负责应用的整体流程控制。个人资料编辑器的UI逻辑已移交给 auth.js。
- * @version 6.3.0 - 修复异步调用导致的数据竞争问题
+ * @version 6.3.1 - [最终修复] 修正了校区查询工具中错误的属性名，从 'name' 改为 'college'。
  */
 
 // 导入重构后的模块
@@ -134,17 +134,13 @@ class GuideApp {
         }, 4000);
     }
 
-    // [修改] 1. 将 init 函数声明为 async，这样我们就可以在函数内部使用 await
     async init() {
         theme.init(this.dom);
         this._setupEventListeners();
 
-        // [最终修复] 为防止 authUI.initializeProfileEditor 意外修改原始数据，
-        // 我们传入一个 campusData 的深拷贝副本 (deep copy)。
         if (this.campusData && this.campusData.colleges) {
             try {
                 const campusDataCopy = JSON.parse(JSON.stringify(this.campusData));
-                // [修改] 2. 使用 await 来确保这个异步函数执行完毕后，程序再继续
                 await authUI.initializeProfileEditor(campusDataCopy);
             } catch (e) {
                 console.error("无法为个人中心编辑器创建数据副本:", e);
@@ -546,7 +542,8 @@ class GuideApp {
 
         collegeSelect.innerHTML = '<option value="">-- 请选择学院 --</option>';
         colleges.forEach(college => {
-            const option = new Option(college.name, college.name);
+            // [修复] 使用 'college.college' 而不是 'college.name'
+            const option = new Option(college.college, college.college);
             collegeSelect.add(option);
         });
 
@@ -558,7 +555,8 @@ class GuideApp {
             resultDisplay.innerHTML = '<p class="text-gray-500 dark:text-gray-400">查询结果将在此处显示</p>';
 
             if (selectedCollegeName) {
-                const selectedCollege = colleges.find(c => c.name === selectedCollegeName);
+                // [修复] 使用 'c.college' 而不是 'c.name'
+                const selectedCollege = colleges.find(c => c.college === selectedCollegeName);
                 if (selectedCollege && selectedCollege.majors && selectedCollege.majors.length > 0) {
                     majorSelect.innerHTML = '<option value="">-- 请选择专业 --</option>';
                     selectedCollege.majors.forEach(major => {
@@ -577,7 +575,8 @@ class GuideApp {
             const selectedMajorName = majorSelect.value;
 
             if (selectedCollegeName && selectedMajorName) {
-                const college = colleges.find(c => c.name === selectedCollegeName);
+                // [修复] 使用 'c.college' 而不是 'c.name'
+                const college = colleges.find(c => c.college === selectedCollegeName);
                 if (college) {
                     const campusId = college.campusId;
                     const campus = campuses.find(c => c.id === campusId);
@@ -587,7 +586,7 @@ class GuideApp {
                         <div class="text-left w-full">
                             <p class="text-gray-600 dark:text-gray-400 text-sm mb-2">查询结果:</p>
                             <p class="text-lg font-semibold text-gray-800 dark:text-gray-100">
-                                <span class="font-normal">${college.name}</span> - <strong>${selectedMajorName}</strong>
+                                <span class="font-normal">${college.college}</span> - <strong>${selectedMajorName}</strong>
                             </p>
                             <p class="mt-4 text-2xl font-bold text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
                                 <i data-lucide="map-pin" class="w-6 h-6 mr-3"></i>
@@ -617,7 +616,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         ]);
         console.log("Main: 应用数据获取成功。");
         const app = new GuideApp(guideData, campusData);
-        // [修改] 3. 同样，在这里也使用 await 来等待 init() 函数的完成
         await app.init();
     } catch (error) {
         console.error("Main: 初始化应用失败!", error);
