@@ -1,8 +1,8 @@
 /**
- * @file 用户认证模块 (Authentication) - 最终修复版
+ * @file 用户认证模块 (Authentication) - 登录函数修复版
  * @description 负责处理所有用户登录、注册、状态管理和UI更新的逻辑。
- * [已修复] 修正了匿名登录的调用方式，以兼容 CloudBase V2 SDK。
- * @version 8.0.0
+ * [已修复] 根据 CloudBase V2 SDK 文档，修正了邮箱密码登录的函数调用方式。
+ * @version 9.1.0
  */
 
 import { app, auth, db } from '../cloudbase.js';
@@ -11,6 +11,10 @@ import * as modals from './modals.js';
 // --- 模块级变量 ---
 let dom;
 let userDocWatcher = null;
+
+// [新增] 手动登出旗帜
+// 这个变量用于区分是“应用首次加载需要匿名身份”还是“用户刚刚主动登出”。
+let manualLogoutInProgress = false;
 
 // !! 重要 !! 请将下面的值替换成你自己在 CloudBase 上传的 avatar_01.png 的真实 File ID。
 const DEFAULT_AVATAR_FILE_ID = 'cloud://jou-campus-guide-9f57jf08ece0812.6a6f-jou-campus-guide-9f57jf08ece0812-1367578274/images/默认头像/avatar_01.png';
@@ -142,9 +146,6 @@ export async function initializeProfileEditor(campusData) {
 
 /**
  * [已修改] 监听用户登录状态。
- * - 如果用户是真实注册用户，则获取其资料。
- * - 如果用户是匿名访客，则允许其加载数据，但UI上显示为未登录。
- * - 如果没有任何登录状态，则自动尝试匿名登录。
  * @param {function} callback - 用于将用户数据传回主应用的函数。
  */
 export function listenForAuthStateChanges(callback) {
@@ -157,18 +158,13 @@ export function listenForAuthStateChanges(callback) {
         if (loginState && loginState.user) {
             const currentUser = loginState.user;
 
-            // [V2 SDK 兼容性修复] 检查用户是否为匿名用户，直接检查 user 对象上的 isAnonymous 属性
             if (currentUser.isAnonymous) {
-                console.log("访客已通过匿名方式登录。数据可以正常加载。");
-                // 将UI更新为未登录状态，因为访客不需要看到个人中心
+                console.log("访客已通过匿名方式登录。");
                 await updateUIWithUserData(null);
-                // 回调函数传入null，表示没有具体的“用户”数据
                 callback(null);
-                // 注意：此处直接返回，不为匿名用户在'users'集合中创建文档
                 return;
             }
 
-            // --- 以下是针对真实注册用户的现有逻辑 ---
             try {
                 const userDocRef = db.collection('users').doc(currentUser.uid);
                 const userDoc = await userDocRef.get();
@@ -210,20 +206,32 @@ export function listenForAuthStateChanges(callback) {
                 callback(null);
             }
         } else {
-            // [V2 SDK 兼容性修复] 如果没有任何登录状态，则尝试匿名登录
-            console.log("无用户登录，正在尝试匿名登录以加载公共数据...");
-            try {
-                // 使用 V2 SDK 正确的匿名登录方法
-                await auth.signInAnonymously();
-                // 成功后，onLoginStateChanged 会再次触发，并进入上面的 if (currentUser.isAnonymous) 分支
-            } catch (err) {
-                console.error("匿名登录失败:", err);
-                // 如果匿名登录也失败，说明服务可能存在问题，向用户显示错误
-                if(dom && dom.showToast) {
-                    dom.showToast('无法加载应用数据，请检查网络连接', 'error');
-                }
+            // [核心修改] 当没有登录状态时，检查是否是手动登出
+            if (manualLogoutInProgress) {
+                // 如果是手动登出，我们不进行任何操作，只重置旗帜。
+                // 这将使应用保持在“游客”状态，而不会重新匿名登录。
+                console.log("用户已手动登出，保持未登录状态。");
+                manualLogoutInProgress = false; 
                 await updateUIWithUserData(null);
+                // 这里我们仍然需要调用callback(null)，以确保main.js知道当前是无用户状态，
+                // 但由于匿名登录并未发生，所以不会触发数据的重新获取。
+                // 一个更优的方案是在main.js中检查userData是否真的改变了。
+                // 但为了最小化改动，当前这样处理是安全的。
                 callback(null);
+            } else {
+                // 如果不是手动登出（即应用首次加载），则尝试匿名登录
+                console.log("无用户登录，正在尝试匿名登录以加载公共数据...");
+                try {
+                    await auth.signInAnonymously();
+                    // 成功后，onLoginStateChanged会再次触发
+                } catch (err) {
+                    console.error("匿名登录失败:", err);
+                    if(dom && dom.showToast) {
+                        dom.showToast('无法加载应用数据，请检查网络连接', 'error');
+                    }
+                    await updateUIWithUserData(null);
+                    callback(null);
+                }
             }
         }
     });
@@ -256,6 +264,10 @@ async function updateUIWithUserData(userData) {
     }
 }
 
+/**
+ * [核心修改] 处理用户登录提交
+ * @description 使用了 CloudBase V2 SDK 的 auth.signIn() 方法。
+ */
 export async function handleLoginSubmit(e) {
     e.preventDefault();
     const button = dom.loginForm.querySelector('button[type="submit"]');
@@ -265,7 +277,11 @@ export async function handleLoginSubmit(e) {
     const password = dom.loginForm.password.value;
     const email = `${emailPrefix}@jou.edu.cn`;
     try {
-        await auth.signInWithEmailAndPassword(email, password);
+        // [修改] 使用新的 signIn 方法，并传入一个对象
+        await auth.signIn({
+            username: email,
+            password: password
+        });
         dom.showToast('登录成功！', 'success');
         modals.hideAuthModal(() => { modals.showProfileModal(); });
     } catch (error) {
@@ -296,7 +312,6 @@ export async function handleRegisterSubmit(e) {
         return;
     }
     try {
-        // V2 SDK 注册流程简化，不需要先verify
         await auth.signUpWithEmailAndPassword(email, password, verificationCode, verificationData.verification_id);
         dom.showToast('注册成功！已自动登录。', 'success');
         verificationData = null;
@@ -340,12 +355,22 @@ export async function handleSendVerificationCode() {
     }
 }
 
+/**
+ * [核心修改] 处理用户登出
+ */
 export async function handleLogout() {
     try {
+        // 在调用 signOut 之前，立即设置旗帜
+        manualLogoutInProgress = true;
         await auth.signOut();
         avatarUrlCache.clear();
         dom.showToast('已成功退出登录', 'info');
+        // 登出成功后，onLoginStateChanged 会被触发，
+        // 并且会检查 manualLogoutInProgress 旗帜，从而阻止自动匿名登录。
     } catch (error) {
+        // 如果登出失败，重置旗帜
+        manualLogoutInProgress = false;
+        console.error("退出登录失败:", error);
         dom.showToast('退出登录失败', 'error');
     }
 }

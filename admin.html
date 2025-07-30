@@ -1,0 +1,56 @@
+<!-- 文件路径: admin.html -->
+<!DOCTYPE html>
+<html lang="zh-CN" class="h-full bg-gray-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>校园指南 - 管理后台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .sidebar-link.active { background-color: #e0f2fe; color: #0c4a6e; font-weight: 600; }
+        .form-input { display: block; width: 100%; padding: 0.5rem 0.75rem; font-size: 0.875rem; line-height: 1.25rem; color: #111827; background-color: #f9fafb; border: 1px solid #d1d5db; border-radius: 0.5rem; transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out; }
+        .form-input:focus { outline: 2px solid transparent; outline-offset: 2px; border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5); }
+        .list-item-container { transition: background-color 0.2s; }
+        .list-item-container:hover .drag-handle { opacity: 1; }
+        .drag-handle { cursor: move; opacity: 0.2; transition: opacity 0.2s; }
+    </style>
+</head>
+<body class="h-full">
+    <div id="loading-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-75 z-[100] flex flex-col items-center justify-center transition-opacity duration-300">
+        <div class="h-16 w-16 animate-spin rounded-full border-4 border-solid border-white border-t-transparent"></div>
+        <p id="loading-text" class="mt-4 text-lg font-semibold text-white">正在初始化管理后台...</p>
+    </div>
+    <div id="app-container" class="hidden h-full">
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-white shadow-lg flex flex-col">
+            <div class="flex items-center justify-center h-16 flex-shrink-0 border-b px-4">
+                <i data-lucide="shield-check" class="h-8 w-8 text-blue-600"></i>
+                <h1 class="ml-3 text-xl font-bold text-slate-800">管理后台</h1>
+            </div>
+            <nav id="sidebar-nav" class="flex-grow overflow-y-auto px-4 py-4"></nav>
+            <div class="border-t p-4 flex-shrink-0">
+                <div id="user-profile" class="flex items-center">
+                    <img id="user-avatar" src="" class="h-10 w-10 rounded-full object-cover bg-gray-200">
+                    <div class="ml-3">
+                        <p id="user-nickname" class="text-sm font-semibold text-slate-800">加载中...</p>
+                        <p id="user-role" class="text-xs font-medium text-white bg-blue-600 px-2 py-0.5 rounded-full inline-block">访客</p>
+                    </div>
+                </div>
+                 <a href="index.html" class="w-full mt-4 flex items-center justify-center px-4 py-2 text-sm text-slate-600 rounded-md hover:bg-slate-100 transition-colors">
+                    <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                    <span>返回主站点</span>
+                </a>
+            </div>
+        </aside>
+        <main class="ml-64 h-full overflow-y-auto">
+            <div id="view-container" class="p-6 md:p-8"></div>
+        </main>
+    </div>
+    <script src="https://static.cloudbase.net/cloudbase-js-sdk/2.18.0/cloudbase.full.js"></script>
+    <script type="module" src="js/admin/main.js"></script>
+</body>
+</html>
