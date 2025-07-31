@@ -16,7 +16,8 @@
  */
 function createNavLink(categoryKey, pageKey, icon, text, isHeader) {
     const link = document.createElement('a');
-    link.href = `#page-${categoryKey}-${pageKey}`;
+    // --- 修改: 为新功能设置一个特殊的 href ---
+    link.href = `#${categoryKey}`;
     if (isHeader) {
         link.className = 'sidebar-link flex items-center px-4 py-3 text-base font-semibold rounded-lg hover:bg-blue-700 dark:hover:bg-gray-700 transition-colors mb-4';
         link.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5 mr-3"></i> ${text}`;
@@ -72,6 +73,22 @@ export function createNavigation(navMenuElement, guideData) {
         categoryDiv.appendChild(pageList);
         navMenuElement.appendChild(categoryDiv);
     });
+
+    // --- 新增: 手动添加入口到学习资料共享中心 ---
+    // 创建一个新的、独立的导航链接
+    const materialsLink = createNavLink('materials', 'list', 'book-marked', '学习资料共享', true);
+    
+    // 将其插入到主页链接之后 (如果主页存在)
+    const homeLink = navMenuElement.querySelector('a[data-category="home"]');
+    if (homeLink && homeLink.nextSibling) {
+        navMenuElement.insertBefore(materialsLink, homeLink.nextSibling);
+    } else if (homeLink) {
+        navMenuElement.appendChild(materialsLink);
+    } else {
+        // 如果没有主页链接，就插在最前面
+        navMenuElement.prepend(materialsLink);
+    }
+    // --- 新增结束 ---
     
     // 创建完所有元素后，让Lucide渲染图标
     if (window.lucide) {
@@ -104,14 +121,21 @@ export function handleNavigationClick(e, onLinkClick) {
 /**
  * 根据当前可见的区域，更新导航链接的激活状态。
  * @param {string} categoryKey - 当前激活分类的键名。
- * @param {string} pageKey - 当前激活页面的键名。
+ * @param {string|null} pageKey - 当前激活页面的键名。
  */
 export function updateActiveNav(categoryKey, pageKey) {
     // 首先停用所有链接
     document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
 
-    // 激活正确的链接
-    const activeLink = document.querySelector(`.sidebar-link[data-category="${categoryKey}"][data-page="${pageKey}"]`);
+    // --- 修改: 兼容没有 pageKey 的顶级导航项 ---
+    let activeLink;
+    if (pageKey) {
+        activeLink = document.querySelector(`.sidebar-link[data-category="${categoryKey}"][data-page="${pageKey}"]`);
+    } else {
+        // 如果 pageKey 为 null 或 undefined，只根据 categoryKey 查找
+        activeLink = document.querySelector(`.sidebar-link[data-category="${categoryKey}"]`);
+    }
+    
     if (activeLink) {
         activeLink.classList.add('active');
         const submenu = activeLink.closest('.submenu');

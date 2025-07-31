@@ -322,7 +322,6 @@ html.dark .auth-tab.active {
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.5);
 }
 
-/* [已修复] 删除不再使用的样式 */
 .loader-small {
     border: 2px solid #f3f3f3;
     border-top: 2px solid #4f46e5;

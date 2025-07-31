@@ -10,6 +10,9 @@ import { db } from '../cloudbase.js';
 // 定义数据集合的名称
 const GUIDE_COLLECTION = 'guide_data';
 const CAMPUS_COLLECTION = 'campus_data';
+// --- 新增 ---
+const STUDY_MATERIALS_COLLECTION = 'study_materials';
+
 
 /**
  * 从 CloudBase 异步获取原始的 guide_data
@@ -68,4 +71,68 @@ export async function getCampusData() {
     console.error(`DataManager: 拉取 '${CAMPUS_COLLECTION}' 数据时发生严重错误!`, error);
     return { campuses: [], dormitories: [], canteens: [], colleges: [] };
   }
+}
+
+
+// ===================================================================================
+// --- 新增: 学习资料共享中心的数据操作函数 ---
+// ===================================================================================
+
+/**
+ * 从 CloudBase 获取学习资料列表。
+ * @param {object} options - 查询选项，例如排序方式。
+ * @param {string} options.sortBy - 用于排序的字段名，默认为 'createdAt'。
+ * @param {string} options.order - 排序顺序，'desc' (降序) 或 'asc' (升序)。
+ * @returns {Promise<Array>} 返回一个资料对象数组。
+ */
+export async function getMaterials({ sortBy = 'createdAt', order = 'desc' } = {}) {
+    try {
+        console.log(`DataManager: 正在从 '${STUDY_MATERIALS_COLLECTION}' 拉取资料列表...`);
+        const result = await db.collection(STUDY_MATERIALS_COLLECTION)
+            .orderBy(sortBy, order)
+            .get();
+        console.log("DataManager: 成功拉取资料列表:", result.data);
+        return result.data;
+    } catch (error) {
+        console.error(`DataManager: 拉取 '${STUDY_MATERIALS_COLLECTION}' 数据失败!`, error);
+        return [];
+    }
+}
+
+/**
+ * 向数据库中添加一条新的学习资料记录。
+ * @param {object} materialData - 包含所有资料信息的对象。
+ * @returns {Promise<object>} 返回 CloudBase 的操作结果。
+ */
+export async function addMaterial(materialData) {
+    try {
+        console.log(`DataManager: 正在向 '${STUDY_MATERIALS_COLLECTION}' 添加新资料...`, materialData);
+        return await db.collection(STUDY_MATERIALS_COLLECTION).add({
+            ...materialData,
+            // 使用服务器时间，确保时间戳的准确性
+            createdAt: db.serverDate()
+        });
+    } catch (error) {
+        console.error(`DataManager: 添加新资料失败!`, error);
+        // 抛出错误，以便上层调用者可以捕获并处理
+        throw error;
+    }
+}
+
+/**
+ * 增加指定资料文档的下载次数。
+ * @param {string} docId - 要更新的资料在数据库中的文档 ID。
+ * @returns {Promise<void>}
+ */
+export async function incrementDownloadCount(docId) {
+    try {
+        console.log(`DataManager: 正在为文档 ${docId} 增加下载次数...`);
+        const _ = db.command;
+        await db.collection(STUDY_MATERIALS_COLLECTION).doc(docId).update({
+            downloadCount: _.inc(1)
+        });
+    } catch (error) {
+        console.error(`DataManager: 更新文档 ${docId} 下载次数失败!`, error);
+        // 此处不抛出错误，因为即使计数失败，也不应中断用户的下载流程
+    }
 }

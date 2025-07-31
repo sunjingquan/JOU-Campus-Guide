@@ -220,6 +220,36 @@
         </div>
     </div>
 
+    <!-- =================================================================================== -->
+    <!-- ===================== 新增: 学习资料共享中心视图 (Materials View) ===================== -->
+    <!-- =================================================================================== -->
+    <div id="materials-view" class="fixed inset-0 bg-gray-50 dark:bg-gray-950 z-30 flex-col hidden">
+        <!-- 资料共享视图的头部 -->
+        <header
+            class="bg-white dark:bg-gray-900 dark:border-b dark:border-gray-800 shadow-md p-3 flex justify-between items-center z-10 flex-shrink-0">
+            <!-- 返回主视图的按钮 -->
+            <button id="back-to-main-from-materials-btn"
+                class="text-gray-600 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-400 transition-colors">
+                <i data-lucide="arrow-left" class="w-6 h-6"></i>
+            </button>
+            <!-- 视图标题 -->
+            <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100">学习资料共享</h2>
+            <!-- 上传按钮 -->
+            <button id="upload-material-prompt-btn"
+                class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors flex items-center">
+                <i data-lucide="upload-cloud" class="w-5 h-5 mr-2"></i>
+                <span>上传资料</span>
+            </button>
+        </header>
+        <!-- 资料共享视图的内容区 -->
+        <div id="materials-content" class="flex-1 p-4 md:p-8 overflow-y-auto">
+            <!-- 资料卡片将通过JS动态加载到这里 -->
+            <p class="text-center text-gray-500">正在加载资料...</p>
+        </div>
+    </div>
+    <!-- ===================== 新增部分结束 ===================== -->
+
+
     <!-- 移动端底部导航栏 -->
     <footer id="bottom-nav"
         class="fixed bottom-0 left-0 right-0 h-16 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex justify-around items-center z-30 md:hidden">
@@ -448,7 +478,7 @@
         </div>
     </div>
 
-    <!-- 新增: 用户中心模态窗口 -->
+    <!-- 用户中心模态窗口 -->
     <div id="profile-modal"
         class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-[100] p-4 hidden">
         <div id="profile-dialog"
@@ -544,6 +574,80 @@
             </div>
         </div>
     </div>
+    
+    <!-- =================================================================================== -->
+    <!-- ===================== 新增: 上传资料模态窗口 (Upload Material Modal) ===================== -->
+    <!-- =================================================================================== -->
+    <div id="upload-material-modal" class="fixed inset-0 bg-black bg-opacity-60 z-[100] flex items-center justify-center p-4 hidden">
+        <div id="upload-material-dialog" class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg p-6 transform transition-all scale-95 opacity-0 max-h-[90vh] flex flex-col">
+            <!-- 模态框头部 -->
+            <div class="flex justify-between items-center mb-4 flex-shrink-0">
+                <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100">分享你的学习资料</h3>
+                <button id="close-upload-material-btn" class="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <!-- 上传表单 -->
+            <form id="upload-material-form" class="overflow-y-auto space-y-4 pr-2">
+                <div>
+                    <label for="material-course-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">课程名称 <span class="text-red-500">*</span></label>
+                    <input type="text" id="material-course-name" name="courseName" required class="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="例如：高等数学">
+                </div>
+                <div>
+                    <label for="material-teacher" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">授课教师</label>
+                    <input type="text" id="material-teacher" name="teacher" class="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="选填，方便同学查找">
+                </div>
+                <div>
+                    <label for="material-type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">资料类型 <span class="text-red-500">*</span></label>
+                    <select id="material-type" name="materialType" required class="custom-select w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <option value="历年考卷">历年考卷</option>
+                        <option value="复习笔记">复习笔记</option>
+                        <option value="课程作业">课程作业</option>
+                        <option value="课件PPT">课件PPT</option>
+                        <option value="其他资料">其他资料</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="material-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">资料描述</label>
+                    <textarea id="material-description" name="description" rows="3" class="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="选填，可以介绍一下资料的特点、年份、适用范围等"></textarea>
+                </div>
+                <div>
+                    <label for="material-file-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">选择文件 <span class="text-red-500">*</span></label>
+                    <input type="file" id="material-file-input" name="materialFile" required class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900/50 dark:file:text-blue-300 dark:hover:file:bg-blue-900">
+                    <p id="material-file-name" class="text-sm text-gray-500 mt-2 truncate"></p>
+                </div>
+                 <!-- 版权声明 -->
+                <div class="flex items-start space-x-3">
+                    <input id="material-tos-checkbox" type="checkbox" required class="mt-1 h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                    <div class="text-sm">
+                        <label for="material-tos-checkbox" class="font-medium text-gray-700 dark:text-gray-300">我已阅读并同意</label>
+                        <p class="text-gray-500 dark:text-gray-400">我保证上传的资料不侵犯他人版权，并仅用于学术交流参考。严禁上传任何违法、违规或与学习无关的内容。</p>
+                    </div>
+                </div>
+            </form>
+            
+            <!-- 上传进度与成功提示 -->
+            <div id="upload-progress-container" class="hidden mt-4">
+                <p id="upload-status-text" class="text-sm font-medium text-center text-gray-700 dark:text-gray-300 mb-2">正在上传...</p>
+                <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                    <div id="upload-progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                </div>
+            </div>
+            <div id="upload-success-msg" class="hidden text-center py-8">
+                <i data-lucide="check-circle" class="w-16 h-16 text-green-500 mx-auto mb-4"></i>
+                <p class="text-lg font-semibold text-gray-800 dark:text-gray-100">分享成功，感谢你的贡献！</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">窗口将在3秒后自动关闭。</p>
+            </div>
+
+            <!-- 底部按钮 -->
+            <div id="upload-form-footer" class="mt-6 text-right flex-shrink-0">
+                <button type="button" id="submit-material-btn" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:bg-gray-400">提交</button>
+            </div>
+        </div>
+    </div>
+    <!-- ===================== 新增部分结束 ===================== -->
+
 
     <!-- 引入 CloudBase SDK -->
     <!-- !! 重要 !! 请将下面的地址替换为你自己项目环境的 Web SDK 地址 -->

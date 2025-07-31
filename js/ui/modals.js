@@ -84,3 +84,12 @@ export function showCampusSelector() {
 export function hideCampusSelector(onHidden) {
     hideModal(dom.campusModal, dom.campusDialog, onHidden);
 }
+
+// --- 新增: 学习资料上传模态框的控制函数 ---
+export function showUploadMaterialModal() {
+    showModal(dom.uploadMaterialModal, dom.uploadMaterialDialog);
+}
+
+export function hideUploadMaterialModal(onHidden) {
+    hideModal(dom.uploadMaterialModal, dom.uploadMaterialDialog, onHidden);
+}

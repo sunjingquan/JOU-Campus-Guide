@@ -111,3 +111,16 @@ export function generateDormitoryDetailsHtml(details) {
 export function generateCanteenDetailsHtml(details) {
     return tpl.createCanteenDetailsHtml(details);
 }
+
+// ===================================================================================
+// --- 新增: 学习资料渲染函数 ---
+// ===================================================================================
+
+/**
+ * 生成学习资料列表的HTML。
+ * @param {Array<object>} materials - 从 'study_materials' 集合获取的资料对象数组。
+ * @returns {string} 渲染好的HTML字符串。
+ */
+export function generateMaterialsList(materials) {
+    return tpl.createMaterialsListHtml(materials);
+}
