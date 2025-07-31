@@ -221,7 +221,7 @@
     </div>
 
     <!-- =================================================================================== -->
-    <!-- ===================== 新增: 学习资料共享中心视图 (Materials View) ===================== -->
+    <!-- ===================== 学习资料共享中心视图 (Materials View) ===================== -->
     <!-- =================================================================================== -->
     <div id="materials-view" class="fixed inset-0 bg-gray-50 dark:bg-gray-950 z-30 flex-col hidden">
         <!-- 资料共享视图的头部 -->
@@ -247,7 +247,6 @@
             <p class="text-center text-gray-500">正在加载资料...</p>
         </div>
     </div>
-    <!-- ===================== 新增部分结束 ===================== -->
 
 
     <!-- 移动端底部导航栏 -->
@@ -576,7 +575,7 @@
     </div>
     
     <!-- =================================================================================== -->
-    <!-- ===================== 新增: 上传资料模态窗口 (Upload Material Modal) ===================== -->
+    <!-- ===================== 上传资料模态窗口 (Upload Material Modal) ===================== -->
     <!-- =================================================================================== -->
     <div id="upload-material-modal" class="fixed inset-0 bg-black bg-opacity-60 z-[100] flex items-center justify-center p-4 hidden">
         <div id="upload-material-dialog" class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg p-6 transform transition-all scale-95 opacity-0 max-h-[90vh] flex flex-col">
@@ -598,6 +597,22 @@
                     <label for="material-teacher" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">授课教师</label>
                     <input type="text" id="material-teacher" name="teacher" class="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="选填，方便同学查找">
                 </div>
+
+                <!-- ===================== 新增: 学院和专业选择框 ===================== -->
+                <div>
+                    <label for="material-college" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">所属学院 <span class="text-red-500">*</span></label>
+                    <select id="material-college" name="college" required class="custom-select w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <option value="">-- 请选择学院 --</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="material-major" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">所属专业 <span class="text-red-500">*</span></label>
+                    <select id="material-major" name="major" required class="custom-select w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none" disabled>
+                        <option value="">-- 请先选择学院 --</option>
+                    </select>
+                </div>
+                <!-- ===================== 新增结束 ===================== -->
+
                 <div>
                     <label for="material-type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">资料类型 <span class="text-red-500">*</span></label>
                     <select id="material-type" name="materialType" required class="custom-select w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none">
@@ -646,7 +661,6 @@
             </div>
         </div>
     </div>
-    <!-- ===================== 新增部分结束 ===================== -->
 
 
     <!-- 引入 CloudBase SDK -->

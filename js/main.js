@@ -117,7 +117,7 @@ class GuideApp {
             editEnrollmentYear: document.getElementById('edit-enrollment-year'),
             editMajor: document.getElementById('edit-major'),
 
-            // --- 新增: 学习资料共享相关的DOM元素 ---
+            // --- 学习资料共享相关的DOM元素 ---
             materialsView: document.getElementById('materials-view'),
             materialsContent: document.getElementById('materials-content'),
             backToMainFromMaterialsBtn: document.getElementById('back-to-main-from-materials-btn'),
@@ -134,6 +134,9 @@ class GuideApp {
             uploadStatusText: document.getElementById('upload-status-text'),
             uploadSuccessMsg: document.getElementById('upload-success-msg'),
             uploadFormFooter: document.getElementById('upload-form-footer'),
+            // --- 新增: 缓存学院和专业选择框 ---
+            materialCollegeSelect: document.getElementById('material-college'),
+            materialMajorSelect: document.getElementById('material-major'),
         };
     }
 
@@ -270,11 +273,10 @@ class GuideApp {
     _setupEventListeners() {
         // --- 原有事件监听 ---
         this.dom.navMenu.addEventListener('click', (e) => handleNavigationClick(e, (category, page) => {
-            // --- 修改: 增加对 'materials' 类别的处理 ---
             if (category === 'materials') {
                 this._showMaterialsView();
             } else {
-                this._hideMaterialsView(); // 从资料共享页切换走时，隐藏它
+                this._hideMaterialsView();
                 viewManager.hideDetailView();
                 this._updateActiveState(category, page);
                 const targetElement = document.getElementById(`page-${category}-${page}`);
@@ -325,7 +327,7 @@ class GuideApp {
             }
         });
 
-        // --- 新增: 学习资料共享功能的事件监听 ---
+        // --- 学习资料共享功能的事件监听 ---
         this.dom.backToMainFromMaterialsBtn.addEventListener('click', this._hideMaterialsView.bind(this));
         this.dom.uploadMaterialPromptBtn.addEventListener('click', this._handleUploadPrompt.bind(this));
         this.dom.closeUploadMaterialBtn.addEventListener('click', () => modals.hideUploadMaterialModal());
@@ -333,8 +335,9 @@ class GuideApp {
         this.dom.materialFileInput.addEventListener('change', (e) => {
             this.dom.materialFileName.textContent = e.target.files[0] ? e.target.files[0].name : '';
         });
-        // 使用事件委托处理所有下载按钮的点击
         this.dom.materialsContent.addEventListener('click', this._handleMaterialDownload.bind(this));
+        // --- 新增: 监听学院选择框的变化 ---
+        this.dom.materialCollegeSelect.addEventListener('change', this._handleCollegeChange.bind(this));
     }
 
     async _handleFeedbackSubmit(e) {
@@ -461,32 +464,201 @@ class GuideApp {
         }, 1000);
     }
 
-    _addFaqListeners(container) { /* ... (原有代码不变) ... */ }
-    _addClubTabListeners(container) { /* ... (原有代码不变) ... */ }
-    _addHomeListeners() { /* ... (原有代码不变) ... */ }
-    _handleCardClick(e) { /* ... (原有代码不变) ... */ }
-    _handleSearchResultClick(dataset) { /* ... (原有代码不变) ... */ }
-    _initCampusQueryTool(container) { /* ... (原有代码不变) ... */ }
+    _addFaqListeners(container) {
+        const headers = container.querySelectorAll('.accordion-header');
+        headers.forEach(header => {
+            header.addEventListener('click', () => {
+                const content = header.nextElementSibling;
+                const icon = header.querySelector('.accordion-icon');
+                const isOpen = header.classList.toggle('open');
+                content.style.display = isOpen ? 'block' : 'none';
+                icon.classList.toggle('rotate-180', isOpen);
+            });
+        });
+    }
+
+    _addClubTabListeners(container) {
+        const tabContainer = container.querySelector('.club-tabs');
+        if (!tabContainer) return;
+        tabContainer.addEventListener('click', (e) => {
+            const button = e.target.closest('.tab-button');
+            if (!button) return;
+            const level = button.dataset.level;
+            tabContainer.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            const paneContainer = container.querySelector('.club-panes-container');
+            paneContainer.querySelectorAll('.club-pane').forEach(pane => {
+                pane.classList.remove('active');
+            });
+            const targetPane = paneContainer.querySelector(`.club-pane[data-level="${level}"]`);
+            if (targetPane) {
+                targetPane.classList.add('active');
+            }
+        });
+    }
+
+    _addHomeListeners() {
+        const homeSection = document.getElementById('page-home-home');
+        if (!homeSection) return;
+
+        homeSection.querySelector('#explore-btn')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            const preparationCategory = this.guideData.find(cat => cat.key === 'preparation');
+            if (preparationCategory && preparationCategory.pages.length > 0) {
+                const firstPage = preparationCategory.pages[0];
+                const nextSection = document.getElementById(`page-${preparationCategory.key}-${firstPage.pageKey}`);
+                if (nextSection) {
+                    this._updateActiveState(preparationCategory.key, firstPage.pageKey);
+                    this._scrollToElement(nextSection);
+                }
+            }
+        });
+
+        homeSection.querySelectorAll('.nav-card').forEach(card => {
+            card.addEventListener('click', (e) => {
+                e.preventDefault();
+                const navData = JSON.parse(card.dataset.navlink);
+                
+                const targetCategory = this.guideData.find(cat => cat.title === navData.category);
+                if (!targetCategory) {
+                    console.warn(`快速导航失败: 未找到分类 "${navData.category}"`);
+                    return;
+                }
+
+                const targetPage = targetCategory.pages.find(p => p.title.startsWith(navData.page));
+                if (!targetPage) {
+                    console.warn(`快速导航失败: 在分类 "${navData.category}" 中未找到页面 "${navData.page}"`);
+                    return;
+                }
+
+                const categoryKey = targetCategory.key;
+                const pageKey = targetPage.pageKey;
+                const targetElement = document.getElementById(`page-${categoryKey}-${pageKey}`);
+
+                if (targetElement) {
+                    this._updateActiveState(categoryKey, pageKey);
+                    this._scrollToElement(targetElement);
+                } else {
+                    console.warn(`快速导航失败: 找不到ID为 "page-${categoryKey}-${pageKey}" 的元素`);
+                }
+            });
+        });
+    }
+
+    _handleCardClick(e) {
+        const card = e.target.closest('.detail-card');
+        if (!card) return;
+        e.preventDefault();
+        const { type, key } = card.dataset;
+        viewManager.showDetailView(type, key);
+    }
+
+    _handleSearchResultClick(dataset) {
+        viewManager.hideAllViews();
+        this.dom.searchInput.value = '';
+        this.dom.mobileSearchInput.value = '';
+        const { isDetail, detailType, detailKey, categoryKey, pageKey, keyword } = dataset;
+        if (isDetail === 'true') {
+            viewManager.showDetailView(detailType, detailKey);
+            setTimeout(() => search.highlightKeywordInSection(this.dom.detailContent, keyword), 500);
+        } else {
+            const targetElement = document.getElementById(`page-${categoryKey}-${pageKey}`);
+            if (targetElement) {
+                this._updateActiveState(categoryKey, pageKey);
+                this._scrollToElement(targetElement, keyword);
+            }
+        }
+    }
+
+    _initCampusQueryTool(container) {
+        const collegeSelect = container.querySelector('#college-select');
+        const majorSelect = container.querySelector('#major-select');
+        const resultDisplay = container.querySelector('#result-display');
+        
+        const colleges = this.campusData.colleges || [];
+        const campuses = this.campusData.campuses || [];
+
+        if (colleges.length === 0) {
+            collegeSelect.disabled = true;
+            majorSelect.disabled = true;
+            resultDisplay.innerHTML = '<p class="text-red-500">无法加载学院数据，功能暂时无法使用。</p>';
+            return;
+        }
+
+        collegeSelect.innerHTML = '<option value="">-- 请选择学院 --</option>';
+        colleges.forEach(college => {
+            const option = new Option(college.college, college.college);
+            collegeSelect.add(option);
+        });
+
+        collegeSelect.addEventListener('change', () => {
+            const selectedCollegeName = collegeSelect.value;
+            
+            majorSelect.innerHTML = '<option value="">-- 请先选择学院 --</option>';
+            majorSelect.disabled = true;
+            resultDisplay.innerHTML = '<p class="text-gray-500 dark:text-gray-400">查询结果将在此处显示</p>';
+
+            if (selectedCollegeName) {
+                const selectedCollege = colleges.find(c => c.college === selectedCollegeName);
+                if (selectedCollege && selectedCollege.majors && selectedCollege.majors.length > 0) {
+                    majorSelect.innerHTML = '<option value="">-- 请选择专业 --</option>';
+                    selectedCollege.majors.forEach(major => {
+                        const option = new Option(major, major);
+                        majorSelect.add(option);
+                    });
+                    majorSelect.disabled = false;
+                } else {
+                    majorSelect.innerHTML = '<option value="">-- 该学院无专业数据 --</option>';
+                }
+            }
+        });
+
+        majorSelect.addEventListener('change', () => {
+            const selectedCollegeName = collegeSelect.value;
+            const selectedMajorName = majorSelect.value;
+
+            if (selectedCollegeName && selectedMajorName) {
+                const college = colleges.find(c => c.college === selectedCollegeName);
+                if (college) {
+                    const campusId = college.campusId;
+                    const campus = campuses.find(c => c.id === campusId);
+                    const campusName = campus ? campus.name : '未知校区';
+
+                    resultDisplay.innerHTML = `
+                        <div class="text-left w-full">
+                            <p class="text-gray-600 dark:text-gray-400 text-sm mb-2">查询结果:</p>
+                            <p class="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                                <span class="font-normal">${college.college}</span> - <strong>${selectedMajorName}</strong>
+                            </p>
+                            <p class="mt-4 text-2xl font-bold text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                                <i data-lucide="map-pin" class="w-6 h-6 mr-3"></i>
+                                <span>${campusName}</span>
+                            </p>
+                        </div>
+                    `;
+                    if (window.lucide) {
+                        lucide.createIcons({ nodes: [resultDisplay] });
+                    }
+                }
+            } else {
+                resultDisplay.innerHTML = '<p class="text-gray-500 dark:text-gray-400">查询结果将在此处显示</p>';
+            }
+        });
+    }
 
     // ===================================================================================
-    // --- 新增: 学习资料共享中心的核心逻辑方法 ---
+    // --- 学习资料共享中心的核心逻辑方法 ---
     // ===================================================================================
 
-    /**
-     * 显示学习资料视图
-     */
     _showMaterialsView() {
         this.dom.mainView.classList.add('hidden');
         this.dom.detailView.classList.add('hidden');
         this.dom.materialsView.classList.remove('hidden');
         this.dom.materialsView.classList.add('flex');
-        updateActiveNav('materials', null); // 高亮导航
+        updateActiveNav('materials', null);
         this._loadAndRenderMaterials();
     }
 
-    /**
-     * 隐藏学习资料视图
-     */
     _hideMaterialsView() {
         if (!this.dom.materialsView.classList.contains('hidden')) {
             this.dom.materialsView.classList.add('hidden');
@@ -495,9 +667,6 @@ class GuideApp {
         }
     }
 
-    /**
-     * 异步加载并渲染学习资料列表
-     */
     async _loadAndRenderMaterials() {
         this.dom.materialsContent.innerHTML = `<div class="loader mx-auto mt-16"></div>`;
         const materials = await getMaterials();
@@ -505,9 +674,6 @@ class GuideApp {
         lucide.createIcons();
     }
     
-    /**
-     * 处理点击“上传资料”按钮的逻辑
-     */
     _handleUploadPrompt() {
         if (!this.currentUserData) {
             this._showToast('请先登录再分享资料哦', 'info');
@@ -516,13 +682,11 @@ class GuideApp {
             return;
         }
         this._resetUploadForm();
-        // --- 修复: 调用 modals.js 中新增的专用函数 ---
+        // --- 新增: 打开弹窗时，自动填充学院列表 ---
+        this._populateCollegeSelect();
         modals.showUploadMaterialModal();
     }
 
-    /**
-     * 重置上传表单到初始状态
-     */
     _resetUploadForm() {
         this.dom.uploadMaterialForm.reset();
         this.dom.materialFileName.textContent = '';
@@ -531,17 +695,16 @@ class GuideApp {
         this.dom.uploadMaterialForm.classList.remove('hidden');
         this.dom.uploadFormFooter.classList.remove('hidden');
         this.dom.submitMaterialBtn.disabled = false;
+        // --- 新增: 重置专业选择框 ---
+        this.dom.materialMajorSelect.innerHTML = '<option value="">-- 请先选择学院 --</option>';
+        this.dom.materialMajorSelect.disabled = true;
     }
 
-    /**
-     * 处理上传表单的提交逻辑
-     */
     async _handleUploadMaterialSubmit() {
         const form = this.dom.uploadMaterialForm;
         const fileInput = this.dom.materialFileInput;
         const submitBtn = this.dom.submitMaterialBtn;
 
-        // 1. 表单验证
         if (!form.checkValidity()) {
             this._showToast('请填写所有必填项', 'error');
             form.reportValidity();
@@ -561,7 +724,6 @@ class GuideApp {
         const formData = new FormData(form);
 
         try {
-            // 2. 上传文件到云存储
             const cloudPath = `study_materials/${this.currentUserData._id}/${Date.now()}-${file.name}`;
             const uploadResult = await app.uploadFile({
                 cloudPath,
@@ -575,16 +737,18 @@ class GuideApp {
 
             this.dom.uploadStatusText.textContent = '正在写入数据库...';
 
-            // 3. 将文件信息存入数据库
+            // --- 修改: 增加 college 和 major 字段 ---
             const materialData = {
                 uploaderId: this.currentUserData._id,
                 uploaderNickname: this.currentUserData.nickname,
                 courseName: formData.get('courseName'),
                 teacher: formData.get('teacher'),
+                college: formData.get('college'), // 新增
+                major: formData.get('major'),     // 新增
                 materialType: formData.get('materialType'),
                 description: formData.get('description'),
                 fileName: file.name,
-                fileCloudPath: uploadResult.fileID, // 关键：使用返回的 File ID
+                fileCloudPath: uploadResult.fileID,
                 fileSize: file.size,
                 downloadCount: 0,
                 rating: 0,
@@ -593,14 +757,12 @@ class GuideApp {
 
             await addMaterial(materialData);
 
-            // 4. 显示成功信息
             this.dom.uploadMaterialForm.classList.add('hidden');
             this.dom.uploadFormFooter.classList.add('hidden');
             this.dom.uploadProgressContainer.classList.add('hidden');
             this.dom.uploadSuccessMsg.classList.remove('hidden');
             lucide.createIcons();
 
-            // 5. 刷新列表并关闭模态框
             await this._loadAndRenderMaterials();
             setTimeout(() => {
                 modals.hideUploadMaterialModal(() => {
@@ -616,9 +778,6 @@ class GuideApp {
         }
     }
 
-    /**
-     * 处理资料下载点击事件 (事件委托)
-     */
     async _handleMaterialDownload(e) {
         const downloadBtn = e.target.closest('.download-material-btn');
         if (!downloadBtn) return;
@@ -652,6 +811,53 @@ class GuideApp {
         } finally {
             downloadBtn.disabled = false;
             downloadBtn.innerHTML = originalText;
+        }
+    }
+
+    // --- 新增: 动态填充下拉菜单的辅助函数 ---
+
+    /**
+     * 填充学院选择框
+     */
+    _populateCollegeSelect() {
+        const select = this.dom.materialCollegeSelect;
+        select.innerHTML = '<option value="">-- 请选择学院 --</option>'; // 重置
+
+        if (this.campusData && this.campusData.colleges) {
+            // 去重并排序
+            const collegeNames = [...new Set(this.campusData.colleges.map(c => c.college))];
+            collegeNames.sort((a, b) => a.localeCompare(b, 'zh-CN'));
+            
+            collegeNames.forEach(name => {
+                const option = new Option(name, name);
+                select.add(option);
+            });
+        }
+    }
+
+    /**
+     * 当学院选择框变化时，填充对应的专业选择框
+     */
+    _handleCollegeChange() {
+        const collegeName = this.dom.materialCollegeSelect.value;
+        const majorSelect = this.dom.materialMajorSelect;
+        majorSelect.innerHTML = '<option value="">-- 请选择专业 --</option>'; // 重置
+
+        if (collegeName && this.campusData && this.campusData.colleges) {
+            const college = this.campusData.colleges.find(c => c.college === collegeName);
+            if (college && college.majors && college.majors.length > 0) {
+                college.majors.forEach(majorName => {
+                    const option = new Option(majorName, majorName);
+                    majorSelect.add(option);
+                });
+                majorSelect.disabled = false;
+            } else {
+                majorSelect.innerHTML = '<option value="">-- 该学院无专业数据 --</option>';
+                majorSelect.disabled = true;
+            }
+        } else {
+            majorSelect.innerHTML = '<option value="">-- 请先选择学院 --</option>';
+            majorSelect.disabled = true;
         }
     }
 }
