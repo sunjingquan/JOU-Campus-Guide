@@ -28,6 +28,17 @@ class GuideApp {
         this.scrollTimeout = null;
         this.currentUserData = null;
 
+        // --- 新增: 资料筛选状态和搜索防抖计时器 ---
+        this.materialFilters = {
+            college: '',
+            major: '',
+            searchTerm: '',
+            sortBy: 'createdAt',
+            order: 'desc'
+        };
+        this.searchDebounceTimer = null;
+
+
         this._cacheDOMElements();
         // 将 showToast 方法绑定到实例，以便在其他模块中正确调用
         this.dom.showToast = this._showToast.bind(this);
@@ -134,9 +145,13 @@ class GuideApp {
             uploadStatusText: document.getElementById('upload-status-text'),
             uploadSuccessMsg: document.getElementById('upload-success-msg'),
             uploadFormFooter: document.getElementById('upload-form-footer'),
-            // --- 新增: 缓存学院和专业选择框 ---
             materialCollegeSelect: document.getElementById('material-college'),
             materialMajorSelect: document.getElementById('material-major'),
+            // --- 新增: 缓存筛选栏的DOM元素 ---
+            materialsCollegeFilter: document.getElementById('materials-college-filter'),
+            materialsMajorFilter: document.getElementById('materials-major-filter'),
+            materialsSearchInput: document.getElementById('materials-search-input'),
+            materialsSortButtons: document.getElementById('materials-sort-buttons'),
         };
     }
 
@@ -336,8 +351,13 @@ class GuideApp {
             this.dom.materialFileName.textContent = e.target.files[0] ? e.target.files[0].name : '';
         });
         this.dom.materialsContent.addEventListener('click', this._handleMaterialDownload.bind(this));
-        // --- 新增: 监听学院选择框的变化 ---
         this.dom.materialCollegeSelect.addEventListener('change', this._handleCollegeChange.bind(this));
+        
+        // --- 新增: 筛选栏的事件监听 ---
+        this.dom.materialsCollegeFilter.addEventListener('change', this._handleFilterCollegeChange.bind(this));
+        this.dom.materialsMajorFilter.addEventListener('change', this._handleFilterChange.bind(this));
+        this.dom.materialsSearchInput.addEventListener('input', this._handleSearchChange.bind(this));
+        this.dom.materialsSortButtons.addEventListener('click', this._handleSortChange.bind(this));
     }
 
     async _handleFeedbackSubmit(e) {
@@ -656,6 +676,8 @@ class GuideApp {
         this.dom.materialsView.classList.remove('hidden');
         this.dom.materialsView.classList.add('flex');
         updateActiveNav('materials', null);
+        // --- 新增: 进入页面时，填充筛选器并加载数据 ---
+        this._populateFilterCollegeSelect();
         this._loadAndRenderMaterials();
     }
 
@@ -667,9 +689,13 @@ class GuideApp {
         }
     }
 
+    /**
+     * [已修改] 根据当前的筛选条件加载并渲染资料
+     */
     async _loadAndRenderMaterials() {
         this.dom.materialsContent.innerHTML = `<div class="loader mx-auto mt-16"></div>`;
-        const materials = await getMaterials();
+        // 将当前的筛选状态传给 dataManager
+        const materials = await getMaterials(this.materialFilters);
         this.dom.materialsContent.innerHTML = renderer.generateMaterialsList(materials);
         lucide.createIcons();
     }
@@ -682,7 +708,6 @@ class GuideApp {
             return;
         }
         this._resetUploadForm();
-        // --- 新增: 打开弹窗时，自动填充学院列表 ---
         this._populateCollegeSelect();
         modals.showUploadMaterialModal();
     }
@@ -695,7 +720,6 @@ class GuideApp {
         this.dom.uploadMaterialForm.classList.remove('hidden');
         this.dom.uploadFormFooter.classList.remove('hidden');
         this.dom.submitMaterialBtn.disabled = false;
-        // --- 新增: 重置专业选择框 ---
         this.dom.materialMajorSelect.innerHTML = '<option value="">-- 请先选择学院 --</option>';
         this.dom.materialMajorSelect.disabled = true;
     }
@@ -737,14 +761,13 @@ class GuideApp {
 
             this.dom.uploadStatusText.textContent = '正在写入数据库...';
 
-            // --- 修改: 增加 college 和 major 字段 ---
             const materialData = {
                 uploaderId: this.currentUserData._id,
                 uploaderNickname: this.currentUserData.nickname,
                 courseName: formData.get('courseName'),
                 teacher: formData.get('teacher'),
-                college: formData.get('college'), // 新增
-                major: formData.get('major'),     // 新增
+                college: formData.get('college'),
+                major: formData.get('major'),
                 materialType: formData.get('materialType'),
                 description: formData.get('description'),
                 fileName: file.name,
@@ -793,14 +816,11 @@ class GuideApp {
         downloadBtn.innerHTML = `<span class="loader-small"></span>正在获取链接...`;
 
         try {
-            // 1. 获取临时下载链接
             const { fileList } = await app.getTempFileURL({ fileList: [filePath] });
             
             if (fileList[0] && fileList[0].tempFileURL) {
                 const tempUrl = fileList[0].tempFileURL;
-                // 2. 打开链接触发下载
                 window.open(tempUrl, '_blank');
-                // 3. 在后台增加下载次数 (无需等待)
                 incrementDownloadCount(docId);
             } else {
                 throw new Error('无法获取有效的下载链接');
@@ -814,17 +834,11 @@ class GuideApp {
         }
     }
 
-    // --- 新增: 动态填充下拉菜单的辅助函数 ---
-
-    /**
-     * 填充学院选择框
-     */
     _populateCollegeSelect() {
         const select = this.dom.materialCollegeSelect;
-        select.innerHTML = '<option value="">-- 请选择学院 --</option>'; // 重置
+        select.innerHTML = '<option value="">-- 请选择学院 --</option>';
 
         if (this.campusData && this.campusData.colleges) {
-            // 去重并排序
             const collegeNames = [...new Set(this.campusData.colleges.map(c => c.college))];
             collegeNames.sort((a, b) => a.localeCompare(b, 'zh-CN'));
             
@@ -835,13 +849,10 @@ class GuideApp {
         }
     }
 
-    /**
-     * 当学院选择框变化时，填充对应的专业选择框
-     */
     _handleCollegeChange() {
         const collegeName = this.dom.materialCollegeSelect.value;
         const majorSelect = this.dom.materialMajorSelect;
-        majorSelect.innerHTML = '<option value="">-- 请选择专业 --</option>'; // 重置
+        majorSelect.innerHTML = '<option value="">-- 请选择专业 --</option>';
 
         if (collegeName && this.campusData && this.campusData.colleges) {
             const college = this.campusData.colleges.find(c => c.college === collegeName);
@@ -859,6 +870,85 @@ class GuideApp {
             majorSelect.innerHTML = '<option value="">-- 请先选择学院 --</option>';
             majorSelect.disabled = true;
         }
+    }
+
+    // --- 新增: 筛选栏相关的所有逻辑 ---
+
+    /**
+     * 填充筛选栏的学院下拉框
+     */
+    _populateFilterCollegeSelect() {
+        const select = this.dom.materialsCollegeFilter;
+        select.innerHTML = '<option value="">所有学院</option>'; // 重置
+
+        if (this.campusData && this.campusData.colleges) {
+            const collegeNames = [...new Set(this.campusData.colleges.map(c => c.college))];
+            collegeNames.sort((a, b) => a.localeCompare(b, 'zh-CN'));
+            collegeNames.forEach(name => {
+                const option = new Option(name, name);
+                select.add(option);
+            });
+        }
+    }
+
+    /**
+     * 处理筛选栏学院选择的变化，并联动专业
+     */
+    _handleFilterCollegeChange() {
+        const collegeName = this.dom.materialsCollegeFilter.value;
+        const majorSelect = this.dom.materialsMajorFilter;
+        majorSelect.innerHTML = '<option value="">所有专业</option>';
+
+        if (collegeName && this.campusData && this.campusData.colleges) {
+            const college = this.campusData.colleges.find(c => c.college === collegeName);
+            if (college && college.majors && college.majors.length > 0) {
+                college.majors.forEach(majorName => {
+                    const option = new Option(majorName, majorName);
+                    majorSelect.add(option);
+                });
+                majorSelect.disabled = false;
+            } else {
+                majorSelect.disabled = true;
+            }
+        } else {
+            majorSelect.disabled = true;
+        }
+        // 触发筛选更新
+        this._handleFilterChange();
+    }
+    
+    /**
+     * 统一处理筛选条件变化，并重新加载数据
+     */
+    _handleFilterChange() {
+        this.materialFilters.college = this.dom.materialsCollegeFilter.value;
+        this.materialFilters.major = this.dom.materialsMajorFilter.value;
+        this.materialFilters.searchTerm = this.dom.materialsSearchInput.value.trim();
+        this._loadAndRenderMaterials();
+    }
+
+    /**
+     * 处理搜索框输入（带防抖）
+     */
+    _handleSearchChange() {
+        clearTimeout(this.searchDebounceTimer);
+        this.searchDebounceTimer = setTimeout(() => {
+            this._handleFilterChange();
+        }, 500); // 500ms 延迟
+    }
+
+    /**
+     * 处理排序按钮点击
+     */
+    _handleSortChange(e) {
+        const button = e.target.closest('.sort-btn');
+        if (!button || button.classList.contains('active')) return;
+
+        this.dom.materialsSortButtons.querySelectorAll('.sort-btn').forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+
+        this.materialFilters.sortBy = button.dataset.sort;
+        this._handleFilterChange();
     }
 }
 

@@ -10,7 +10,6 @@ import { db } from '../cloudbase.js';
 // 定义数据集合的名称
 const GUIDE_COLLECTION = 'guide_data';
 const CAMPUS_COLLECTION = 'campus_data';
-// --- 新增 ---
 const STUDY_MATERIALS_COLLECTION = 'study_materials';
 
 
@@ -75,22 +74,59 @@ export async function getCampusData() {
 
 
 // ===================================================================================
-// --- 新增: 学习资料共享中心的数据操作函数 ---
+// --- 学习资料共享中心的数据操作函数 ---
 // ===================================================================================
 
 /**
- * 从 CloudBase 获取学习资料列表。
- * @param {object} options - 查询选项，例如排序方式。
- * @param {string} options.sortBy - 用于排序的字段名，默认为 'createdAt'。
- * @param {string} options.order - 排序顺序，'desc' (降序) 或 'asc' (升序)。
+ * [已升级] 从 CloudBase 获取学习资料列表，支持复杂的筛选和排序。
+ * @param {object} options - 查询选项对象。
+ * @param {string} [options.college] - 按学院筛选。
+ * @param {string} [options.major] - 按专业筛选。
+ * @param {string} [options.searchTerm] - 按课程名或教师名搜索的关键词。
+ * @param {string} [options.sortBy='createdAt'] - 用于排序的字段名。
+ * @param {string} [options.order='desc'] - 排序顺序 ('desc' 或 'asc')。
  * @returns {Promise<Array>} 返回一个资料对象数组。
  */
-export async function getMaterials({ sortBy = 'createdAt', order = 'desc' } = {}) {
+export async function getMaterials(options = {}) {
+    const {
+        college = '',
+        major = '',
+        searchTerm = '',
+        sortBy = 'createdAt',
+        order = 'desc'
+    } = options;
+
     try {
-        console.log(`DataManager: 正在从 '${STUDY_MATERIALS_COLLECTION}' 拉取资料列表...`);
-        const result = await db.collection(STUDY_MATERIALS_COLLECTION)
-            .orderBy(sortBy, order)
-            .get();
+        console.log(`DataManager: 正在拉取资料列表，筛选条件:`, options);
+        let query = db.collection(STUDY_MATERIALS_COLLECTION);
+        const _ = db.command;
+        
+        // 使用一个数组来存储所有的 where 条件
+        const whereClauses = [];
+
+        if (college) {
+            whereClauses.push({ college: college });
+        }
+        if (major) {
+            whereClauses.push({ major: major });
+        }
+        if (searchTerm) {
+            // 使用正则表达式进行模糊搜索，'i' 表示不区分大小写
+            const regex = db.RegExp({ regexp: searchTerm, options: 'i' });
+            // 使用 _.or 来匹配课程名或教师名
+            whereClauses.push(_.or([
+                { courseName: regex },
+                { teacher: regex }
+            ]));
+        }
+        
+        // 如果有筛选条件，则应用 where 查询
+        if (whereClauses.length > 0) {
+            // 使用 _.and 将所有条件组合起来
+            query = query.where(_.and(whereClauses));
+        }
+
+        const result = await query.orderBy(sortBy, order).get();
         console.log("DataManager: 成功拉取资料列表:", result.data);
         return result.data;
     } catch (error) {
