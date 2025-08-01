@@ -2,7 +2,9 @@
  * @file UI 模板模块 (UI Templates)
  * @description 该模块是所有UI组件的“HTML蓝图”。它包含一系列纯函数，
  * 每个函数接收从 guide_data.json 获取的纯净JSON数据，并返回与旧版 guideData.js 视觉效果完全一致的HTML字符串。
- * @version 4.2.1 - 修复快速导航链接
+ * @version 4.3.0
+ * @changes
+ * - [体验优化] 在 `createMaterialsListHtml` 的空状态视图中增加了一个“立即上传”按钮，以引导用户贡献内容。
  */
 
 // --- 辅助函数 ---
@@ -22,7 +24,7 @@ export function createSliderHtml(images) {
     if (!images || images.length === 0) {
         return `
             <img src="https://placehold.co/800x450/cccccc/ffffff?text=无图片" 
-                 alt="无图片" 
+                 alt="[无图片]" 
                  class="w-full h-auto object-cover rounded-lg mb-4">
         `;
     }
@@ -39,8 +41,8 @@ export function createSliderHtml(images) {
         <button class="dot" data-index="${index}"></button>
     `).join('');
 
-    const singleImageCaption = images.length === 1 
-        ? `<p class="text-white text-center text-sm font-semibold truncate">${escapeHtml(images[0].caption)}</p>` 
+    const singleImageCaption = images.length === 1
+        ? `<p class="text-white text-center text-sm font-semibold truncate">${escapeHtml(images[0].caption)}</p>`
         : `<p class="slider-caption text-white text-center text-sm font-semibold truncate"></p>`;
 
     const navButtonsHtml = images.length > 1 ? `
@@ -51,7 +53,7 @@ export function createSliderHtml(images) {
             <i data-lucide="chevron-right" class="w-6 h-6"></i>
         </button>
     ` : '';
-    
+
     const dotsContainerHtml = images.length > 1 ? `
         <div class="slider-dots flex justify-center space-x-2 mt-2">
             ${dotsHtml}
@@ -93,10 +95,6 @@ export function createHomePage(content) {
         };
         const color = colors[item.title] || { bg: 'bg-gray-100', text: 'text-gray-600', shadow: '' };
         
-        // [修复] 移除了 escapeHtml 对 JSON 字符串的错误处理。
-        // 之前：const navLinkData = escapeHtml(JSON.stringify(item.link));
-        // 这会导致 JSON 中的双引号 " 被转换为 &quot;，使得 JSON.parse 解析失败。
-        // 现在：直接使用 JSON.stringify 的结果，并用单引号包裹属性值，这是正确的做法。
         const navLinkData = JSON.stringify(item.link);
 
         return `
@@ -167,10 +165,10 @@ export function createChecklistHtml(content) {
     const sections = content.sections || [];
     const tips = content.tips || {};
     const sectionColors = { "床上用品": "green", "洗漱用品": "cyan", "衣物鞋袜": "purple", "电子产品及其它": "orange" };
-    
+
     const mainSection = sections.find(s => s.category && s.category.includes('证件'));
     const otherSections = sections.filter(s => !s.category || !s.category.includes('证件'));
-    
+
     const mainSectionHtml = mainSection ? `
         <div class="p-6 rounded-xl w-full">
             <h3 class="text-2xl font-bold text-blue-800 dark:text-blue-400 mb-6 border-l-4 border-blue-700 dark:border-blue-500 pl-4">${escapeHtml(mainSection.category)}</h3>
@@ -241,7 +239,7 @@ export function createStepsHtml(content) {
         const topStyleMapping = { 0: 'top: 6px;', 1: 'top: 33.33%;', 2: 'top: 66.66%;', 3: 'bottom: 6px;' };
         const style = topStyleMapping[index] || '';
         const ringClass = (index === 0 || index === steps.length - 1) ? 'ring-8 ring-white dark:ring-gray-800' : '';
-        
+
         return `<div class="absolute w-4 h-4 bg-blue-600 rounded-full -left-2 ${ringClass}" style="${style}"></div>`;
     }).join('');
 
@@ -279,7 +277,7 @@ export function createStepsHtml(content) {
  */
 export function createPointsHtml(content) {
     const points = content.points || [];
-    
+
     // 【样式已修复】在这里定义图标和颜色的映射关系，以还原旧版样式
     const iconConfig = {
         'calendar-days': { color: 'text-indigo-500' },
@@ -396,7 +394,7 @@ export function createClubsHtml(content) {
             </div>
         `;
     }).join('');
-    
+
     const allClubsListHtml = (data.clubs || [])
         .flatMap(group => (group.list || []).map(clubName => createClubItem(clubName, iconMap[group.level], colorMap[group.level])))
         .join('');
@@ -637,7 +635,7 @@ export function createDormitoryDetailsHtml(details) {
             { icon: 'wifi', label: '网络', value: dorm.network },
             { icon: 'washing-machine', label: '洗衣', value: dorm.laundry },
         ];
-        
+
         const listHtml = listItems.map(item => `
             <li class="flex items-center">
                 <i data-lucide="${item.icon}" class="w-5 h-5 mr-3 text-blue-500"></i>
@@ -781,13 +779,23 @@ export function createMaterialCardHtml(material) {
  */
 export function createMaterialsListHtml(materials) {
     if (!materials || materials.length === 0) {
+        // =================================================================
+        // [体验优化] 任务4：在这里修改空状态的 HTML，增加一个上传按钮
+        // =================================================================
         return `
             <div class="text-center py-16">
                 <i data-lucide="folder-search" class="w-24 h-24 text-gray-300 dark:text-gray-600 mx-auto"></i>
                 <h3 class="mt-4 text-xl font-semibold text-gray-800 dark:text-gray-200">空空如也</h3>
                 <p class="mt-2 text-gray-500 dark:text-gray-400">还没有人分享资料，快来当第一个贡献者吧！</p>
+                <button id="upload-from-empty-state-btn" class="mt-6 bg-blue-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors flex items-center justify-center mx-auto">
+                    <i data-lucide="upload-cloud" class="w-5 h-5 mr-2"></i>
+                    <span>立即上传</span>
+                </button>
             </div>
         `;
+        // =================================================================
+        // HTML 修改结束
+        // =================================================================
     }
 
     const cardsHtml = materials.map(createMaterialCardHtml).join('');
