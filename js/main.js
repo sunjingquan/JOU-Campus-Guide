@@ -1,8 +1,11 @@
 /**
- * @file 应用主入口 (Main Entry Point) - 时序修复版
+ * @file 应用主入口 (Main Entry Point) - 优化第一版
  * @description 负责应用的整体流程控制。
- * [已修复] 重构了应用的初始化流程，确保在认证状态明确（包括匿名登录）后，才开始获取数据，从而解决了启动时的竞态条件问题。
- * @version 7.0.0
+ * @version 7.1.0
+ * @changes
+ * - [安全增强] 在 `_handleUploadMaterialSubmit` 中增加了前端文件类型和大小校验。
+ * - [体验优化] 在 `_handleMaterialDownload` 中实现了下载计数的实时前端更新。
+ * - [体验优化] 在 `_setupEventListeners` 中为“空状态”下的上传按钮添加了事件监听。
  */
 
 // 导入重构后的模块
@@ -47,7 +50,7 @@ class GuideApp {
         viewManager.init({
             domElements: this.dom,
             // 初始时 campusData 为 null，后续会更新
-            cData: () => this.campusData 
+            cData: () => this.campusData
         });
     }
 
@@ -195,7 +198,7 @@ class GuideApp {
                  if (!this.campusData || !this.campusData.colleges) {
                    throw new Error("校区数据加载失败或为空。");
                 }
-                
+
                 console.log("Main: 应用数据获取成功。");
 
                 await this.initializeDataDependentModules();
@@ -351,8 +354,16 @@ class GuideApp {
             this.dom.materialFileName.textContent = e.target.files[0] ? e.target.files[0].name : '';
         });
         this.dom.materialsContent.addEventListener('click', this._handleMaterialDownload.bind(this));
+
+        // [体验优化] 为空状态下的上传按钮添加事件监听 (使用事件委托)
+        this.dom.materialsContent.addEventListener('click', (e) => {
+            if (e.target.id === 'upload-from-empty-state-btn') {
+                this._handleUploadPrompt();
+            }
+        });
+
         this.dom.materialCollegeSelect.addEventListener('change', this._handleCollegeChange.bind(this));
-        
+
         // --- 新增: 筛选栏的事件监听 ---
         this.dom.materialsCollegeFilter.addEventListener('change', this._handleFilterCollegeChange.bind(this));
         this.dom.materialsMajorFilter.addEventListener('change', this._handleFilterChange.bind(this));
@@ -538,7 +549,7 @@ class GuideApp {
             card.addEventListener('click', (e) => {
                 e.preventDefault();
                 const navData = JSON.parse(card.dataset.navlink);
-                
+
                 const targetCategory = this.guideData.find(cat => cat.title === navData.category);
                 if (!targetCategory) {
                     console.warn(`快速导航失败: 未找到分类 "${navData.category}"`);
@@ -594,7 +605,7 @@ class GuideApp {
         const collegeSelect = container.querySelector('#college-select');
         const majorSelect = container.querySelector('#major-select');
         const resultDisplay = container.querySelector('#result-display');
-        
+
         const colleges = this.campusData.colleges || [];
         const campuses = this.campusData.campuses || [];
 
@@ -613,7 +624,7 @@ class GuideApp {
 
         collegeSelect.addEventListener('change', () => {
             const selectedCollegeName = collegeSelect.value;
-            
+
             majorSelect.innerHTML = '<option value="">-- 请先选择学院 --</option>';
             majorSelect.disabled = true;
             resultDisplay.innerHTML = '<p class="text-gray-500 dark:text-gray-400">查询结果将在此处显示</p>';
@@ -699,7 +710,7 @@ class GuideApp {
         this.dom.materialsContent.innerHTML = renderer.generateMaterialsList(materials);
         lucide.createIcons();
     }
-    
+
     _handleUploadPrompt() {
         if (!this.currentUserData) {
             this._showToast('请先登录再分享资料哦', 'info');
@@ -739,12 +750,43 @@ class GuideApp {
             return;
         }
 
+        const file = fileInput.files[0];
+
+        // =================================================================
+        // [安全增强] 任务2：在这里增加前端的文件类型和大小校验
+        // =================================================================
+        const allowedTypes = [
+            'application/pdf', // PDF
+            'application/msword', // .doc
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+            'application/vnd.ms-powerpoint', // .ppt
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
+            'image/jpeg', // .jpg, .jpeg
+            'image/png', // .png
+            'application/zip', // .zip
+            'application/x-rar-compressed', // .rar
+        ];
+        const maxSizeInMB = 20;
+
+        if (!allowedTypes.includes(file.type)) {
+            this._showToast('不支持的文件类型！仅支持PDF, Word, PPT, 图片和压缩包。', 'error');
+            return;
+        }
+
+        if (file.size > maxSizeInMB * 1024 * 1024) {
+            this._showToast(`文件大小不能超过 ${maxSizeInMB}MB`, 'error');
+            return;
+        }
+        // =================================================================
+        // 文件校验结束
+        // =================================================================
+
+
         submitBtn.disabled = true;
         this.dom.uploadStatusText.textContent = '准备上传...';
         this.dom.uploadProgressContainer.classList.remove('hidden');
         this.dom.uploadProgressBar.style.width = '0%';
 
-        const file = fileInput.files[0];
         const formData = new FormData(form);
 
         try {
@@ -817,11 +859,26 @@ class GuideApp {
 
         try {
             const { fileList } = await app.getTempFileURL({ fileList: [filePath] });
-            
+
             if (fileList[0] && fileList[0].tempFileURL) {
                 const tempUrl = fileList[0].tempFileURL;
                 window.open(tempUrl, '_blank');
-                incrementDownloadCount(docId);
+                incrementDownloadCount(docId); // 后台更新下载计数
+
+                // =================================================================
+                // [体验优化] 任务3：在这里增加前端下载计数的实时更新
+                // =================================================================
+                const countElement = downloadBtn.closest('.material-card').querySelector('[data-lucide="download"] + span');
+                if (countElement) {
+                    const currentCount = parseInt(countElement.textContent, 10);
+                    if (!isNaN(currentCount)) {
+                        countElement.textContent = currentCount + 1;
+                    }
+                }
+                // =================================================================
+                // 实时更新结束
+                // =================================================================
+
             } else {
                 throw new Error('无法获取有效的下载链接');
             }
@@ -841,7 +898,7 @@ class GuideApp {
         if (this.campusData && this.campusData.colleges) {
             const collegeNames = [...new Set(this.campusData.colleges.map(c => c.college))];
             collegeNames.sort((a, b) => a.localeCompare(b, 'zh-CN'));
-            
+
             collegeNames.forEach(name => {
                 const option = new Option(name, name);
                 select.add(option);
@@ -916,7 +973,7 @@ class GuideApp {
         // 触发筛选更新
         this._handleFilterChange();
     }
-    
+
     /**
      * 统一处理筛选条件变化，并重新加载数据
      */
@@ -956,7 +1013,7 @@ class GuideApp {
 document.addEventListener('DOMContentLoaded', async () => {
     const loadingOverlay = document.getElementById('loading-overlay');
     loadingOverlay.style.display = 'flex';
-    
+
     const app = new GuideApp();
     await app.init();
 });
