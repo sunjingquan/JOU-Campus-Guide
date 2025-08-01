@@ -2,8 +2,12 @@
  * @file UI 模板模块 (UI Templates)
  * @description 该模块是所有UI组件的“HTML蓝图”。它包含一系列纯函数，
  * 每个函数接收从 guide_data.json 获取的纯净JSON数据，并返回与旧版 guideData.js 视觉效果完全一致的HTML字符串。
- * @version 4.3.0
+ * @version 4.4.1
  * @changes
+ * - [错误修复] 修复了 `createRatingStarsHtml` 函数中因缺少 `material` 变量导致的 ReferenceError。
+ * - [代码优化] 调整了 `createRatingStarsHtml` 函数的参数，现在它接收 docId，使其职责更清晰。
+ * - [功能新增] 在 `createMaterialCardHtml` 中，将静态的评分显示替换为可交互的五星评分组件。
+ * - [代码重构] 新增 `createRatingStarsHtml` 辅助函数，专门用于生成五星评分的HTML结构，使代码更清晰。
  * - [体验优化] 在 `createMaterialsListHtml` 的空状态视图中增加了一个“立即上传”按钮，以引导用户贡献内容。
  */
 
@@ -703,8 +707,48 @@ export function createCanteenDetailsHtml(details) {
 }
 
 // ===================================================================================
-// --- 新增: 学习资料共享模板 ---
+// --- 学习资料共享模板 ---
 // ===================================================================================
+
+/**
+ * [错误修复] 辅助函数: 创建五星评分组件的HTML
+ * @param {string} docId - 资料的文档ID
+ * @param {number} rating - 平均分 (0-5)
+ * @param {number} ratingCount - 评分人数
+ * @returns {string} 
+ */
+function createRatingStarsHtml(docId, rating = 0, ratingCount = 0) {
+    let starsHtml = '';
+    const fullStars = Math.floor(rating);
+    const halfStar = rating % 1 >= 0.5 ? 1 : 0;
+    const emptyStars = 5 - fullStars - halfStar;
+
+    for (let i = 0; i < fullStars; i++) {
+        starsHtml += `<i data-lucide="star" class="rating-star star-filled" data-value="${i + 1}"></i>`;
+    }
+    if (halfStar) {
+        starsHtml += `<i data-lucide="star-half" class="rating-star star-filled" data-value="${fullStars + 1}"></i>`;
+    }
+    for (let i = 0; i < emptyStars; i++) {
+        starsHtml += `<i data-lucide="star" class="rating-star" data-value="${fullStars + halfStar + i + 1}"></i>`;
+    }
+
+    const ratingText = ratingCount > 0
+        ? `<span class="rating-score">${rating.toFixed(1)}</span><span class="rating-count">(${ratingCount}人)</span>`
+        : `<span class="rating-score">暂无评分</span>`;
+
+    return `
+        <div class="material-rating-container flex items-center" title="点击评分">
+            <div class="material-rating-stars flex text-yellow-400 cursor-pointer" data-doc-id="${escapeHtml(docId)}">
+                ${starsHtml}
+            </div>
+            <div class="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                ${ratingText}
+            </div>
+        </div>
+    `;
+}
+
 
 /**
  * 模板: 单个学习资料卡片
@@ -724,6 +768,9 @@ export function createMaterialCardHtml(material) {
 
     // 格式化上传时间
     const uploadDate = material.createdAt ? new Date(material.createdAt).toLocaleDateString() : '未知日期';
+
+    // [错误修复] 调用辅助函数时，传入 docId
+    const ratingComponentHtml = createRatingStarsHtml(material._id, material.rating, material.ratingCount);
 
     return `
         <div class="material-card bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden flex flex-col transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
@@ -758,10 +805,7 @@ export function createMaterialCardHtml(material) {
                         <i data-lucide="download" class="w-3 h-3 mr-1.5"></i>
                         <span>${material.downloadCount || 0}</span>
                     </div>
-                    <div class="flex items-center" title="评分">
-                        <i data-lucide="star" class="w-3 h-3 mr-1.5 text-yellow-500"></i>
-                        <span>${material.rating ? material.rating.toFixed(1) : '暂无评分'}</span>
-                    </div>
+                    ${ratingComponentHtml}
                 </div>
                  <button class="download-material-btn mt-4 w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors flex items-center justify-center" data-file-path="${escapeHtml(material.fileCloudPath)}" data-doc-id="${escapeHtml(material._id)}">
                     <i data-lucide="download-cloud" class="w-4 h-4 mr-2"></i>
@@ -779,9 +823,6 @@ export function createMaterialCardHtml(material) {
  */
 export function createMaterialsListHtml(materials) {
     if (!materials || materials.length === 0) {
-        // =================================================================
-        // [体验优化] 任务4：在这里修改空状态的 HTML，增加一个上传按钮
-        // =================================================================
         return `
             <div class="text-center py-16">
                 <i data-lucide="folder-search" class="w-24 h-24 text-gray-300 dark:text-gray-600 mx-auto"></i>
@@ -793,9 +834,6 @@ export function createMaterialsListHtml(materials) {
                 </button>
             </div>
         `;
-        // =================================================================
-        // HTML 修改结束
-        // =================================================================
     }
 
     const cardsHtml = materials.map(createMaterialCardHtml).join('');

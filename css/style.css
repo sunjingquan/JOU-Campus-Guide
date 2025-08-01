@@ -381,3 +381,9 @@ html.dark .auth-tab.active {
 .toast-notification .toast-icon {
     margin-right: 12px;
 }
+
+/* 资料卡片评分星星的悬停效果 */
+.material-rating-stars:not(.disabled) .rating-star.hover {
+    transform: scale(1.2);
+    color: #f59e0b; /* amber-500 */
+}
