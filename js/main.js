@@ -1,16 +1,16 @@
 /**
- * @file 应用主入口 (Main Entry Point) - 优化第一版
+ * @file 应用主入口 (Main Entry Point) - 优化第三版
  * @description 负责应用的整体流程控制。
- * @version 7.1.0
+ * @version 7.3.0
  * @changes
- * - [安全增强] 在 `_handleUploadMaterialSubmit` 中增加了前端文件类型和大小校验。
- * - [体验优化] 在 `_handleMaterialDownload` 中实现了下载计数的实时前端更新。
- * - [体验优化] 在 `_setupEventListeners` 中为“空状态”下的上传按钮添加了事件监听。
+ * - [权限增强] 在 `_handleMaterialDownload` 函数中增加了用户登录状态检查，未登录用户将被引导至登录界面。
+ * - [功能新增] 导入 rateMaterial 函数，并添加 _handleMaterialRating 方法来处理评分逻辑。
+ * - [功能新增] 在 _setupEventListeners 中添加了对评分星星的点击和悬停事件监听。
+ * - [优化] 放宽了文件类型限制，增加了对Excel和Txt文件的支持。
  */
 
 // 导入重构后的模块
-// --- 修改: 导入 app 实例和新的 dataManager 函数 ---
-import { getGuideData, getCampusData, getMaterials, addMaterial, incrementDownloadCount } from './data/dataManager.js';
+import { getGuideData, getCampusData, getMaterials, addMaterial, incrementDownloadCount, rateMaterial } from './data/dataManager.js';
 import * as renderer from './ui/renderer.js';
 import { createNavigation, handleNavigationClick, updateActiveNav } from './ui/navigation.js';
 import * as authUI from './ui/auth.js';
@@ -345,7 +345,44 @@ class GuideApp {
             }
         });
 
-        // --- 学习资料共享功能的事件监听 ---
+        // --- 学习资料共享功能的事件监听 (使用事件委托) ---
+        this.dom.materialsContent.addEventListener('click', (e) => {
+            // 下载按钮事件
+            if (e.target.closest('.download-material-btn')) {
+                this._handleMaterialDownload(e);
+            }
+            // 空状态下的上传按钮事件
+            if (e.target.closest('#upload-from-empty-state-btn')) {
+                this._handleUploadPrompt();
+            }
+            // 为星星评分添加点击事件监听
+            if (e.target.closest('.rating-star')) {
+                this._handleMaterialRating(e);
+            }
+        });
+
+        // 为星星评分添加悬停效果的事件监听
+        this.dom.materialsContent.addEventListener('mouseover', (e) => {
+            const star = e.target.closest('.rating-star');
+            const container = e.target.closest('.material-rating-stars');
+            if (!star || !container || container.classList.contains('disabled')) return;
+
+            const hoverValue = parseInt(star.dataset.value, 10);
+            container.querySelectorAll('.rating-star').forEach((s, i) => {
+                // 为小于等于当前悬停值的星星添加 hover 样式
+                s.classList.toggle('hover', i < hoverValue);
+            });
+        });
+
+        this.dom.materialsContent.addEventListener('mouseout', (e) => {
+            const container = e.target.closest('.material-rating-stars');
+            if (container) {
+                // 鼠标移出时，移除所有星星的 hover 样式
+                container.querySelectorAll('.rating-star.hover').forEach(s => s.classList.remove('hover'));
+            }
+        });
+
+
         this.dom.backToMainFromMaterialsBtn.addEventListener('click', this._hideMaterialsView.bind(this));
         this.dom.uploadMaterialPromptBtn.addEventListener('click', this._handleUploadPrompt.bind(this));
         this.dom.closeUploadMaterialBtn.addEventListener('click', () => modals.hideUploadMaterialModal());
@@ -353,18 +390,10 @@ class GuideApp {
         this.dom.materialFileInput.addEventListener('change', (e) => {
             this.dom.materialFileName.textContent = e.target.files[0] ? e.target.files[0].name : '';
         });
-        this.dom.materialsContent.addEventListener('click', this._handleMaterialDownload.bind(this));
-
-        // [体验优化] 为空状态下的上传按钮添加事件监听 (使用事件委托)
-        this.dom.materialsContent.addEventListener('click', (e) => {
-            if (e.target.id === 'upload-from-empty-state-btn') {
-                this._handleUploadPrompt();
-            }
-        });
-
+        
         this.dom.materialCollegeSelect.addEventListener('change', this._handleCollegeChange.bind(this));
 
-        // --- 新增: 筛选栏的事件监听 ---
+        // --- 筛选栏的事件监听 ---
         this.dom.materialsCollegeFilter.addEventListener('change', this._handleFilterCollegeChange.bind(this));
         this.dom.materialsMajorFilter.addEventListener('change', this._handleFilterChange.bind(this));
         this.dom.materialsSearchInput.addEventListener('input', this._handleSearchChange.bind(this));
@@ -752,24 +781,25 @@ class GuideApp {
 
         const file = fileInput.files[0];
 
-        // =================================================================
-        // [安全增强] 任务2：在这里增加前端的文件类型和大小校验
-        // =================================================================
+        // [优化] 根据你的建议，放宽文件类型限制，增加 Excel 和 Txt
         const allowedTypes = [
-            'application/pdf', // PDF
+            'application/pdf', // .pdf
             'application/msword', // .doc
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
             'application/vnd.ms-powerpoint', // .ppt
             'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
+            'application/vnd.ms-excel', // .xls
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
             'image/jpeg', // .jpg, .jpeg
             'image/png', // .png
+            'text/plain', // .txt
             'application/zip', // .zip
             'application/x-rar-compressed', // .rar
         ];
         const maxSizeInMB = 20;
 
         if (!allowedTypes.includes(file.type)) {
-            this._showToast('不支持的文件类型！仅支持PDF, Word, PPT, 图片和压缩包。', 'error');
+            this._showToast('不支持的文件类型！', 'error');
             return;
         }
 
@@ -777,10 +807,6 @@ class GuideApp {
             this._showToast(`文件大小不能超过 ${maxSizeInMB}MB`, 'error');
             return;
         }
-        // =================================================================
-        // 文件校验结束
-        // =================================================================
-
 
         submitBtn.disabled = true;
         this.dom.uploadStatusText.textContent = '准备上传...';
@@ -847,6 +873,16 @@ class GuideApp {
         const downloadBtn = e.target.closest('.download-material-btn');
         if (!downloadBtn) return;
 
+        // ===================================================================================
+        // [权限增强] 在这里增加“代码守卫”，检查用户登录状态
+        // ===================================================================================
+        if (!this.currentUserData) {
+            this._showToast('请先登录才能下载资料哦', 'info');
+            authUI.handleAuthViewChange('login');
+            modals.showAuthModal();
+            return; // 阻止后续代码执行
+        }
+
         const { filePath, docId } = downloadBtn.dataset;
         if (!filePath || !docId) {
             this._showToast('文件信息无效，无法下载', 'error');
@@ -865,9 +901,7 @@ class GuideApp {
                 window.open(tempUrl, '_blank');
                 incrementDownloadCount(docId); // 后台更新下载计数
 
-                // =================================================================
-                // [体验优化] 任务3：在这里增加前端下载计数的实时更新
-                // =================================================================
+                // [体验优化] 前端下载计数的实时更新
                 const countElement = downloadBtn.closest('.material-card').querySelector('[data-lucide="download"] + span');
                 if (countElement) {
                     const currentCount = parseInt(countElement.textContent, 10);
@@ -875,9 +909,6 @@ class GuideApp {
                         countElement.textContent = currentCount + 1;
                     }
                 }
-                // =================================================================
-                // 实时更新结束
-                // =================================================================
 
             } else {
                 throw new Error('无法获取有效的下载链接');
@@ -888,6 +919,81 @@ class GuideApp {
         } finally {
             downloadBtn.disabled = false;
             downloadBtn.innerHTML = originalText;
+        }
+    }
+
+    async _handleMaterialRating(e) {
+        const star = e.target.closest('.rating-star');
+        if (!star) return;
+
+        // 1. 检查登录状态
+        if (!this.currentUserData) {
+            this._showToast('请先登录才能评分哦', 'info');
+            authUI.handleAuthViewChange('login');
+            modals.showAuthModal();
+            return;
+        }
+
+        const ratingStarsContainer = star.parentElement;
+        const docId = ratingStarsContainer.dataset.docId;
+        const ratingValue = parseInt(star.dataset.value, 10);
+
+        // 2. 防止重复评分
+        if (ratingStarsContainer.classList.contains('disabled')) {
+            this._showToast('您已经评过分啦', 'info');
+            return;
+        }
+        
+        // 禁用评分，防止重复点击
+        ratingStarsContainer.classList.add('disabled');
+
+        try {
+            // 3. 调用 dataManager 函数提交评分
+            const { newRating, newRatingCount } = await rateMaterial(docId, ratingValue);
+            this._showToast('感谢您的评分！', 'success');
+
+            // 4. 实时更新UI
+            const ratingContainer = ratingStarsContainer.closest('.material-rating-container');
+            const scoreElement = ratingContainer.querySelector('.rating-score');
+            const countElement = ratingContainer.querySelector('.rating-count');
+
+            // 更新评分数字和人数
+            scoreElement.textContent = newRating.toFixed(1);
+            if (countElement) {
+                countElement.textContent = `(${newRatingCount}人)`;
+            } else {
+                // 如果之前是“暂无评分”，则需要创建人数元素
+                const newCountElement = document.createElement('span');
+                newCountElement.className = 'rating-count';
+                newCountElement.textContent = `(${newRatingCount}人)`;
+                scoreElement.after(newCountElement);
+            }
+
+            // 更新星星的显示状态
+            const fullStars = Math.floor(newRating);
+            const halfStar = newRating % 1 >= 0.5;
+            ratingStarsContainer.querySelectorAll('.rating-star').forEach((s, index) => {
+                s.classList.remove('star-filled');
+                if (index < fullStars) {
+                    s.setAttribute('data-lucide', 'star');
+                    s.classList.add('star-filled');
+                } else if (index === fullStars && halfStar) {
+                    s.setAttribute('data-lucide', 'star-half');
+                    s.classList.add('star-filled');
+                } else {
+                    s.setAttribute('data-lucide', 'star');
+                }
+            });
+            lucide.createIcons({nodes: [ratingStarsContainer]}); // 仅重绘当前容器内的图标
+
+            // 永久禁用评分
+            ratingStarsContainer.parentElement.setAttribute('title', '已评分');
+
+        } catch (error) {
+            console.error('评分失败:', error);
+            this._showToast('评分失败，请稍后再试', 'error');
+            // 如果失败，则恢复评分功能
+            ratingStarsContainer.classList.remove('disabled');
         }
     }
 
@@ -929,7 +1035,7 @@ class GuideApp {
         }
     }
 
-    // --- 新增: 筛选栏相关的所有逻辑 ---
+    // --- 筛选栏相关的所有逻辑 ---
 
     /**
      * 填充筛选栏的学院下拉框

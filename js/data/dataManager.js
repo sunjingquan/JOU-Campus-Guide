@@ -2,7 +2,10 @@
  * @file 数据管理器 (Data Manager) - 优化版
  * @description 本模块是应用所有数据的唯一出入口。
  * 它直接从 CloudBase 云数据库获取最原始、纯净的 JSON 数据。
- * @version 5.2.0 - 采用 where 查询，精准获取包含 'colleges' 字段的聚合文档，增强了容错性。
+ * @version 5.3.1
+ * @changes
+ * - [错误修复] 修复了 `rateMaterial` 函数中因在事务内使用 `_.inc()` 操作符而导致的 INVALID_ACTION 错误。
+ * - [功能新增] 添加 rateMaterial 函数，用于处理用户对学习资料的评分。
  */
 
 import { db } from '../cloudbase.js';
@@ -27,7 +30,7 @@ export async function getGuideData() {
   } catch (error) {
     console.error(`DataManager: 拉取 '${GUIDE_COLLECTION}' 数据失败!`, error);
     // 如果获取失败，返回一个空数组以防止应用崩溃
-    return []; 
+    return [];
   }
 }
 
@@ -39,7 +42,7 @@ export async function getGuideData() {
 export async function getCampusData() {
   try {
     console.log(`DataManager: 正在从 '${CAMPUS_COLLECTION}' 集合中查找包含 'colleges' 字段的聚合文档...`);
-    
+
     // [新策略] 使用 where 查询，确保我们只获取包含 'colleges' 字段的文档。
     // 这是为了防止加载到旧的、不完整的数据文档。
     const result = await db.collection(CAMPUS_COLLECTION)
@@ -51,13 +54,13 @@ export async function getCampusData() {
     // 检查是否成功获取到了数据，并且至少有一个匹配的文档
     if (result.data && result.data.length > 0) {
       // CloudBase V2 SDK 的 get() 返回一个数组，我们取第一个元素
-      const finalData = result.data[0]; 
-      
+      const finalData = result.data[0];
+
       // 添加一个警告，以防集合中有多个符合条件的文档，这可能表示配置错误
       if (result.data.length > 1) {
           console.warn(`DataManager 警告: '${CAMPUS_COLLECTION}' 集合中发现了多个包含 'colleges' 字段的文档。系统将使用第一个。建议清理多余的文档。`);
       }
-      
+
       console.log("DataManager: 成功拉取到聚合的 campus_data:", finalData);
       return finalData;
     } else {
@@ -100,7 +103,7 @@ export async function getMaterials(options = {}) {
         console.log(`DataManager: 正在拉取资料列表，筛选条件:`, options);
         let query = db.collection(STUDY_MATERIALS_COLLECTION);
         const _ = db.command;
-        
+
         // 使用一个数组来存储所有的 where 条件
         const whereClauses = [];
 
@@ -119,7 +122,7 @@ export async function getMaterials(options = {}) {
                 { teacher: regex }
             ]));
         }
-        
+
         // 如果有筛选条件，则应用 where 查询
         if (whereClauses.length > 0) {
             // 使用 _.and 将所有条件组合起来
@@ -170,5 +173,52 @@ export async function incrementDownloadCount(docId) {
     } catch (error) {
         console.error(`DataManager: 更新文档 ${docId} 下载次数失败!`, error);
         // 此处不抛出错误，因为即使计数失败，也不应中断用户的下载流程
+    }
+}
+
+/**
+ * 更新指定资料的评分。
+ * @param {string} docId - 要评分的资料文档ID。
+ * @param {number} userRating - 用户给出的评分 (1-5的整数)。
+ * @returns {Promise<{newRating: number, newRatingCount: number}>} 返回包含新平均分和新评分人数的对象。
+ */
+export async function rateMaterial(docId, userRating) {
+    const materialRef = db.collection(STUDY_MATERIALS_COLLECTION).doc(docId);
+
+    try {
+        console.log(`DataManager: 用户正在为文档 ${docId} 评分为 ${userRating} 星...`);
+        
+        // 使用事务来确保读取和写入的原子性，防止并发问题
+        const transactionResult = await db.runTransaction(async transaction => {
+            const doc = await transaction.get(materialRef);
+            if (!doc.data || doc.data.length === 0) {
+                throw new Error("文档不存在");
+            }
+
+            const material = doc.data[0];
+            const oldTotalScore = (material.rating || 0) * (material.ratingCount || 0);
+            const newRatingCount = (material.ratingCount || 0) + 1;
+            const newTotalScore = oldTotalScore + userRating;
+            const newRating = newTotalScore / newRatingCount;
+
+            // ===================================================================================
+            // [错误修复] 在事务中，直接使用计算出的新值进行更新，而不是使用 _.inc()
+            // ===================================================================================
+            await transaction.update(materialRef, {
+                rating: newRating,
+                ratingCount: newRatingCount
+            });
+
+            // 事务需要返回一个值，这个值将作为 runTransaction 的结果
+            return { newRating, newRatingCount };
+        });
+
+        console.log(`DataManager: 文档 ${docId} 评分成功。新平均分: ${transactionResult.newRating}, 总评分人数: ${transactionResult.newRatingCount}`);
+        return transactionResult;
+
+    } catch (error) {
+        console.error(`DataManager: 更新文档 ${docId} 评分失败!`, error);
+        // 抛出错误，让上层调用者知道操作失败
+        throw error;
     }
 }
