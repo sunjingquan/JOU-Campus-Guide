@@ -10,7 +10,7 @@
  */
 
 // ===================================================================================
-// [重构] 任务1：导入新的函数，移除旧的 rateMaterial
+// [修改] 任务1：导入新的函数，移除旧的 rateMaterial
 // ===================================================================================
 import { getGuideData, getCampusData, getMaterials, addMaterial, incrementDownloadCount, addRating, checkIfUserRated } from './data/dataManager.js';
 import * as renderer from './ui/renderer.js';
@@ -41,7 +41,7 @@ class GuideApp {
         };
         this.searchDebounceTimer = null;
 
-        // 用于缓存资料的原始评分数据，以便进行乐观UI更新
+        // [新增] 用于缓存资料的原始评分数据，以便进行乐观UI更新
         this.materialRatingCache = new Map();
 
         this._cacheDOMElements();
@@ -721,7 +721,7 @@ class GuideApp {
         this.dom.materialsContent.innerHTML = `<div class="loader mx-auto mt-16"></div>`;
         const materials = await getMaterials(this.materialFilters);
 
-        // 缓存评分数据，以便进行乐观UI更新
+        // [修改] 缓存评分数据，以便进行乐观UI更新
         this.materialRatingCache.clear();
         materials.forEach(m => {
             this.materialRatingCache.set(m._id, {
@@ -733,7 +733,7 @@ class GuideApp {
         this.dom.materialsContent.innerHTML = renderer.generateMaterialsList(materials);
         lucide.createIcons();
 
-        // [体验优化] 如果用户已登录，检查并禁用已评分项目的评分功能
+        // [修改] 如果用户已登录，检查并禁用已评分项目的评分功能
         if (this.currentUserData) {
             this.dom.materialsContent.querySelectorAll('.material-rating-stars').forEach(async container => {
                 const docId = container.dataset.docId;
@@ -942,13 +942,13 @@ class GuideApp {
         const docId = ratingStarsContainer.dataset.docId;
         const ratingValue = parseInt(star.dataset.value, 10);
 
-        // 2. 防止重复评分
+        // 2. 防止重复评分（前端检查）
         if (ratingStarsContainer.classList.contains('disabled')) {
             this._showToast('您已经评过分啦', 'info');
             return;
         }
 
-        // 3. 立即禁用评分，防止重复点击
+        // 3. 立即禁用评分UI，防止重复点击
         ratingStarsContainer.classList.add('disabled');
         ratingStarsContainer.parentElement.setAttribute('title', '正在提交...');
 
@@ -960,10 +960,11 @@ class GuideApp {
             // 5. 施展“乐观UI更新”魔法
             const oldRatingData = this.materialRatingCache.get(docId) || { rating: 0, ratingCount: 0 };
             const newRatingCount = oldRatingData.ratingCount + 1;
+            // 计算新的总分 = 原总分 + 本次评分。原总分 = 原平均分 * 原人数
             const newTotalScore = (oldRatingData.rating * oldRatingData.ratingCount) + ratingValue;
             const newRating = newTotalScore / newRatingCount;
 
-            // 更新缓存
+            // 更新前端缓存，以便下次计算
             this.materialRatingCache.set(docId, { rating: newRating, ratingCount: newRatingCount });
 
             // 更新UI
@@ -973,7 +974,7 @@ class GuideApp {
         } catch (error) {
             console.error('评分失败:', error);
             this._showToast('评分失败，请稍后再试', 'error');
-            // 如果后台提交失败，则恢复评分功能
+            // 如果后台提交失败，则恢复评分功能，让用户可以重试
             ratingStarsContainer.classList.remove('disabled');
             ratingStarsContainer.parentElement.setAttribute('title', '点击评分');
         }
@@ -992,6 +993,7 @@ class GuideApp {
         if (countElement) {
             countElement.textContent = `(${newRatingCount}人)`;
         } else {
+            // 如果之前没有人评过分，可能没有 countElement，需要创建一个
             const newCountElement = document.createElement('span');
             newCountElement.className = 'rating-count';
             newCountElement.textContent = `(${newRatingCount}人)`;
@@ -1002,13 +1004,19 @@ class GuideApp {
         const fullStars = Math.floor(newRating);
         const halfStar = newRating % 1 >= 0.5;
         ratingStarsContainer.querySelectorAll('.rating-star').forEach((s, index) => {
-            s.classList.remove('star-filled', 'hover');
-            const icon = (index < fullStars) ? 'star' : (index === fullStars && halfStar) ? 'star-half' : 'star';
-            s.setAttribute('data-lucide', icon);
-            if (icon !== 'star') {
+            s.classList.remove('star-filled', 'hover'); // 移除所有状态
+            const starValue = index + 1;
+            let icon = 'star'; // 默认为空星
+            if (starValue <= fullStars) {
+                icon = 'star'; // 实心星
+                s.classList.add('star-filled');
+            } else if (starValue === fullStars + 1 && halfStar) {
+                icon = 'star-half'; // 半星
                 s.classList.add('star-filled');
             }
+            s.setAttribute('data-lucide', icon);
         });
+        // 让 lucide 重新渲染我们刚刚修改过的图标
         lucide.createIcons({ nodes: [ratingStarsContainer] });
     }
 

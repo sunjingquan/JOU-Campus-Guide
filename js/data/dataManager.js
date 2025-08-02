@@ -163,17 +163,19 @@ export async function incrementDownloadCount(docId) {
  */
 export async function checkIfUserRated(materialId, userId) {
     try {
+        // 在 'ratings' 集合中查找同时满足 materialId 和 userId 的记录
         const result = await db.collection(RATINGS_COLLECTION)
             .where({
                 materialId: materialId,
                 userId: userId
             })
-            .count();
+            .count(); // 我们只需要知道有没有，所以用 count() 更高效
         
+        // 如果查到的记录总数大于0，说明用户已经投过票了
         return result.total > 0;
     } catch (error) {
         console.error("DataManager: 检查用户评分记录失败!", error);
-        // 在不确定的情况下，为防止刷分，保守地返回 true
+        // 在不确定的情况下（比如网络错误），为了防止刷分，保守地返回 true
         return true; 
     }
 }
@@ -188,14 +190,15 @@ export async function checkIfUserRated(materialId, userId) {
 export async function addRating(materialId, userId, rating) {
     try {
         console.log(`DataManager: 用户 ${userId} 正在为资料 ${materialId} 评分为 ${rating} 星...`);
+        // 向 'ratings' 集合中添加一条新文档（一张选票）
         return await db.collection(RATINGS_COLLECTION).add({
-            materialId,
-            userId,
-            rating,
-            createdAt: db.serverDate()
+            materialId, // 投给谁
+            userId,     // 谁投的
+            rating,     // 投了多少分
+            createdAt: db.serverDate() // 投票时间
         });
     } catch (error) {
         console.error(`DataManager: 添加新评分失败!`, error);
-        throw error;
+        throw error; // 将错误抛出，让调用它的函数（main.js）知道操作失败了
     }
 }
