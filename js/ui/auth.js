@@ -1,8 +1,9 @@
 /**
- * @file 用户认证模块 (Authentication) - 最终修复版
+ * @file 用户认证模块 (Authentication) - 已集成学号
  * @description 负责处理所有用户登录、注册、状态管理和UI更新的逻辑。
- * [已修复] 修正了匿名登录的调用方式，以兼容 CloudBase V2 SDK。
- * @version 8.0.0
+ * @version 9.0.0
+ * @changes
+ * - [功能新增] 在新用户注册时，自动从邮箱中提取学号并存入 users 集合的 studentId 字段。
  */
 
 import { app, auth, db } from '../cloudbase.js';
@@ -177,8 +178,13 @@ export function listenForAuthStateChanges(callback) {
                 if (userDoc.data && userDoc.data.length > 0) {
                     userData = { ...currentUser, ...userDoc.data[0] };
                 } else {
+                    // [修改] 提取学号
+                    const emailParts = currentUser.email.split('@');
+                    const studentId = emailParts.length > 0 ? emailParts[0] : null;
+
                     const newUserDoc = {
                         _id: currentUser.uid,
+                        studentId: studentId, // [新增] 将学号存入文档
                         nickname: `用户_${currentUser.uid.slice(0, 6)}`,
                         email: currentUser.email,
                         avatar: DEFAULT_AVATAR_FILE_ID,

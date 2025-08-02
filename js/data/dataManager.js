@@ -1,12 +1,9 @@
 /**
- * @file 数据管理器 (Data Manager) - 投票箱方案版
- * @description 本模块采用读写分离的思想，将评分操作写入独立的 ratings 集合。
- * @version 7.0.0
+ * @file 数据管理器 (Data Manager) - 已集成学号
+ * @description 负责所有与后端数据库的交互。
+ * @version 8.0.0
  * @changes
- * - [重大重构] 废弃 rateMaterial 函数。
- * - [功能新增] 新增 RATINGS_COLLECTION 集合，专门用于存储评分记录。
- * - [功能新增] 新增 addRating 函数，用于向 ratings 集合中添加一条新的评分记录（投票）。
- * - [功能新增] 新增 checkIfUserRated 函数，用于检查用户是否已对某资料评过分，防止重复投票。
+ * - [功能新增] addRating 函数现在可以接收并存储 studentId。
  */
 
 import { db } from '../cloudbase.js';
@@ -15,9 +12,6 @@ import { db } from '../cloudbase.js';
 const GUIDE_COLLECTION = 'guide_data';
 const CAMPUS_COLLECTION = 'campus_data';
 const STUDY_MATERIALS_COLLECTION = 'study_materials';
-// ===================================================================================
-// [功能新增] 为我们的“投票箱”定义一个集合名称
-// ===================================================================================
 const RATINGS_COLLECTION = 'ratings';
 
 
@@ -75,7 +69,6 @@ export async function getCampusData() {
 
 /**
  * 从 study_materials 集合获取资料列表。
- * 注意：这里的 rating 和 ratingCount 是“数据快照”，可能不是最新的。
  */
 export async function getMaterials(options = {}) {
     const {
@@ -151,54 +144,45 @@ export async function incrementDownloadCount(docId) {
     }
 }
 
-// ===================================================================================
-// [功能新增] “投票箱”方案的核心函数
-// ===================================================================================
-
 /**
  * 检查用户是否已经对某个资料评过分（查票）。
- * @param {string} materialId - 资料的文档ID。
- * @param {string} userId - 当前用户的ID。
- * @returns {Promise<boolean>} 如果已评分，返回 true；否则返回 false。
  */
 export async function checkIfUserRated(materialId, userId) {
     try {
-        // 在 'ratings' 集合中查找同时满足 materialId 和 userId 的记录
         const result = await db.collection(RATINGS_COLLECTION)
             .where({
                 materialId: materialId,
                 userId: userId
             })
-            .count(); // 我们只需要知道有没有，所以用 count() 更高效
+            .count();
         
-        // 如果查到的记录总数大于0，说明用户已经投过票了
         return result.total > 0;
     } catch (error) {
         console.error("DataManager: 检查用户评分记录失败!", error);
-        // 在不确定的情况下（比如网络错误），为了防止刷分，保守地返回 true
         return true; 
     }
 }
 
 /**
- * 向 ratings 集合中添加一条新的评分记录（投票）。
+ * [修改] 向 ratings 集合中添加一条新的评分记录（投票）。
  * @param {string} materialId - 资料的文档ID。
  * @param {string} userId - 评分用户的ID。
+ * @param {string} studentId - [新增] 评分用户的学号。
  * @param {number} rating - 用户给出的评分 (1-5的整数)。
  * @returns {Promise<object>} 返回 CloudBase 的操作结果。
  */
-export async function addRating(materialId, userId, rating) {
+export async function addRating(materialId, userId, studentId, rating) {
     try {
-        console.log(`DataManager: 用户 ${userId} 正在为资料 ${materialId} 评分为 ${rating} 星...`);
-        // 向 'ratings' 集合中添加一条新文档（一张选票）
+        console.log(`DataManager: 用户 ${userId} (学号: ${studentId}) 正在为资料 ${materialId} 评分为 ${rating} 星...`);
         return await db.collection(RATINGS_COLLECTION).add({
-            materialId, // 投给谁
-            userId,     // 谁投的
-            rating,     // 投了多少分
-            createdAt: db.serverDate() // 投票时间
+            materialId,
+            userId,
+            studentId, // [新增] 将学号存入评分记录
+            rating,
+            createdAt: db.serverDate()
         });
     } catch (error) {
         console.error(`DataManager: 添加新评分失败!`, error);
-        throw error; // 将错误抛出，让调用它的函数（main.js）知道操作失败了
+        throw error;
     }
 }
