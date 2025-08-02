@@ -1,17 +1,13 @@
 /**
- * @file 应用主入口 (Main Entry Point) - 投票箱方案最终版
+ * @file 应用主入口 (Main Entry Point) - 已集成学号
  * @description 负责应用的整体流程控制。
- * @version 8.0.0
+ * @version 9.0.0
  * @changes
- * - [重大重构] 全面重构 _handleMaterialRating 函数，以适配“投票箱”方案。
- * - [功能新增] 导入 addRating 和 checkIfUserRated 函数。
- * - [功能新增] 新增 _updateRatingUI 函数，专门用于处理前端评分UI的实时更新（乐观UI）。
- * - [体验优化] 在加载资料列表后，会检查并禁用当前用户已评过分的资料的评分功能。
+ * - [功能新增] 上传文件路径使用 studentId，数据库记录增加 uploaderStudentId。
+ * - [功能新增] 提交反馈时增加 studentId 字段。
+ * - [功能新增] 提交评分时增加 studentId 字段。
  */
 
-// ===================================================================================
-// [修改] 任务1：导入新的函数，移除旧的 rateMaterial
-// ===================================================================================
 import { getGuideData, getCampusData, getMaterials, addMaterial, incrementDownloadCount, addRating, checkIfUserRated } from './data/dataManager.js';
 import * as renderer from './ui/renderer.js';
 import { createNavigation, handleNavigationClick, updateActiveNav } from './ui/navigation.js';
@@ -41,7 +37,6 @@ class GuideApp {
         };
         this.searchDebounceTimer = null;
 
-        // [新增] 用于缓存资料的原始评分数据，以便进行乐观UI更新
         this.materialRatingCache = new Map();
 
         this._cacheDOMElements();
@@ -406,14 +401,17 @@ class GuideApp {
         }
 
         try {
-            await db.collection('feedback').add({
+            // [修改] 在提交反馈时，同时记录 userId 和 studentId
+            const feedbackData = {
                 content: content,
                 contact: contact,
                 submittedAt: db.serverDate(),
                 userAgent: navigator.userAgent,
                 campus: this.selectedCampus,
-                userId: this.currentUserData ? this.currentUserData._id : 'anonymous'
-            });
+                userId: this.currentUserData ? this.currentUserData._id : 'anonymous',
+                studentId: this.currentUserData ? this.currentUserData.studentId : 'anonymous'
+            };
+            await db.collection('feedback').add(feedbackData);
 
             this.dom.feedbackForm.classList.add('hidden');
             this.dom.feedbackSuccessMsg.classList.remove('hidden');
@@ -721,7 +719,6 @@ class GuideApp {
         this.dom.materialsContent.innerHTML = `<div class="loader mx-auto mt-16"></div>`;
         const materials = await getMaterials(this.materialFilters);
 
-        // [修改] 缓存评分数据，以便进行乐观UI更新
         this.materialRatingCache.clear();
         materials.forEach(m => {
             this.materialRatingCache.set(m._id, {
@@ -733,7 +730,6 @@ class GuideApp {
         this.dom.materialsContent.innerHTML = renderer.generateMaterialsList(materials);
         lucide.createIcons();
 
-        // [修改] 如果用户已登录，检查并禁用已评分项目的评分功能
         if (this.currentUserData) {
             this.dom.materialsContent.querySelectorAll('.material-rating-stars').forEach(async container => {
                 const docId = container.dataset.docId;
@@ -821,7 +817,10 @@ class GuideApp {
         const formData = new FormData(form);
 
         try {
-            const cloudPath = `study_materials/${this.currentUserData._id}/${Date.now()}-${file.name}`;
+            // [修改] 使用 studentId 作为文件路径的一部分，如果不存在则回退到 userId
+            const userIdentifier = this.currentUserData.studentId || this.currentUserData._id;
+            const cloudPath = `study_materials/${userIdentifier}/${Date.now()}-${file.name}`;
+            
             const uploadResult = await app.uploadFile({
                 cloudPath,
                 filePath: file,
@@ -834,8 +833,10 @@ class GuideApp {
 
             this.dom.uploadStatusText.textContent = '正在写入数据库...';
 
+            // [修改] 在资料数据中同时记录 uploaderId 和 uploaderStudentId
             const materialData = {
                 uploaderId: this.currentUserData._id,
+                uploaderStudentId: this.currentUserData.studentId || null,
                 uploaderNickname: this.currentUserData.nickname,
                 courseName: formData.get('courseName'),
                 teacher: formData.get('teacher'),
@@ -923,14 +924,10 @@ class GuideApp {
         }
     }
 
-    // ===================================================================================
-    // [重大重构] 任务2：重构评分处理函数，适配“投票箱”方案
-    // ===================================================================================
     async _handleMaterialRating(e) {
         const star = e.target.closest('.rating-star');
         if (!star) return;
 
-        // 1. 检查登录状态
         if (!this.currentUserData) {
             this._showToast('请先登录才能评分哦', 'info');
             authUI.handleAuthViewChange('login');
@@ -942,81 +939,67 @@ class GuideApp {
         const docId = ratingStarsContainer.dataset.docId;
         const ratingValue = parseInt(star.dataset.value, 10);
 
-        // 2. 防止重复评分（前端检查）
         if (ratingStarsContainer.classList.contains('disabled')) {
             this._showToast('您已经评过分啦', 'info');
             return;
         }
 
-        // 3. 立即禁用评分UI，防止重复点击
         ratingStarsContainer.classList.add('disabled');
         ratingStarsContainer.parentElement.setAttribute('title', '正在提交...');
 
         try {
-            // 4. 提交评分到 "ratings" 集合 (投票)
-            await addRating(docId, this.currentUserData._id, ratingValue);
+            // [修改] 调用 addRating 时，传入 studentId
+            await addRating(docId, this.currentUserData._id, this.currentUserData.studentId, ratingValue);
             this._showToast('感谢您的评分！', 'success');
 
-            // 5. 施展“乐观UI更新”魔法
             const oldRatingData = this.materialRatingCache.get(docId) || { rating: 0, ratingCount: 0 };
             const newRatingCount = oldRatingData.ratingCount + 1;
-            // 计算新的总分 = 原总分 + 本次评分。原总分 = 原平均分 * 原人数
             const newTotalScore = (oldRatingData.rating * oldRatingData.ratingCount) + ratingValue;
             const newRating = newTotalScore / newRatingCount;
 
-            // 更新前端缓存，以便下次计算
             this.materialRatingCache.set(docId, { rating: newRating, ratingCount: newRatingCount });
 
-            // 更新UI
             this._updateRatingUI(ratingStarsContainer, newRating, newRatingCount);
             ratingStarsContainer.parentElement.setAttribute('title', '您已评过分');
 
         } catch (error) {
             console.error('评分失败:', error);
             this._showToast('评分失败，请稍后再试', 'error');
-            // 如果后台提交失败，则恢复评分功能，让用户可以重试
             ratingStarsContainer.classList.remove('disabled');
             ratingStarsContainer.parentElement.setAttribute('title', '点击评分');
         }
     }
     
-    // ===================================================================================
-    // [功能新增] 任务3：新增一个专门用于更新评分UI的辅助函数
-    // ===================================================================================
     _updateRatingUI(ratingStarsContainer, newRating, newRatingCount) {
         const ratingContainer = ratingStarsContainer.closest('.material-rating-container');
         const scoreElement = ratingContainer.querySelector('.rating-score');
         const countElement = ratingContainer.querySelector('.rating-count');
 
-        // 更新评分数字和人数
         scoreElement.textContent = newRating.toFixed(1);
         if (countElement) {
             countElement.textContent = `(${newRatingCount}人)`;
         } else {
-            // 如果之前没有人评过分，可能没有 countElement，需要创建一个
             const newCountElement = document.createElement('span');
             newCountElement.className = 'rating-count';
             newCountElement.textContent = `(${newRatingCount}人)`;
             scoreElement.after(newCountElement);
         }
 
-        // 更新星星的显示状态
         const fullStars = Math.floor(newRating);
         const halfStar = newRating % 1 >= 0.5;
         ratingStarsContainer.querySelectorAll('.rating-star').forEach((s, index) => {
-            s.classList.remove('star-filled', 'hover'); // 移除所有状态
+            s.classList.remove('star-filled', 'hover');
             const starValue = index + 1;
-            let icon = 'star'; // 默认为空星
+            let icon = 'star';
             if (starValue <= fullStars) {
-                icon = 'star'; // 实心星
+                icon = 'star';
                 s.classList.add('star-filled');
             } else if (starValue === fullStars + 1 && halfStar) {
-                icon = 'star-half'; // 半星
+                icon = 'star-half';
                 s.classList.add('star-filled');
             }
             s.setAttribute('data-lucide', icon);
         });
-        // 让 lucide 重新渲染我们刚刚修改过的图标
         lucide.createIcons({ nodes: [ratingStarsContainer] });
     }
 
