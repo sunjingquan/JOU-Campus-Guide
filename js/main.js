@@ -1,11 +1,13 @@
 /**
- * @file 应用主入口 (Main Entry Point) - 已集成学号
+ * @file 应用主入口 (Main Entry Point) - 密码功能集成版
  * @description 负责应用的整体流程控制。
- * @version 9.0.0
+ * @version 10.0.1
  * @changes
- * - [功能新增] 上传文件路径使用 studentId，数据库记录增加 uploaderStudentId。
- * - [功能新增] 提交反馈时增加 studentId 字段。
- * - [功能新增] 提交评分时增加 studentId 字段。
+ * - [修复] 补全了文件末尾缺失的 `});` 闭合符号，解决了语法错误。
+ * - [新增] 在 _cacheDOMElements 中缓存了所有与密码重置/修改相关的UI元素。
+ * - [新增] 在 _setupEventListeners 中为所有新按钮和表单绑定了从 auth.js 导入的处理函数。
+ * - [新增] 增加了对注册流程中验证码输入框 `blur` 事件的监听，以触发V3 SDK的验证步骤。
+ * - [重构] 更新了部分函数调用以匹配 auth.js 中视图切换的新逻辑。
  */
 
 import { getGuideData, getCampusData, getMaterials, addMaterial, incrementDownloadCount, addRating, checkIfUserRated } from './data/dataManager.js';
@@ -51,6 +53,7 @@ class GuideApp {
 
     _cacheDOMElements() {
         this.dom = {
+            // --- [修改] 缓存所有与密码功能相关的UI元素 ---
             loadingOverlay: document.getElementById('loading-overlay'),
             mainView: document.getElementById('main-view'),
             navMenu: document.getElementById('nav-menu'),
@@ -109,6 +112,7 @@ class GuideApp {
             profileModal: document.getElementById('profile-modal'),
             profileDialog: document.getElementById('profile-dialog'),
             closeProfileBtn: document.getElementById('close-profile-btn'),
+            profileTitle: document.getElementById('profile-title'), // [新增]
             profileViewContainer: document.getElementById('profile-view-container'),
             profileEditContainer: document.getElementById('profile-edit-container'),
             profileAvatarLarge: document.getElementById('profile-avatar-large'),
@@ -118,13 +122,23 @@ class GuideApp {
             profileBio: document.getElementById('profile-bio'),
             editProfileBtn: document.getElementById('edit-profile-btn'),
             logoutButton: document.getElementById('logout-button'),
-            cancelEditBtn: document.getElementById('cancel-edit-btn'),
+            cancelEditProfileBtn: document.getElementById('cancel-edit-profile-btn'), // [修改] 重命名
             saveProfileBtn: document.getElementById('save-profile-btn'),
             avatarSelectionGrid: document.getElementById('avatar-selection-grid'),
             editNickname: document.getElementById('edit-nickname'),
             editBio: document.getElementById('edit-bio'),
             editEnrollmentYear: document.getElementById('edit-enrollment-year'),
             editMajor: document.getElementById('edit-major'),
+            // [新增] 密码重置表单元素
+            sendResetCodeBtn: document.getElementById('send-reset-code-btn'),
+            // [新增] 修改密码表单元素
+            changePasswordPromptBtn: document.getElementById('change-password-prompt-btn'),
+            profileChangePasswordContainer: document.getElementById('profile-change-password-container'),
+            currentPasswordInput: document.getElementById('current-password'),
+            newPasswordInput: document.getElementById('new-password'),
+            confirmNewPasswordInput: document.getElementById('confirm-new-password'),
+            savePasswordBtn: document.getElementById('save-password-btn'),
+            cancelChangePasswordBtn: document.getElementById('cancel-change-password-btn'),
             materialsView: document.getElementById('materials-view'),
             materialsContent: document.getElementById('materials-content'),
             backToMainFromMaterialsBtn: document.getElementById('back-to-main-from-materials-btn'),
@@ -281,7 +295,9 @@ class GuideApp {
     }
 
     _setupEventListeners() {
-        // --- 原有事件监听 ---
+        // --- [修改] 绑定所有新旧UI元素的事件 ---
+
+        // --- 导航与视图切换 ---
         this.dom.navMenu.addEventListener('click', (e) => handleNavigationClick(e, (category, page) => {
             if (category === 'materials') {
                 this._showMaterialsView();
@@ -294,7 +310,6 @@ class GuideApp {
             }
             if (window.innerWidth < 768) viewManager.toggleSidebar();
         }));
-
         this.dom.homeButtonTop.addEventListener('click', this._handleHomeClick.bind(this));
         this.dom.menuToggle.addEventListener('click', viewManager.toggleSidebar);
         this.dom.sidebarOverlay.addEventListener('click', viewManager.toggleSidebar);
@@ -307,9 +322,14 @@ class GuideApp {
         this.dom.bottomNavSearch.addEventListener('click', viewManager.showMobileSearch);
         this.dom.bottomNavCampus.addEventListener('click', modals.showCampusSelector);
         this.dom.closeMobileSearchBtn.addEventListener('click', viewManager.hideMobileSearch);
+
+        // --- 反馈与主题 ---
         this.dom.feedbackForm.addEventListener('submit', this._handleFeedbackSubmit.bind(this));
         this.dom.feedbackBtn.addEventListener('click', modals.showFeedbackModal);
         this.dom.closeFeedbackBtn.addEventListener('click', modals.hideFeedbackModal);
+        this.dom.themeToggleBtn.addEventListener('click', theme.toggleTheme);
+
+        // --- 认证相关 (登录、注册、重置) ---
         this.dom.loginPromptBtn.addEventListener('click', () => {
             authUI.handleAuthViewChange('login');
             modals.showAuthModal();
@@ -319,15 +339,23 @@ class GuideApp {
         this.dom.registerForm.addEventListener('submit', (e) => authUI.handleRegisterSubmit(e));
         this.dom.resetPasswordForm.addEventListener('submit', (e) => authUI.handlePasswordResetSubmit(e));
         this.dom.sendVerificationCodeBtn.addEventListener('click', () => authUI.handleSendVerificationCode());
+        // [新增] 注册时，验证码输入框失去焦点后触发验证
+        this.dom.registerForm.querySelector('#register-verification-code').addEventListener('blur', authUI.handleVerifyCode);
+        // [新增] 忘记密码时，点击发送验证码
+        this.dom.sendResetCodeBtn.addEventListener('click', () => authUI.handleSendResetCode());
+
+        // --- 认证视图切换链接 ---
         this.dom.goToRegister.addEventListener('click', (e) => { e.preventDefault(); authUI.handleAuthViewChange('register'); });
         this.dom.goToLoginFromRegister.addEventListener('click', (e) => { e.preventDefault(); authUI.handleAuthViewChange('login'); });
         this.dom.forgotPasswordLink.addEventListener('click', (e) => { e.preventDefault(); authUI.handleAuthViewChange('reset'); });
         this.dom.goToLoginFromReset.addEventListener('click', (e) => { e.preventDefault(); authUI.handleAuthViewChange('login'); });
+
+        // --- 个人中心相关 ---
         this.dom.userProfileBtn.addEventListener('click', () => { authUI.handleProfileViewChange('view'); modals.showProfileModal(); });
         this.dom.closeProfileBtn.addEventListener('click', modals.hideProfileModal);
         this.dom.logoutButton.addEventListener('click', () => { authUI.handleLogout(); modals.hideProfileModal(); });
         this.dom.editProfileBtn.addEventListener('click', () => { authUI.populateProfileEditForm(this.currentUserData); authUI.handleProfileViewChange('edit'); });
-        this.dom.cancelEditBtn.addEventListener('click', () => authUI.handleProfileViewChange('view'));
+        this.dom.cancelEditProfileBtn.addEventListener('click', () => authUI.handleProfileViewChange('view')); // [修改] 重命名
         this.dom.profileEditContainer.addEventListener('submit', (e) => authUI.handleProfileSave(e, this.currentUserData));
         this.dom.avatarSelectionGrid.addEventListener('click', (e) => {
             const selectedAvatar = e.target.closest('.avatar-option');
@@ -336,6 +364,11 @@ class GuideApp {
                 selectedAvatar.classList.add('selected');
             }
         });
+        // [新增] 修改密码相关事件
+        this.dom.changePasswordPromptBtn.addEventListener('click', () => authUI.handleProfileViewChange('changePassword'));
+        this.dom.profileChangePasswordContainer.addEventListener('submit', (e) => authUI.handleChangePasswordSubmit(e));
+        this.dom.cancelChangePasswordBtn.addEventListener('click', () => authUI.handleProfileViewChange('view'));
+
 
         // --- 学习资料共享功能的事件监听 (使用事件委托) ---
         this.dom.materialsContent.addEventListener('click', (e) => {
@@ -349,7 +382,6 @@ class GuideApp {
                 this._handleMaterialRating(e);
             }
         });
-
         this.dom.materialsContent.addEventListener('mouseover', (e) => {
             const star = e.target.closest('.rating-star');
             const container = e.target.closest('.material-rating-stars');
@@ -359,14 +391,12 @@ class GuideApp {
                 s.classList.toggle('hover', i < hoverValue);
             });
         });
-
         this.dom.materialsContent.addEventListener('mouseout', (e) => {
             const container = e.target.closest('.material-rating-stars');
             if (container) {
                 container.querySelectorAll('.rating-star.hover').forEach(s => s.classList.remove('hover'));
             }
         });
-
         this.dom.backToMainFromMaterialsBtn.addEventListener('click', this._hideMaterialsView.bind(this));
         this.dom.uploadMaterialPromptBtn.addEventListener('click', this._handleUploadPrompt.bind(this));
         this.dom.closeUploadMaterialBtn.addEventListener('click', () => modals.hideUploadMaterialModal());
@@ -374,7 +404,6 @@ class GuideApp {
         this.dom.materialFileInput.addEventListener('change', (e) => {
             this.dom.materialFileName.textContent = e.target.files[0] ? e.target.files[0].name : '';
         });
-        
         this.dom.materialCollegeSelect.addEventListener('change', this._handleCollegeChange.bind(this));
 
         // --- 筛选栏的事件监听 ---
@@ -401,7 +430,6 @@ class GuideApp {
         }
 
         try {
-            // [修改] 在提交反馈时，同时记录 userId 和 studentId
             const feedbackData = {
                 content: content,
                 contact: contact,
@@ -817,7 +845,6 @@ class GuideApp {
         const formData = new FormData(form);
 
         try {
-            // [修改] 使用 studentId 作为文件路径的一部分，如果不存在则回退到 userId
             const userIdentifier = this.currentUserData.studentId || this.currentUserData._id;
             const cloudPath = `study_materials/${userIdentifier}/${Date.now()}-${file.name}`;
             
@@ -833,7 +860,6 @@ class GuideApp {
 
             this.dom.uploadStatusText.textContent = '正在写入数据库...';
 
-            // [修改] 在资料数据中同时记录 uploaderId 和 uploaderStudentId
             const materialData = {
                 uploaderId: this.currentUserData._id,
                 uploaderStudentId: this.currentUserData.studentId || null,
@@ -948,7 +974,6 @@ class GuideApp {
         ratingStarsContainer.parentElement.setAttribute('title', '正在提交...');
 
         try {
-            // [修改] 调用 addRating 时，传入 studentId
             await addRating(docId, this.currentUserData._id, this.currentUserData.studentId, ratingValue);
             this._showToast('感谢您的评分！', 'success');
 

@@ -1,9 +1,13 @@
 /**
- * @file 用户认证模块 (Authentication) - 已集成学号
+ * @file 用户认证模块 (Authentication) - SDK V3 密码功能升级版
  * @description 负责处理所有用户登录、注册、状态管理和UI更新的逻辑。
- * @version 9.0.0
+ * @version 11.0.0
  * @changes
- * - [功能新增] 在新用户注册时，自动从邮箱中提取学号并存入 users 集合的 studentId 字段。
+ * - [重构] handlePasswordResetSubmit: 完全重写，以实现应用内密码重置流程。
+ * - [新增] handleSendResetCode: 为“忘记密码”场景添加独立的发送验证码功能。
+ * - [新增] handleChangePasswordSubmit: 为已登录用户实现安全的密码修改功能。
+ * - [新增] handleProfileViewChange: 扩展此函数以管理个人中心内的三种视图切换（查看、编辑资料、修改密码）。
+ * - [注释] 增加了大量中文注释，解释新功能的工作流程。
  */
 
 import { app, auth, db } from '../cloudbase.js';
@@ -13,20 +17,17 @@ import * as modals from './modals.js';
 let dom;
 let userDocWatcher = null;
 
-// !! 重要 !! 请将下面的值替换成你自己在 CloudBase 上传的 avatar_01.png 的真实 File ID。
 const DEFAULT_AVATAR_FILE_ID = 'cloud://jou-campus-guide-9f57jf08ece0812.6a6f-jou-campus-guide-9f57jf08ece0812-1367578274/images/默认头像/avatar_01.png';
 const FALLBACK_AVATAR_URL = 'https://6a6f-jou-campus-guide-9f57jf08ece0812-1367578274.tcb.qcloud.la/images/%E9%BB%98%E8%AE%A4%E5%A4%B4%E5%83%8F/avatar_01.png?sign=94c44b27adbfba6ce88b12e681b9d360&t=1753770580';
 
 let avatarUrlCache = new Map();
-let verificationData = null;
+let verificationData = {
+    register: null,
+    reset: null
+};
 
-// --- 核心函数 ---
+// --- 核心函数 (无变化) ---
 
-/**
- * 获取单个头像的URL，带缓存和多重后备。
- * @param {string} fileID - 数据库中存储的头像 File ID。
- * @returns {Promise<string>} - 可供<img>标签直接使用的、有效的图片URL。
- */
 export async function getAvatarUrl(fileID) {
     const finalFileID = fileID && fileID.startsWith('cloud://') ? fileID : DEFAULT_AVATAR_FILE_ID;
     if (avatarUrlCache.has(finalFileID)) {
@@ -50,11 +51,6 @@ export async function getAvatarUrl(fileID) {
     }
 }
 
-/**
- * 批量获取一组头像的真实URL，带缓存。
- * @param {Array<string>} fileIDs - 一个包含多个云端FileID的数组
- * @returns {Promise<Object>} - 一个映射对象，key是FileID，value是对应的公开URL
- */
 export async function getAvatarUrls(fileIDs) {
     const urlMap = {};
     const uncachedFileIDs = fileIDs.filter(id => !avatarUrlCache.has(id));
@@ -91,44 +87,29 @@ export function cacheAuthDOMElements(domElements) {
     dom = domElements;
 }
 
-/**
- * [新增] 负责初始化个人资料编辑器所需的所有静态内容（下拉菜单、头像网格等）。
- * 这个函数应该在应用启动时被调用一次。
- * @param {Object} campusData - 从 main.js 传入的校区数据，用于填充专业列表。
- */
 export async function initializeProfileEditor(campusData) {
     if (!dom || !campusData) {
         console.error("无法初始化个人中心编辑器：DOM或校区数据未提供。");
         return;
     }
-
-    // 1. 填充年份
     const yearSelect = dom.editEnrollmentYear;
     const currentYear = new Date().getFullYear();
-    yearSelect.innerHTML = ''; // 清空以防重复调用
+    yearSelect.innerHTML = '';
     for (let i = 0; i < 10; i++) {
         const year = currentYear - i;
         yearSelect.add(new Option(`${year}年`, year));
     }
-
-    // 2. 填充专业
     const majorSelect = dom.editMajor;
     const allMajors = [...new Set(campusData.colleges.flatMap(c => c.majors))];
     allMajors.sort((a, b) => a.localeCompare(b, 'zh-CN'));
     majorSelect.innerHTML = '<option value="">未选择</option>';
     allMajors.forEach(major => majorSelect.add(new Option(major, major)));
-
-    // 3. 填充头像选择网格
     const avatarGrid = dom.avatarSelectionGrid;
-    avatarGrid.innerHTML = ''; // 清空以防重复调用
-
-    // !! 重要 !! 请将这里的 File ID 列表替换成你自己在 CloudBase 上传的所有可选头像的真实 File ID。
+    avatarGrid.innerHTML = '';
     const selectableAvatarFileIDs = [
         'cloud://jou-campus-guide-9f57jf08ece0812.6a6f-jou-campus-guide-9f57jf08ece0812-1367578274/images/默认头像/avatar_01.png',
     ];
-
     const urlMap = await getAvatarUrls(selectableAvatarFileIDs);
-
     selectableAvatarFileIDs.forEach(fileID => {
         const displayUrl = urlMap[fileID];
         if (displayUrl) {
@@ -141,36 +122,24 @@ export async function initializeProfileEditor(campusData) {
     });
 }
 
-/**
- * [已修改] 监听用户登录状态。
- * - 如果用户是真实注册用户，则获取其资料。
- * - 如果用户是匿名访客，则允许其加载数据，但UI上显示为未登录。
- * - 如果没有任何登录状态，则自动尝试匿名登录。
- * @param {function} callback - 用于将用户数据传回主应用的函数。
- */
+// --- 认证核心逻辑 (已升级至 V3) ---
+
 export function listenForAuthStateChanges(callback) {
     auth.onLoginStateChanged(async (loginState) => {
         if (userDocWatcher) {
             userDocWatcher.close();
             userDocWatcher = null;
         }
-
-        if (loginState && loginState.user) {
-            const currentUser = loginState.user;
-
-            // [V2 SDK 兼容性修复] 检查用户是否为匿名用户，直接检查 user 对象上的 isAnonymous 属性
-            if (currentUser.isAnonymous) {
-                console.log("访客已通过匿名方式登录。数据可以正常加载。");
-                // 将UI更新为未登录状态，因为访客不需要看到个人中心
+        if (loginState) {
+            const isAnonymous = loginState.user && loginState.user.isAnonymous;
+            if (isAnonymous) {
+                console.log("访客已通过匿名方式登录。");
                 await updateUIWithUserData(null);
-                // 回调函数传入null，表示没有具体的“用户”数据
                 callback(null);
-                // 注意：此处直接返回，不为匿名用户在'users'集合中创建文档
                 return;
             }
-
-            // --- 以下是针对真实注册用户的现有逻辑 ---
             try {
+                const currentUser = loginState.user;
                 const userDocRef = db.collection('users').doc(currentUser.uid);
                 const userDoc = await userDocRef.get();
                 let userData;
@@ -178,13 +147,11 @@ export function listenForAuthStateChanges(callback) {
                 if (userDoc.data && userDoc.data.length > 0) {
                     userData = { ...currentUser, ...userDoc.data[0] };
                 } else {
-                    // [修改] 提取学号
                     const emailParts = currentUser.email.split('@');
                     const studentId = emailParts.length > 0 ? emailParts[0] : null;
-
                     const newUserDoc = {
                         _id: currentUser.uid,
-                        studentId: studentId, // [新增] 将学号存入文档
+                        studentId: studentId,
                         nickname: `用户_${currentUser.uid.slice(0, 6)}`,
                         email: currentUser.email,
                         avatar: DEFAULT_AVATAR_FILE_ID,
@@ -195,10 +162,8 @@ export function listenForAuthStateChanges(callback) {
                     await userDocRef.set(newUserDoc);
                     userData = { ...currentUser, ...newUserDoc };
                 }
-
                 await updateUIWithUserData(userData);
                 callback(userData);
-
                 userDocWatcher = userDocRef.watch({
                     onChange: async (snapshot) => {
                         if (snapshot.docs && snapshot.docs.length > 0) {
@@ -209,24 +174,19 @@ export function listenForAuthStateChanges(callback) {
                     },
                     onError: (error) => console.error("[DB 监听] 实时监听器出错:", error)
                 });
-
             } catch (dbError) {
-                console.error("获取用户数据时出错:", dbError);
+                console.error("获取或创建用户数据库文档时出错:", dbError);
                 await updateUIWithUserData(null);
                 callback(null);
             }
         } else {
-            // [V2 SDK 兼容性修复] 如果没有任何登录状态，则尝试匿名登录
-            console.log("无用户登录，正在尝试匿名登录以加载公共数据...");
+            console.log("无用户登录，正在尝试匿名登录...");
             try {
-                // 使用 V2 SDK 正确的匿名登录方法
                 await auth.signInAnonymously();
-                // 成功后，onLoginStateChanged 会再次触发，并进入上面的 if (currentUser.isAnonymous) 分支
             } catch (err) {
                 console.error("匿名登录失败:", err);
-                // 如果匿名登录也失败，说明服务可能存在问题，向用户显示错误
                 if(dom && dom.showToast) {
-                    dom.showToast('无法加载应用数据，请检查网络连接', 'error');
+                    dom.showToast('无法连接服务，请检查网络后重试', 'error');
                 }
                 await updateUIWithUserData(null);
                 callback(null);
@@ -235,13 +195,11 @@ export function listenForAuthStateChanges(callback) {
     });
 }
 
-
 async function updateUIWithUserData(userData) {
     if (!dom) return;
     const isLoggedIn = !!userData;
     dom.loginPromptBtn.classList.toggle('hidden', isLoggedIn);
     dom.userProfileBtn.classList.toggle('hidden', !isLoggedIn);
-
     if (isLoggedIn) {
         const avatarUrl = await getAvatarUrl(userData.avatar);
         dom.sidebarAvatar.src = avatarUrl;
@@ -271,9 +229,9 @@ export async function handleLoginSubmit(e) {
     const password = dom.loginForm.password.value;
     const email = `${emailPrefix}@jou.edu.cn`;
     try {
-        await auth.signInWithEmailAndPassword(email, password);
+        await auth.signIn({ username: email, password: password });
         dom.showToast('登录成功！', 'success');
-        modals.hideAuthModal(() => { modals.showProfileModal(); });
+        modals.hideAuthModal(() => { handleProfileViewChange('view'); modals.showProfileModal(); });
     } catch (error) {
         dom.showToast(`登录失败: ${error.message || '请检查学号和密码'}`, 'error');
     } finally {
@@ -284,8 +242,8 @@ export async function handleLoginSubmit(e) {
 
 export async function handleRegisterSubmit(e) {
     e.preventDefault();
-    if (!verificationData) {
-        dom.showToast('请先发送并获取邮箱验证码', 'error');
+    if (!verificationData.register || !verificationData.register.verification_token) {
+        dom.showToast('请先发送并正确输入邮箱验证码', 'error');
         return;
     }
     const button = dom.registerForm.querySelector('button[type="submit"]');
@@ -295,6 +253,7 @@ export async function handleRegisterSubmit(e) {
     const password = dom.registerForm.password.value;
     const verificationCode = dom.registerForm.verification_code.value;
     const email = `${emailPrefix}@jou.edu.cn`;
+
     if (password.length < 8) {
         dom.showToast('密码长度至少需要8位', 'error');
         button.disabled = false;
@@ -302,11 +261,15 @@ export async function handleRegisterSubmit(e) {
         return;
     }
     try {
-        // V2 SDK 注册流程简化，不需要先verify
-        await auth.signUpWithEmailAndPassword(email, password, verificationCode, verificationData.verification_id);
+        await auth.signUp({
+            email: email,
+            password: password,
+            verification_code: verificationCode,
+            verification_token: verificationData.register.verification_token
+        });
         dom.showToast('注册成功！已自动登录。', 'success');
-        verificationData = null;
-        modals.hideAuthModal(() => { modals.showProfileModal(); });
+        verificationData.register = null;
+        modals.hideAuthModal(() => { handleProfileViewChange('view'); modals.showProfileModal(); });
     } catch (error) {
         dom.showToast(`注册失败: ${error.message || '请检查信息是否正确'}`, 'error');
     } finally {
@@ -315,18 +278,18 @@ export async function handleRegisterSubmit(e) {
     }
 }
 
-export async function handleSendVerificationCode() {
-    const emailPrefix = dom.registerForm.email_prefix.value;
-    if (!emailPrefix) {
-        dom.showToast('请先输入学号', 'error');
-        return;
-    }
-    const email = `${emailPrefix}@jou.edu.cn`;
-    const btn = dom.sendVerificationCodeBtn;
+/**
+ * @description 统一处理发送验证码的逻辑，并启动倒计时。
+ * @param {string} email - 目标邮箱地址。
+ * @param {HTMLButtonElement} btn - 点击的按钮元素。
+ * @param {'register' | 'reset'} type - 验证码类型。
+ */
+async function sendVerificationCode(email, btn, type) {
     btn.disabled = true;
     btn.textContent = '发送中...';
     try {
-        verificationData = await auth.sendSignUpVerificationCode(email);
+        const verificationResult = await auth.getVerification({ email: email });
+        verificationData[type] = { verification_id: verificationResult.verification_id };
         dom.showToast('验证码已发送，请检查邮箱', 'success');
         let countdown = 60;
         btn.textContent = `${countdown}秒后重发`;
@@ -346,6 +309,34 @@ export async function handleSendVerificationCode() {
     }
 }
 
+export async function handleSendVerificationCode() {
+    const emailPrefix = dom.registerForm.email_prefix.value;
+    if (!emailPrefix) {
+        dom.showToast('请先输入学号', 'error');
+        return;
+    }
+    const email = `${emailPrefix}@jou.edu.cn`;
+    await sendVerificationCode(email, dom.sendVerificationCodeBtn, 'register');
+}
+
+export async function handleVerifyCode() {
+    const verificationCode = dom.registerForm.verification_code.value;
+    if (!verificationData.register || !verificationData.register.verification_id || !verificationCode) {
+        return;
+    }
+    try {
+        const verifyResult = await auth.verify({
+            verification_id: verificationData.register.verification_id,
+            verification_code: verificationCode
+        });
+        verificationData.register.verification_token = verifyResult.verification_token;
+        console.log("注册验证码验证成功");
+    } catch(error) {
+        dom.showToast(`验证码错误: ${error.message}`, 'error');
+        verificationData.register = null;
+    }
+}
+
 export async function handleLogout() {
     try {
         await auth.signOut();
@@ -356,22 +347,111 @@ export async function handleLogout() {
     }
 }
 
+// [新增] 为忘记密码表单发送验证码
+export async function handleSendResetCode() {
+    const emailPrefix = dom.resetPasswordForm.email_prefix.value;
+    if (!emailPrefix) {
+        dom.showToast('请先输入学号', 'error');
+        return;
+    }
+    const email = `${emailPrefix}@jou.edu.cn`;
+    await sendVerificationCode(email, dom.sendResetCodeBtn, 'reset');
+}
+
+// [重构] 实现应用内密码重置
 export async function handlePasswordResetSubmit(e) {
     e.preventDefault();
     const button = dom.resetPasswordForm.querySelector('button[type="submit"]');
     button.disabled = true;
-    button.textContent = '发送中...';
+    button.textContent = '重置中...';
+
     const emailPrefix = dom.resetPasswordForm.email_prefix.value;
     const email = `${emailPrefix}@jou.edu.cn`;
+    const verificationCode = dom.resetPasswordForm.verification_code.value;
+    const newPassword = dom.resetPasswordForm.new_password.value;
+
+    if (!verificationData.reset || !verificationData.reset.verification_id) {
+        dom.showToast('请先发送并获取验证码', 'error');
+        button.disabled = false;
+        button.textContent = '确认重置';
+        return;
+    }
+    if (newPassword.length < 8) {
+        dom.showToast('新密码长度至少需要8位', 'error');
+        button.disabled = false;
+        button.textContent = '确认重置';
+        return;
+    }
+
     try {
-        await auth.sendPasswordResetEmail(email);
-        dom.showToast('密码重置邮件已发送，请检查您的邮箱', 'success');
-        handleAuthViewChange('login');
+        // 步骤1: 验证验证码以获取 token
+        const verifyResult = await auth.verify({
+            verification_id: verificationData.reset.verification_id,
+            verification_code: verificationCode
+        });
+
+        // 步骤2: 使用获取到的 token 和新密码重置
+        await auth.resetPassword({
+            email: email,
+            new_password: newPassword,
+            verification_token: verifyResult.verification_token,
+        });
+
+        dom.showToast('密码重置成功！', 'success');
+        verificationData.reset = null;
+        handleAuthViewChange('login'); // 跳转回登录界面
     } catch (error) {
-        dom.showToast('邮件发送失败，请检查学号是否正确', 'error');
+        dom.showToast(`重置失败: ${error.message}`, 'error');
     } finally {
         button.disabled = false;
-        button.textContent = '发送重置邮件';
+        button.textContent = '确认重置';
+    }
+}
+
+// [新增] 处理已登录用户的密码修改
+export async function handleChangePasswordSubmit(e) {
+    e.preventDefault();
+    const button = dom.savePasswordBtn;
+    button.disabled = true;
+    button.textContent = '保存中...';
+
+    const currentPassword = dom.currentPasswordInput.value;
+    const newPassword = dom.newPasswordInput.value;
+    const confirmPassword = dom.confirmNewPasswordInput.value;
+
+    if (newPassword !== confirmPassword) {
+        dom.showToast('两次输入的新密码不一致', 'error');
+        button.disabled = false;
+        button.textContent = '保存更改';
+        return;
+    }
+    if (newPassword.length < 8) {
+        dom.showToast('新密码长度至少需要8位', 'error');
+        button.disabled = false;
+        button.textContent = '保存更改';
+        return;
+    }
+
+    try {
+        // 步骤1: 使用当前密码获取 sudo_token (高级操作许可)
+        const sudoRes = await auth.sudo({
+            password: currentPassword
+        });
+
+        // 步骤2: 使用 sudo_token 设置新密码
+        await auth.setPassword({
+            new_password: newPassword,
+            sudo_token: sudoRes.sudo_token
+        });
+
+        dom.showToast('密码修改成功！', 'success');
+        handleProfileViewChange('view'); // 返回个人中心查看页
+
+    } catch (error) {
+        dom.showToast(`修改失败: ${error.message || '请检查当前密码是否正确'}`, 'error');
+    } finally {
+        button.disabled = false;
+        button.textContent = '保存更改';
     }
 }
 
@@ -433,8 +513,22 @@ export function handleAuthViewChange(viewName) {
     dom.authTitle.textContent = titles[viewName];
 }
 
+// [修改] 扩展此函数以支持三种视图
 export function handleProfileViewChange(viewName) {
     if (!dom) return;
     dom.profileViewContainer.classList.toggle('hidden', viewName !== 'view');
     dom.profileEditContainer.classList.toggle('hidden', viewName !== 'edit');
+    dom.profileChangePasswordContainer.classList.toggle('hidden', viewName !== 'changePassword');
+
+    const titles = {
+        view: '个人中心',
+        edit: '编辑个人资料',
+        changePassword: '修改密码'
+    };
+    dom.profileTitle.textContent = titles[viewName];
+
+    // 如果是切换到修改密码视图，清空输入框
+    if (viewName === 'changePassword') {
+        dom.profileChangePasswordContainer.reset();
+    }
 }

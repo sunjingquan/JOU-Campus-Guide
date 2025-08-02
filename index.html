@@ -455,7 +455,7 @@
                                         placeholder="至少8位">
                                 </div>
                             </div>
-                            <!-- [新增] 验证码输入 -->
+                            <!-- 验证码输入 -->
                             <div>
                                 <label for="register-verification-code"
                                     class="block text-sm font-medium text-gray-700 dark:text-gray-300">邮箱验证码</label>
@@ -469,7 +469,7 @@
                                     </button>
                                 </div>
                             </div>
-                            <!-- [修改] 注册按钮 -->
+                            <!-- 注册按钮 -->
                             <div>
                                 <button type="submit" id="register-button"
                                     class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">
@@ -483,9 +483,10 @@
                         </form>
                     </div>
 
-                    <!-- 密码重置表单 -->
+                    <!-- [修改] 密码重置表单结构 -->
                     <div id="reset-password-form-container" class="hidden">
-                        <form id="reset-password-form" class="space-y-6">
+                        <form id="reset-password-form" class="space-y-4">
+                            <!-- 邮箱输入 -->
                             <div>
                                 <label for="reset-email-prefix"
                                     class="block text-sm font-medium text-gray-700 dark:text-gray-300">校园邮箱</label>
@@ -497,10 +498,37 @@
                                         class="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-100 text-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400 text-sm">@jou.edu.cn</span>
                                 </div>
                             </div>
+                            <!-- 验证码输入 -->
                             <div>
+                                <label for="reset-verification-code"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">邮箱验证码</label>
+                                <div class="mt-1 flex space-x-2">
+                                    <input id="reset-verification-code" name="verification_code" type="text" required
+                                        class="w-full px-3 py-2 rounded-md border bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 focus:bg-white dark:focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        placeholder="6位数字验证码">
+                                    <button type="button" id="send-reset-code-btn"
+                                        class="flex-shrink-0 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                                        发送验证码
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- 新密码输入 -->
+                            <div>
+                                <label for="reset-new-password"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">设置新密码</label>
+                                <div class="mt-1 relative">
+                                    <i data-lucide="lock"
+                                        class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none"></i>
+                                    <input id="reset-new-password" name="new_password" type="password" required
+                                        class="w-full pl-10 pr-4 py-2 rounded-md border bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 focus:bg-white dark:focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                                        placeholder="至少8位">
+                                </div>
+                            </div>
+                            <!-- 提交按钮 -->
+                            <div class="pt-2">
                                 <button type="submit" id="reset-password-button"
                                     class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">
-                                    发送重置邮件
+                                    确认重置
                                 </button>
                             </div>
                             <p class="text-center text-sm text-gray-600 dark:text-gray-400">
@@ -509,6 +537,7 @@
                             </p>
                         </form>
                     </div>
+
                 </div>
             </div>
         </div>
@@ -520,7 +549,7 @@
         <div id="profile-dialog"
             class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl transform transition-all scale-95 opacity-0 flex flex-col max-h-[90vh]">
             <div class="p-4 border-b dark:border-gray-700 flex justify-between items-center flex-shrink-0">
-                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">个人中心</h3>
+                <h3 id="profile-title" class="text-lg font-semibold text-gray-800 dark:text-gray-100">个人中心</h3>
                 <button id="close-profile-btn"
                     class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
                     <i data-lucide="x" class="w-6 h-6"></i>
@@ -545,14 +574,21 @@
                     <div class="mt-8 text-center">
                         <p id="profile-bio" class="text-gray-700 dark:text-gray-300 italic max-w-lg mx-auto"></p>
                     </div>
-                    <div class="mt-8 pt-6 border-t dark:border-gray-700 flex justify-center space-x-4">
+                    <!-- [修改] 调整按钮布局和新增“修改密码”按钮 -->
+                    <div class="mt-8 pt-6 border-t dark:border-gray-700 flex justify-center space-x-2 md:space-x-4">
                         <button id="edit-profile-btn"
-                            class="flex items-center justify-center px-6 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors">
+                            class="flex items-center justify-center px-5 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors">
                             <i data-lucide="edit-3" class="w-4 h-4 mr-2"></i>
                             <span>编辑资料</span>
                         </button>
+                        <!-- [新增] 修改密码按钮 -->
+                        <button id="change-password-prompt-btn"
+                            class="flex items-center justify-center px-5 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                            <i data-lucide="key-round" class="w-4 h-4 mr-2"></i>
+                            <span>修改密码</span>
+                        </button>
                         <button id="logout-button"
-                            class="flex items-center justify-center px-6 py-2 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors">
+                            class="flex items-center justify-center px-5 py-2 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors">
                             <i data-lucide="log-out" class="w-4 h-4 mr-2"></i>
                             <span>退出登录</span>
                         </button>
@@ -600,9 +636,38 @@
                         </div>
                     </div>
                     <div class="pt-4 flex justify-end space-x-3">
-                        <button type="button" id="cancel-edit-btn"
+                        <button type="button" id="cancel-edit-profile-btn"
                             class="px-5 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">取消</button>
                         <button type="submit" id="save-profile-btn"
+                            class="px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700">保存更改</button>
+                    </div>
+                </form>
+
+                <!-- [新增] 修改密码视图 -->
+                <form id="profile-change-password-container" class="hidden p-6 md:p-8 space-y-6">
+                    <div>
+                        <label for="current-password"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">当前密码</label>
+                        <input type="password" id="current-password" required autocomplete="current-password"
+                            class="mt-1 w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label for="new-password"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">新密码</label>
+                        <input type="password" id="new-password" required autocomplete="new-password"
+                            class="mt-1 w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                            placeholder="至少8位">
+                    </div>
+                    <div>
+                        <label for="confirm-new-password"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">确认新密码</label>
+                        <input type="password" id="confirm-new-password" required autocomplete="new-password"
+                            class="mt-1 w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div class="pt-4 flex justify-end space-x-3">
+                        <button type="button" id="cancel-change-password-btn"
+                            class="px-5 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">取消</button>
+                        <button type="submit" id="save-password-btn"
                             class="px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700">保存更改</button>
                     </div>
                 </form>
