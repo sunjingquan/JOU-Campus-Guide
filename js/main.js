@@ -1,16 +1,18 @@
 /**
- * @file 应用主入口 (Main Entry Point) - 优化第三版
+ * @file 应用主入口 (Main Entry Point) - 投票箱方案最终版
  * @description 负责应用的整体流程控制。
- * @version 7.3.0
+ * @version 8.0.0
  * @changes
- * - [权限增强] 在 `_handleMaterialDownload` 函数中增加了用户登录状态检查，未登录用户将被引导至登录界面。
- * - [功能新增] 导入 rateMaterial 函数，并添加 _handleMaterialRating 方法来处理评分逻辑。
- * - [功能新增] 在 _setupEventListeners 中添加了对评分星星的点击和悬停事件监听。
- * - [优化] 放宽了文件类型限制，增加了对Excel和Txt文件的支持。
+ * - [重大重构] 全面重构 _handleMaterialRating 函数，以适配“投票箱”方案。
+ * - [功能新增] 导入 addRating 和 checkIfUserRated 函数。
+ * - [功能新增] 新增 _updateRatingUI 函数，专门用于处理前端评分UI的实时更新（乐观UI）。
+ * - [体验优化] 在加载资料列表后，会检查并禁用当前用户已评过分的资料的评分功能。
  */
 
-// 导入重构后的模块
-import { getGuideData, getCampusData, getMaterials, addMaterial, incrementDownloadCount, rateMaterial } from './data/dataManager.js';
+// ===================================================================================
+// [重构] 任务1：导入新的函数，移除旧的 rateMaterial
+// ===================================================================================
+import { getGuideData, getCampusData, getMaterials, addMaterial, incrementDownloadCount, addRating, checkIfUserRated } from './data/dataManager.js';
 import * as renderer from './ui/renderer.js';
 import { createNavigation, handleNavigationClick, updateActiveNav } from './ui/navigation.js';
 import * as authUI from './ui/auth.js';
@@ -18,11 +20,10 @@ import * as modals from './ui/modals.js';
 import * as search from './ui/search.js';
 import * as viewManager from './ui/viewManager.js';
 import * as theme from './ui/theme.js';
-import { db, app } from './cloudbase.js'; // 导入 app 用于文件上传下载
+import { db, app } from './cloudbase.js';
 
 class GuideApp {
     constructor() {
-        // 数据在认证成功后才会被填充
         this.guideData = null;
         this.campusData = null;
         this.selectedCampus = null;
@@ -31,7 +32,6 @@ class GuideApp {
         this.scrollTimeout = null;
         this.currentUserData = null;
 
-        // --- 新增: 资料筛选状态和搜索防抖计时器 ---
         this.materialFilters = {
             college: '',
             major: '',
@@ -41,15 +41,15 @@ class GuideApp {
         };
         this.searchDebounceTimer = null;
 
+        // 用于缓存资料的原始评分数据，以便进行乐观UI更新
+        this.materialRatingCache = new Map();
 
         this._cacheDOMElements();
-        // 将 showToast 方法绑定到实例，以便在其他模块中正确调用
         this.dom.showToast = this._showToast.bind(this);
         authUI.cacheAuthDOMElements(this.dom);
         modals.init(this.dom);
         viewManager.init({
             domElements: this.dom,
-            // 初始时 campusData 为 null，后续会更新
             cData: () => this.campusData
         });
     }
@@ -130,8 +130,6 @@ class GuideApp {
             editBio: document.getElementById('edit-bio'),
             editEnrollmentYear: document.getElementById('edit-enrollment-year'),
             editMajor: document.getElementById('edit-major'),
-
-            // --- 学习资料共享相关的DOM元素 ---
             materialsView: document.getElementById('materials-view'),
             materialsContent: document.getElementById('materials-content'),
             backToMainFromMaterialsBtn: document.getElementById('back-to-main-from-materials-btn'),
@@ -150,7 +148,6 @@ class GuideApp {
             uploadFormFooter: document.getElementById('upload-form-footer'),
             materialCollegeSelect: document.getElementById('material-college'),
             materialMajorSelect: document.getElementById('material-major'),
-            // --- 新增: 缓存筛选栏的DOM元素 ---
             materialsCollegeFilter: document.getElementById('materials-college-filter'),
             materialsMajorFilter: document.getElementById('materials-major-filter'),
             materialsSearchInput: document.getElementById('materials-search-input'),
@@ -347,29 +344,23 @@ class GuideApp {
 
         // --- 学习资料共享功能的事件监听 (使用事件委托) ---
         this.dom.materialsContent.addEventListener('click', (e) => {
-            // 下载按钮事件
             if (e.target.closest('.download-material-btn')) {
                 this._handleMaterialDownload(e);
             }
-            // 空状态下的上传按钮事件
             if (e.target.closest('#upload-from-empty-state-btn')) {
                 this._handleUploadPrompt();
             }
-            // 为星星评分添加点击事件监听
             if (e.target.closest('.rating-star')) {
                 this._handleMaterialRating(e);
             }
         });
 
-        // 为星星评分添加悬停效果的事件监听
         this.dom.materialsContent.addEventListener('mouseover', (e) => {
             const star = e.target.closest('.rating-star');
             const container = e.target.closest('.material-rating-stars');
             if (!star || !container || container.classList.contains('disabled')) return;
-
             const hoverValue = parseInt(star.dataset.value, 10);
             container.querySelectorAll('.rating-star').forEach((s, i) => {
-                // 为小于等于当前悬停值的星星添加 hover 样式
                 s.classList.toggle('hover', i < hoverValue);
             });
         });
@@ -377,11 +368,9 @@ class GuideApp {
         this.dom.materialsContent.addEventListener('mouseout', (e) => {
             const container = e.target.closest('.material-rating-stars');
             if (container) {
-                // 鼠标移出时，移除所有星星的 hover 样式
                 container.querySelectorAll('.rating-star.hover').forEach(s => s.classList.remove('hover'));
             }
         });
-
 
         this.dom.backToMainFromMaterialsBtn.addEventListener('click', this._hideMaterialsView.bind(this));
         this.dom.uploadMaterialPromptBtn.addEventListener('click', this._handleUploadPrompt.bind(this));
@@ -716,7 +705,6 @@ class GuideApp {
         this.dom.materialsView.classList.remove('hidden');
         this.dom.materialsView.classList.add('flex');
         updateActiveNav('materials', null);
-        // --- 新增: 进入页面时，填充筛选器并加载数据 ---
         this._populateFilterCollegeSelect();
         this._loadAndRenderMaterials();
     }
@@ -729,15 +717,33 @@ class GuideApp {
         }
     }
 
-    /**
-     * [已修改] 根据当前的筛选条件加载并渲染资料
-     */
     async _loadAndRenderMaterials() {
         this.dom.materialsContent.innerHTML = `<div class="loader mx-auto mt-16"></div>`;
-        // 将当前的筛选状态传给 dataManager
         const materials = await getMaterials(this.materialFilters);
+
+        // 缓存评分数据，以便进行乐观UI更新
+        this.materialRatingCache.clear();
+        materials.forEach(m => {
+            this.materialRatingCache.set(m._id, {
+                rating: m.rating || 0,
+                ratingCount: m.ratingCount || 0
+            });
+        });
+
         this.dom.materialsContent.innerHTML = renderer.generateMaterialsList(materials);
         lucide.createIcons();
+
+        // [体验优化] 如果用户已登录，检查并禁用已评分项目的评分功能
+        if (this.currentUserData) {
+            this.dom.materialsContent.querySelectorAll('.material-rating-stars').forEach(async container => {
+                const docId = container.dataset.docId;
+                const hasRated = await checkIfUserRated(docId, this.currentUserData._id);
+                if (hasRated) {
+                    container.classList.add('disabled');
+                    container.parentElement.setAttribute('title', '您已评过分');
+                }
+            });
+        }
     }
 
     _handleUploadPrompt() {
@@ -781,20 +787,19 @@ class GuideApp {
 
         const file = fileInput.files[0];
 
-        // [优化] 根据你的建议，放宽文件类型限制，增加 Excel 和 Txt
         const allowedTypes = [
-            'application/pdf', // .pdf
-            'application/msword', // .doc
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
-            'application/vnd.ms-powerpoint', // .ppt
-            'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
-            'application/vnd.ms-excel', // .xls
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
-            'image/jpeg', // .jpg, .jpeg
-            'image/png', // .png
-            'text/plain', // .txt
-            'application/zip', // .zip
-            'application/x-rar-compressed', // .rar
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-powerpoint',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'image/jpeg',
+            'image/png',
+            'text/plain',
+            'application/zip',
+            'application/x-rar-compressed',
         ];
         const maxSizeInMB = 20;
 
@@ -873,14 +878,11 @@ class GuideApp {
         const downloadBtn = e.target.closest('.download-material-btn');
         if (!downloadBtn) return;
 
-        // ===================================================================================
-        // [权限增强] 在这里增加“代码守卫”，检查用户登录状态
-        // ===================================================================================
         if (!this.currentUserData) {
             this._showToast('请先登录才能下载资料哦', 'info');
             authUI.handleAuthViewChange('login');
             modals.showAuthModal();
-            return; // 阻止后续代码执行
+            return;
         }
 
         const { filePath, docId } = downloadBtn.dataset;
@@ -899,9 +901,8 @@ class GuideApp {
             if (fileList[0] && fileList[0].tempFileURL) {
                 const tempUrl = fileList[0].tempFileURL;
                 window.open(tempUrl, '_blank');
-                incrementDownloadCount(docId); // 后台更新下载计数
+                incrementDownloadCount(docId);
 
-                // [体验优化] 前端下载计数的实时更新
                 const countElement = downloadBtn.closest('.material-card').querySelector('[data-lucide="download"] + span');
                 if (countElement) {
                     const currentCount = parseInt(countElement.textContent, 10);
@@ -922,6 +923,9 @@ class GuideApp {
         }
     }
 
+    // ===================================================================================
+    // [重大重构] 任务2：重构评分处理函数，适配“投票箱”方案
+    // ===================================================================================
     async _handleMaterialRating(e) {
         const star = e.target.closest('.rating-star');
         if (!star) return;
@@ -943,59 +947,71 @@ class GuideApp {
             this._showToast('您已经评过分啦', 'info');
             return;
         }
-        
-        // 禁用评分，防止重复点击
+
+        // 3. 立即禁用评分，防止重复点击
         ratingStarsContainer.classList.add('disabled');
+        ratingStarsContainer.parentElement.setAttribute('title', '正在提交...');
 
         try {
-            // 3. 调用 dataManager 函数提交评分
-            const { newRating, newRatingCount } = await rateMaterial(docId, ratingValue);
+            // 4. 提交评分到 "ratings" 集合 (投票)
+            await addRating(docId, this.currentUserData._id, ratingValue);
             this._showToast('感谢您的评分！', 'success');
 
-            // 4. 实时更新UI
-            const ratingContainer = ratingStarsContainer.closest('.material-rating-container');
-            const scoreElement = ratingContainer.querySelector('.rating-score');
-            const countElement = ratingContainer.querySelector('.rating-count');
+            // 5. 施展“乐观UI更新”魔法
+            const oldRatingData = this.materialRatingCache.get(docId) || { rating: 0, ratingCount: 0 };
+            const newRatingCount = oldRatingData.ratingCount + 1;
+            const newTotalScore = (oldRatingData.rating * oldRatingData.ratingCount) + ratingValue;
+            const newRating = newTotalScore / newRatingCount;
 
-            // 更新评分数字和人数
-            scoreElement.textContent = newRating.toFixed(1);
-            if (countElement) {
-                countElement.textContent = `(${newRatingCount}人)`;
-            } else {
-                // 如果之前是“暂无评分”，则需要创建人数元素
-                const newCountElement = document.createElement('span');
-                newCountElement.className = 'rating-count';
-                newCountElement.textContent = `(${newRatingCount}人)`;
-                scoreElement.after(newCountElement);
-            }
+            // 更新缓存
+            this.materialRatingCache.set(docId, { rating: newRating, ratingCount: newRatingCount });
 
-            // 更新星星的显示状态
-            const fullStars = Math.floor(newRating);
-            const halfStar = newRating % 1 >= 0.5;
-            ratingStarsContainer.querySelectorAll('.rating-star').forEach((s, index) => {
-                s.classList.remove('star-filled');
-                if (index < fullStars) {
-                    s.setAttribute('data-lucide', 'star');
-                    s.classList.add('star-filled');
-                } else if (index === fullStars && halfStar) {
-                    s.setAttribute('data-lucide', 'star-half');
-                    s.classList.add('star-filled');
-                } else {
-                    s.setAttribute('data-lucide', 'star');
-                }
-            });
-            lucide.createIcons({nodes: [ratingStarsContainer]}); // 仅重绘当前容器内的图标
-
-            // 永久禁用评分
-            ratingStarsContainer.parentElement.setAttribute('title', '已评分');
+            // 更新UI
+            this._updateRatingUI(ratingStarsContainer, newRating, newRatingCount);
+            ratingStarsContainer.parentElement.setAttribute('title', '您已评过分');
 
         } catch (error) {
             console.error('评分失败:', error);
             this._showToast('评分失败，请稍后再试', 'error');
-            // 如果失败，则恢复评分功能
+            // 如果后台提交失败，则恢复评分功能
             ratingStarsContainer.classList.remove('disabled');
+            ratingStarsContainer.parentElement.setAttribute('title', '点击评分');
         }
     }
+    
+    // ===================================================================================
+    // [功能新增] 任务3：新增一个专门用于更新评分UI的辅助函数
+    // ===================================================================================
+    _updateRatingUI(ratingStarsContainer, newRating, newRatingCount) {
+        const ratingContainer = ratingStarsContainer.closest('.material-rating-container');
+        const scoreElement = ratingContainer.querySelector('.rating-score');
+        const countElement = ratingContainer.querySelector('.rating-count');
+
+        // 更新评分数字和人数
+        scoreElement.textContent = newRating.toFixed(1);
+        if (countElement) {
+            countElement.textContent = `(${newRatingCount}人)`;
+        } else {
+            const newCountElement = document.createElement('span');
+            newCountElement.className = 'rating-count';
+            newCountElement.textContent = `(${newRatingCount}人)`;
+            scoreElement.after(newCountElement);
+        }
+
+        // 更新星星的显示状态
+        const fullStars = Math.floor(newRating);
+        const halfStar = newRating % 1 >= 0.5;
+        ratingStarsContainer.querySelectorAll('.rating-star').forEach((s, index) => {
+            s.classList.remove('star-filled', 'hover');
+            const icon = (index < fullStars) ? 'star' : (index === fullStars && halfStar) ? 'star-half' : 'star';
+            s.setAttribute('data-lucide', icon);
+            if (icon !== 'star') {
+                s.classList.add('star-filled');
+            }
+        });
+        lucide.createIcons({ nodes: [ratingStarsContainer] });
+    }
+
 
     _populateCollegeSelect() {
         const select = this.dom.materialCollegeSelect;
@@ -1037,9 +1053,6 @@ class GuideApp {
 
     // --- 筛选栏相关的所有逻辑 ---
 
-    /**
-     * 填充筛选栏的学院下拉框
-     */
     _populateFilterCollegeSelect() {
         const select = this.dom.materialsCollegeFilter;
         select.innerHTML = '<option value="">所有学院</option>'; // 重置
@@ -1054,9 +1067,6 @@ class GuideApp {
         }
     }
 
-    /**
-     * 处理筛选栏学院选择的变化，并联动专业
-     */
     _handleFilterCollegeChange() {
         const collegeName = this.dom.materialsCollegeFilter.value;
         const majorSelect = this.dom.materialsMajorFilter;
@@ -1076,13 +1086,9 @@ class GuideApp {
         } else {
             majorSelect.disabled = true;
         }
-        // 触发筛选更新
         this._handleFilterChange();
     }
 
-    /**
-     * 统一处理筛选条件变化，并重新加载数据
-     */
     _handleFilterChange() {
         this.materialFilters.college = this.dom.materialsCollegeFilter.value;
         this.materialFilters.major = this.dom.materialsMajorFilter.value;
@@ -1090,19 +1096,13 @@ class GuideApp {
         this._loadAndRenderMaterials();
     }
 
-    /**
-     * 处理搜索框输入（带防抖）
-     */
     _handleSearchChange() {
         clearTimeout(this.searchDebounceTimer);
         this.searchDebounceTimer = setTimeout(() => {
             this._handleFilterChange();
-        }, 500); // 500ms 延迟
+        }, 500);
     }
 
-    /**
-     * 处理排序按钮点击
-     */
     _handleSortChange(e) {
         const button = e.target.closest('.sort-btn');
         if (!button || button.classList.contains('active')) return;
@@ -1115,7 +1115,6 @@ class GuideApp {
     }
 }
 
-// [关键改动] 重构后的应用启动入口
 document.addEventListener('DOMContentLoaded', async () => {
     const loadingOverlay = document.getElementById('loading-overlay');
     loadingOverlay.style.display = 'flex';
