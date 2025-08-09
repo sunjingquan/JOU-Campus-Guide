@@ -1,46 +1,37 @@
 /**
- * @file 用户认证组件 (Auth Component) - 重构版
- * @description 一个完全独立的、高内聚的模块，封装了所有与用户认证相关的功能。
- * 它自我管理DOM、事件和内部状态，并通过事件总线 (eventBus) 与外部通信。
- * @version 12.0.0
+ * @file 用户认证组件 (Auth Component) - 二次修复版
+ * @description 修复了编辑资料时无法预填用户旧数据的问题，并优化了退出登录后的状态逻辑。
+ * @version 12.2.0
  */
 
 // --- 依赖导入 ---
-// 导入 CloudBase 服务，用于与后端交互
-import { app, auth, db } from '../../js/cloudbase.js'; 
-// 导入事件总线，用于实现低耦合的模块间通信
+import { app, auth, db } from '../../js/cloudbase.js';
 import { eventBus } from '../../services/eventBus.js';
 
 // --- 模块内变量 ---
-// 用于缓存组件自身需要操作的所有DOM元素，避免重复查询
-let dom = {}; 
-// 用于缓存从CloudBase获取的头像URL，减少不必要的API请求
+let dom = {};
 let avatarUrlCache = new Map();
-// 用于存储注册和重置密码流程中的验证数据
 let verificationData = {
     register: null,
     reset: null
 };
+let campusDataForEditor = null;
+// [修复] 新增一个模块级变量，用于存储完整的用户数据对象
+let fullUserData = null; 
+// [修复] 新增一个标志位，用于处理用户主动退出的情况
+let isExplicitLogout = false; 
 
-// 默认和备用的头像地址
 const DEFAULT_AVATAR_FILE_ID = 'cloud://jou-campus-guide-9f57jf08ece0812.6a6f-jou-campus-guide-9f57jf08ece0812-1367578274/images/默认头像/avatar_01.png';
 const FALLBACK_AVATAR_URL = 'https://6a6f-jou-campus-guide-9f57jf08ece0812-1367578274.tcb.qcloud.la/images/%E9%BB%98%E8%AE%A4%E5%A4%B4%E5%83%8F/avatar_01.png?sign=94c44b27adbfba6ce88b12e681b9d360&t=1753770580';
 
-// 用于监听用户数据库文档变化的 watcher
-let userDocWatcher = null; 
+let userDocWatcher = null;
 
 // =============================================================================
-// --- 核心逻辑函数 (处理数据和与后端交互) ---
+// --- 核心逻辑函数 ---
 // =============================================================================
 
-/**
- * 监听用户登录状态的实时变化。
- * 这是整个组件的核心，它连接了CloudBase认证状态和我们的应用。
- * [第三刀：解耦] 不再使用回调函数，而是发布全局事件。
- */
 function listenForAuthStateChanges() {
     auth.onLoginStateChanged(async (loginState) => {
-        // 如果之前有监听器，先关闭它
         if (userDocWatcher) {
             userDocWatcher.close();
             userDocWatcher = null;
@@ -48,14 +39,12 @@ function listenForAuthStateChanges() {
 
         let finalUserData = null;
 
-        if (loginState) { // 用户已登录 (包括匿名登录)
+        if (loginState) {
             const isAnonymous = loginState.user && loginState.user.isAnonymous;
             if (isAnonymous) {
                 console.log("Auth Component: 访客已通过匿名方式登录。");
-                // 对于匿名用户，我们认为应用层面的用户数据为 null
                 finalUserData = null;
             } else {
-                // 对于真实用户，获取或创建其在数据库中的文档
                 try {
                     const currentUser = loginState.user;
                     const userDocRef = db.collection('users').doc(currentUser.uid);
@@ -64,14 +53,15 @@ function listenForAuthStateChanges() {
                     if (userDoc.data && userDoc.data.length > 0) {
                         finalUserData = { ...currentUser, ...userDoc.data[0] };
                     } else {
-                        // 如果是新注册用户，为其创建一条默认的用户数据记录
-                        const emailParts = currentUser.email.split('@');
+                        const email = currentUser.email || '';
+                        const emailParts = email.split('@');
                         const studentId = emailParts.length > 0 ? emailParts[0] : null;
+                        
                         const newUserDoc = {
                             _id: currentUser.uid,
                             studentId: studentId,
                             nickname: `用户_${currentUser.uid.slice(0, 6)}`,
-                            email: currentUser.email,
+                            email: email,
                             avatar: DEFAULT_AVATAR_FILE_ID,
                             bio: '这个人很懒，什么都没留下...',
                             enrollmentYear: new Date().getFullYear().toString(),
@@ -81,13 +71,14 @@ function listenForAuthStateChanges() {
                         finalUserData = { ...currentUser, ...newUserDoc };
                     }
                     
-                    // 启动对该用户文档的实时监听
                     userDocWatcher = userDocRef.watch({
                         onChange: (snapshot) => {
                             if (snapshot.docs && snapshot.docs.length > 0) {
                                 const updatedData = { ...loginState.user, ...snapshot.docs[0] };
-                                // 当用户信息更新时，再次发布事件
+                                // [修复] 当用户信息更新时，同步更新内部缓存
+                                fullUserData = updatedData; 
                                 eventBus.publish('auth:stateChanged', { user: updatedData });
+                                updateComponentUI(updatedData); // 确保UI也同步更新
                             }
                         },
                         onError: (error) => console.error("[DB 监听] 实时监听器出错:", error)
@@ -99,29 +90,49 @@ function listenForAuthStateChanges() {
                 }
             }
         } else { // 用户未登录
-            console.log("Auth Component: 无用户登录，正在尝试匿名登录...");
-            try {
-                await auth.signInAnonymously();
-                // 匿名登录成功后，onLoginStateChanged 会再次被触发
-            } catch (err) {
-                console.error("Auth Component: 匿名登录失败:", err);
-                eventBus.publish('toast:show', { message: '无法连接服务，请检查网络后重试', type: 'error' });
+            // [修复] 检查是否是用户主动退出
+            if (isExplicitLogout) {
+                console.log("Auth Component: 用户已主动退出。");
                 finalUserData = null;
+                isExplicitLogout = false; // 重置标志位
+            } else {
+                console.log("Auth Component: 无用户登录，正在尝试匿名登录...");
+                try {
+                    await auth.signInAnonymously();
+                } catch (err) {
+                    console.error("Auth Component: 匿名登录失败:", err);
+                    eventBus.publish('toast:show', { message: '无法连接服务，请检查网络后重试', type: 'error' });
+                    finalUserData = null;
+                }
             }
         }
         
-        // 统一在最后发布事件，通知整个应用认证状态已确定
+        // [修复] 更新内部的完整用户数据缓存
+        fullUserData = finalUserData;
+        
         eventBus.publish('auth:stateChanged', { user: finalUserData });
-        // 同时更新本组件内的UI
         await updateComponentUI(finalUserData);
     });
 }
 
-
 /**
- * 处理登录表单的提交。
- * @param {Event} e - 表单提交事件。
+ * 处理退出登录。
+ * [修复] 在调用 signOut 之前，设置标志位。
  */
+async function handleLogout() {
+    try {
+        isExplicitLogout = true; // 设置主动退出标志
+        await auth.signOut();
+        avatarUrlCache.clear();
+        eventBus.publish('toast:show', { message: '已成功退出登录', type: 'info' });
+        hideProfileModal();
+    } catch (error) {
+        isExplicitLogout = false; // 如果出错，重置标志位
+        eventBus.publish('toast:show', { message: '退出登录失败', type: 'error' });
+    }
+}
+
+// ... 其他 handle 函数保持不变 ...
 async function handleLoginSubmit(e) {
     e.preventDefault();
     const button = dom.loginForm.querySelector('button[type="submit"]');
@@ -133,10 +144,7 @@ async function handleLoginSubmit(e) {
     try {
         await auth.signIn({ username: email, password: password });
         eventBus.publish('toast:show', { message: '登录成功！', type: 'success' });
-        hideAuthModal(() => { 
-            handleProfileViewChange('view'); 
-            showProfileModal(); 
-        });
+        hideAuthModal();
     } catch (error) {
         eventBus.publish('toast:show', { message: `登录失败: ${error.message || '请检查学号和密码'}`, type: 'error' });
     } finally {
@@ -145,10 +153,6 @@ async function handleLoginSubmit(e) {
     }
 }
 
-/**
- * 处理注册表单的提交。
- * @param {Event} e - 表单提交事件。
- */
 async function handleRegisterSubmit(e) {
     e.preventDefault();
     if (!verificationData.register || !verificationData.register.verification_token) {
@@ -178,10 +182,7 @@ async function handleRegisterSubmit(e) {
         });
         eventBus.publish('toast:show', { message: '注册成功！已自动登录。', type: 'success' });
         verificationData.register = null;
-        hideAuthModal(() => { 
-            handleProfileViewChange('view'); 
-            showProfileModal(); 
-        });
+        hideAuthModal();
     } catch (error) {
         eventBus.publish('toast:show', { message: `注册失败: ${error.message || '请检查信息是否正确'}`, type: 'error' });
     } finally {
@@ -190,10 +191,6 @@ async function handleRegisterSubmit(e) {
     }
 }
 
-/**
- * 处理密码重置表单的提交。
- * @param {Event} e - 表单提交事件。
- */
 async function handlePasswordResetSubmit(e) {
     e.preventDefault();
     const button = dom.resetPasswordForm.querySelector('button[type="submit"]');
@@ -241,10 +238,6 @@ async function handlePasswordResetSubmit(e) {
     }
 }
 
-/**
- * 处理已登录用户修改密码的表单提交。
- * @param {Event} e - 表单提交事件。
- */
 async function handleChangePasswordSubmit(e) {
     e.preventDefault();
     const button = dom.savePasswordBtn;
@@ -284,14 +277,9 @@ async function handleChangePasswordSubmit(e) {
     }
 }
 
-/**
- * 处理保存个人资料的逻辑。
- * @param {Event} e - 表单提交事件。
- */
 async function handleProfileSave(e) {
     e.preventDefault();
-    const currentUser = auth.currentUser;
-    if (!currentUser || currentUser.isAnonymous) {
+    if (!fullUserData) {
         eventBus.publish('toast:show', { message: '请先登录', type: 'error' });
         return;
     }
@@ -309,7 +297,7 @@ async function handleProfileSave(e) {
         if (selectedAvatarFileID) {
             updatedData.avatar = selectedAvatarFileID;
         }
-        await db.collection('users').doc(currentUser.uid).update(updatedData);
+        await db.collection('users').doc(fullUserData._id).update(updatedData);
         eventBus.publish('toast:show', { message: '个人资料更新成功！', type: 'success' });
         handleProfileViewChange('view');
     } catch (error) {
@@ -320,28 +308,10 @@ async function handleProfileSave(e) {
     }
 }
 
-/**
- * 处理退出登录。
- */
-async function handleLogout() {
-    try {
-        await auth.signOut();
-        avatarUrlCache.clear();
-        eventBus.publish('toast:show', { message: '已成功退出登录', type: 'info' });
-        hideProfileModal();
-    } catch (error) {
-        eventBus.publish('toast:show', { message: '退出登录失败', type: 'error' });
-    }
-}
-
 // =============================================================================
 // --- UI 更新与视图管理函数 ---
 // =============================================================================
 
-/**
- * 根据用户数据更新本组件内的UI元素。
- * @param {object|null} userData - 当前登录的用户数据，或 null。
- */
 async function updateComponentUI(userData) {
     const isLoggedIn = !!userData;
     dom.loginPromptBtn.classList.toggle('hidden', isLoggedIn);
@@ -359,7 +329,6 @@ async function updateComponentUI(userData) {
         const majorYearText = (userData.enrollmentYear && userData.major) ? `${userData.enrollmentYear}级 ${userData.major}` : '待设置';
         dom.profileMajorYear.querySelector('span').textContent = majorYearText;
         dom.profileBio.textContent = userData.bio || '这个人很懒，什么都没留下...';
-        populateProfileEditForm(userData);
     } else {
         const defaultUrl = await getAvatarUrl(DEFAULT_AVATAR_FILE_ID);
         dom.sidebarAvatar.src = defaultUrl;
@@ -368,10 +337,6 @@ async function updateComponentUI(userData) {
     }
 }
 
-/**
- * 切换认证模态框中的视图（登录/注册/重置密码）。
- * @param {string} viewName - 'login', 'register', 或 'reset'。
- */
 function handleAuthViewChange(viewName) {
     dom.loginFormContainer.classList.toggle('hidden', viewName !== 'login');
     dom.registerFormContainer.classList.toggle('hidden', viewName !== 'register');
@@ -380,10 +345,6 @@ function handleAuthViewChange(viewName) {
     dom.authTitle.textContent = titles[viewName];
 }
 
-/**
- * 切换个人中心模态框中的视图（查看/编辑/修改密码）。
- * @param {string} viewName - 'view', 'edit', 或 'changePassword'。
- */
 function handleProfileViewChange(viewName) {
     dom.profileViewContainer.classList.toggle('hidden', viewName !== 'view');
     dom.profileEditContainer.classList.toggle('hidden', viewName !== 'edit');
@@ -401,10 +362,6 @@ function handleProfileViewChange(viewName) {
     }
 }
 
-/**
- * 将用户数据填充到个人资料编辑表单中。
- * @param {object} userData - 当前用户的数据。
- */
 function populateProfileEditForm(userData) {
     if (!userData) return;
     dom.editNickname.value = userData.nickname || '';
@@ -427,11 +384,6 @@ function populateProfileEditForm(userData) {
 // --- 辅助函数 ---
 // =============================================================================
 
-/**
- * 获取头像的临时可访问URL。
- * @param {string} fileID - CloudBase中的文件ID。
- * @returns {Promise<string>} 可访问的URL。
- */
 async function getAvatarUrl(fileID) {
     const finalFileID = fileID && fileID.startsWith('cloud://') ? fileID : DEFAULT_AVATAR_FILE_ID;
     if (avatarUrlCache.has(finalFileID)) {
@@ -451,12 +403,6 @@ async function getAvatarUrl(fileID) {
     }
 }
 
-/**
- * 统一处理发送验证码的逻辑。
- * @param {string} email - 目标邮箱。
- * @param {HTMLButtonElement} btn - 点击的按钮。
- * @param {'register' | 'reset'} type - 验证码类型。
- */
 async function sendVerificationCode(email, btn, type) {
     btn.disabled = true;
     btn.textContent = '发送中...';
@@ -482,9 +428,6 @@ async function sendVerificationCode(email, btn, type) {
     }
 }
 
-/**
- * 验证用户输入的验证码是否正确。
- */
 async function handleVerifyCode() {
     const verificationCode = dom.registerForm.verification_code.value;
     if (!verificationData.register || !verificationData.register.verification_id || !verificationCode) {
@@ -503,12 +446,66 @@ async function handleVerifyCode() {
 }
 
 // =============================================================================
-// --- 组件初始化 ---
+// --- 组件初始化与数据注入 ---
 // =============================================================================
 
-/**
- * [第二刀：内聚化] 缓存所有本组件需要操作的DOM元素。
- */
+export async function provideCampusData(campusData) {
+    campusDataForEditor = campusData;
+    if (dom.editEnrollmentYear) {
+        await initializeProfileEditor();
+    }
+}
+
+async function initializeProfileEditor() {
+    if (!dom || !campusDataForEditor) {
+        console.error("Auth Component: 无法初始化个人中心编辑器，DOM或校区数据未提供。");
+        return;
+    }
+    
+    const yearSelect = dom.editEnrollmentYear;
+    const currentYear = new Date().getFullYear();
+    yearSelect.innerHTML = '';
+    for (let i = 0; i < 10; i++) {
+        const year = currentYear - i;
+        yearSelect.add(new Option(`${year}年`, year));
+    }
+
+    const majorSelect = dom.editMajor;
+    const allMajors = [...new Set(campusDataForEditor.colleges.flatMap(c => c.majors))];
+    allMajors.sort((a, b) => a.localeCompare(b, 'zh-CN'));
+    majorSelect.innerHTML = '<option value="">未选择</option>';
+    allMajors.forEach(major => majorSelect.add(new Option(major, major)));
+    
+    const avatarGrid = dom.avatarSelectionGrid;
+    avatarGrid.innerHTML = '';
+    const selectableAvatarFileIDs = [
+        'cloud://jou-campus-guide-9f57jf08ece0812.6a6f-jou-campus-guide-9f57jf08ece0812-1367578274/images/默认头像/avatar_01.png',
+    ];
+    
+    const uncachedFileIDs = selectableAvatarFileIDs.filter(id => !avatarUrlCache.has(id));
+    if (uncachedFileIDs.length > 0) {
+        try {
+            const { fileList } = await app.getTempFileURL({ fileList: uncachedFileIDs });
+            fileList.forEach(item => {
+                if (item.tempFileURL) {
+                    avatarUrlCache.set(item.fileID, item.tempFileURL);
+                }
+            });
+        } catch (error) {
+            console.error("Auth Component: 批量获取头像URL失败:", error);
+        }
+    }
+
+    selectableAvatarFileIDs.forEach(fileID => {
+        const displayUrl = avatarUrlCache.get(fileID) || FALLBACK_AVATAR_URL;
+        const avatarOption = document.createElement('div');
+        avatarOption.className = 'avatar-option p-1';
+        avatarOption.dataset.avatar = fileID;
+        avatarOption.innerHTML = `<img src="${displayUrl}" alt="头像选项" class="w-full h-full rounded-full object-cover" onerror="this.src='${FALLBACK_AVATAR_URL}'">`;
+        avatarGrid.appendChild(avatarOption);
+    });
+}
+
 function cacheDOMElements() {
     dom = {
         loginPromptBtn: document.getElementById('login-prompt-btn'),
@@ -561,11 +558,7 @@ function cacheDOMElements() {
     };
 }
 
-/**
- * [第二刀：内聚化] 为本组件的所有DOM元素绑定事件监听。
- */
 function setupEventListeners() {
-    // 触发器
     dom.loginPromptBtn.addEventListener('click', () => {
         handleAuthViewChange('login');
         showAuthModal();
@@ -576,7 +569,6 @@ function setupEventListeners() {
     });
     dom.logoutButton.addEventListener('click', handleLogout);
 
-    // 认证模态框
     dom.closeAuthBtn.addEventListener('click', hideAuthModal);
     dom.loginForm.addEventListener('submit', handleLoginSubmit);
     dom.registerForm.addEventListener('submit', handleRegisterSubmit);
@@ -585,16 +577,15 @@ function setupEventListeners() {
     dom.registerForm.querySelector('#register-verification-code').addEventListener('blur', handleVerifyCode);
     dom.sendResetCodeBtn.addEventListener('click', () => sendVerificationCode(`${dom.resetPasswordForm.email_prefix.value}@jou.edu.cn`, dom.sendResetCodeBtn, 'reset'));
     
-    // 认证视图切换
     dom.goToRegister.addEventListener('click', (e) => { e.preventDefault(); handleAuthViewChange('register'); });
     dom.goToLoginFromRegister.addEventListener('click', (e) => { e.preventDefault(); handleAuthViewChange('login'); });
     dom.forgotPasswordLink.addEventListener('click', (e) => { e.preventDefault(); handleAuthViewChange('reset'); });
     dom.goToLoginFromReset.addEventListener('click', (e) => { e.preventDefault(); handleAuthViewChange('login'); });
 
-    // 个人中心模态框
     dom.closeProfileBtn.addEventListener('click', hideProfileModal);
     dom.editProfileBtn.addEventListener('click', () => {
-        populateProfileEditForm(auth.currentUser); // 确保使用最新数据填充
+        // [修复] 使用内部缓存的 fullUserData 来填充表单
+        populateProfileEditForm(fullUserData); 
         handleProfileViewChange('edit');
     });
     dom.cancelEditProfileBtn.addEventListener('click', () => handleProfileViewChange('view'));
@@ -607,27 +598,24 @@ function setupEventListeners() {
         }
     });
     
-    // 修改密码
     dom.changePasswordPromptBtn.addEventListener('click', () => handleProfileViewChange('changePassword'));
     dom.profileChangePasswordContainer.addEventListener('submit', handleChangePasswordSubmit);
     dom.cancelChangePasswordBtn.addEventListener('click', () => handleProfileViewChange('view'));
+
+    eventBus.subscribe('auth:requestLogin', () => {
+        handleAuthViewChange('login');
+        showAuthModal();
+    });
 }
 
-/**
- * (导出函数) 组件的唯一初始化入口。
- */
 export function init() {
     cacheDOMElements();
     setupEventListeners();
     listenForAuthStateChanges();
-    console.log("Auth Component Initialized.");
+    console.log("Auth Component Initialized and Fixed (v12.2.0).");
 }
 
-
-// =============================================================================
-// --- 私有辅助函数 (从 modals.js 迁移而来) ---
-// =============================================================================
-
+// --- 私有辅助函数 (弹窗控制) ---
 function showModal(modalElement, dialogElement) {
     modalElement.classList.remove('hidden');
     setTimeout(() => {
@@ -647,7 +635,6 @@ function hideModal(modalElement, dialogElement, onHidden) {
     }, 300);
 }
 
-// 封装后的模态框控制函数
 function showAuthModal() { showModal(dom.authModal, dom.authDialog); }
 function hideAuthModal(onHidden) { hideModal(dom.authModal, dom.authDialog, onHidden); }
 function showProfileModal() { showModal(dom.profileModal, dom.profileDialog); }

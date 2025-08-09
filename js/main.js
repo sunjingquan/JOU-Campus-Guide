@@ -1,7 +1,7 @@
 /**
- * @file 应用主入口 (Main Entry Point) - Auth组件重构版
- * @description 负责应用的整体流程控制。认证功能已被剥离到独立的 Auth 组件中。
- * @version 11.0.0
+ * @file 应用主入口 (Main Entry Point) - Auth组件修复版
+ * @description 增加了向Auth组件注入数据的逻辑。
+ * @version 11.1.0
  */
 
 // --- 核心服务和旧模块导入 ---
@@ -10,7 +10,7 @@ import { eventBus } from '../services/eventBus.js';
 import { db, app } from './cloudbase.js';
 
 // --- 新组件导入 ---
-import * as auth from '../components/Auth/auth.js'; 
+import * as auth from '../components/Auth/auth.js';
 import * as theme from '../components/Theme/theme..js';
 import * as feedback from '../components/Feedback/feedback.js';
 import * as search from '../components/Search/search.js';
@@ -19,7 +19,6 @@ import * as search from '../components/Search/search.js';
 import * as renderer from './ui/renderer.js';
 import { createNavigation, handleNavigationClick, updateActiveNav } from './ui/navigation.js';
 import * as viewManager from './ui/viewManager.js';
-// 删除了对 modals.js 的导入，因为其功能已被内化或将在后续重构中处理
 
 class GuideApp {
     constructor() {
@@ -29,7 +28,7 @@ class GuideApp {
         this.observer = null;
         this.isScrollingProgrammatically = false;
         this.scrollTimeout = null;
-        this.currentUserData = null; // 状态依然由 main.js 暂时管理
+        this.currentUserData = null;
 
         this.materialFilters = {
             college: '',
@@ -42,8 +41,6 @@ class GuideApp {
         this.materialRatingCache = new Map();
 
         this._cacheDOMElements();
-        // ✨ 第四刀：移除对 authUI.cacheAuthDOMElements 的调用
-        // modals.init(this.dom); // 删除了对旧 modals 模块的初始化
         viewManager.init({
             domElements: this.dom,
             cData: () => this.campusData
@@ -51,8 +48,8 @@ class GuideApp {
     }
 
     _cacheDOMElements() {
+        // ... (这里的缓存内容保持不变，因为我们上次已经清理过了)
         this.dom = {
-            // ✨ 第四刀：移除了所有与认证相关的DOM元素缓存
             loadingOverlay: document.getElementById('loading-overlay'),
             mainView: document.getElementById('main-view'),
             navMenu: document.getElementById('nav-menu'),
@@ -84,7 +81,6 @@ class GuideApp {
             closeMobileSearchBtn: document.getElementById('close-mobile-search-btn'),
             themeToggleBtn: document.getElementById('theme-toggle-btn'),
             feedbackBtn: document.getElementById('feedback-btn'),
-            // 反馈和资料上传的模态框元素暂时保留，因为它们还未被完全重构
             feedbackModal: document.getElementById('feedback-modal'),
             feedbackDialog: document.getElementById('feedback-dialog'),
             feedbackForm: document.getElementById('feedback-form'),
@@ -115,7 +111,6 @@ class GuideApp {
         };
     }
     
-    // Toast消息提示功能现在由事件总线驱动
     _showToast({ message, type = 'info' }) {
         const container = document.getElementById('toast-container');
         if (!container) return;
@@ -137,17 +132,14 @@ class GuideApp {
     }
 
     async init() {
-        // ✨ 第二步：初始化所有独立的组件和服务
         theme.init();
         feedback.init();
-        auth.init(); // 激活我们全新的Auth组件！
+        auth.init();
 
-        this._setupAppEventListeners(); // 设置应用级事件监听
-        this._setupEventListeners(); // 设置剩余的、待重构的事件监听
+        this._setupAppEventListeners();
+        this._setupEventListeners();
 
-        // 应用的核心数据加载流程保持不变
         try {
-            console.log("Main: 等待应用数据加载...");
             [this.guideData, this.campusData] = await Promise.all([
                 getGuideData(),
                 getCampusData()
@@ -160,17 +152,15 @@ class GuideApp {
                throw new Error("校区数据加载失败或为空。");
             }
 
-            console.log("Main: 应用数据获取成功。");
-
-            // 因为 Auth 组件现在已经可以自我管理了。
-            // 我们只需要确保 viewManager 能拿到校区数据即可。
+            // [修复] 在获取到数据后，立即将其注入到 Auth 组件中
+            await auth.provideCampusData(this.campusData);
+            
             viewManager.updateCampusData(this.campusData);
 
             this.selectedCampus = localStorage.getItem('selectedCampus');
             if (this.selectedCampus) {
                 this.runApp();
             } else {
-                // 这里的 campus-selector 也应该被重构，但暂时保留旧逻辑
                 this.showCampusSelector();
             }
 
@@ -185,27 +175,17 @@ class GuideApp {
         }
     }
 
-    /**
-     * 设置应用级的事件监听器，用于响应各组件发布的事件。
-     */
     _setupAppEventListeners() {
-        // 监听“显示toast消息”事件
         eventBus.subscribe('toast:show', (data) => this._showToast(data));
-
-        // 监听“搜索结果被点击”事件
         eventBus.subscribe('search:resultClicked', (dataset) => {
             this._handleSearchResultClick(dataset);
         });
-
-        // ✨ 第四刀：订阅认证状态变化事件
         eventBus.subscribe('auth:stateChanged', (data) => {
-            console.log("Main: 接收到认证状态变更", data);
             this.currentUserData = data.user;
-            // 在这里可以触发其他依赖用户状态的模块更新，
-            // 例如，当未来 Navigation 组件重构后，它自己会订阅这个事件。
         });
     }
-
+    
+    // ... 其他所有方法保持不变 ...
     runApp() {
         createNavigation(this.dom.navMenu, this.guideData);
         this._renderAllContent();
@@ -222,7 +202,6 @@ class GuideApp {
         viewManager.updateCampus(this.selectedCampus);
     }
     
-    // showCampusSelector 和 hideCampusSelector 暂时保留，因为它们还未被重构
     showCampusSelector() {
         this.dom.campusModal.classList.remove('hidden');
         setTimeout(() => {
@@ -242,9 +221,6 @@ class GuideApp {
     }
 
     _setupEventListeners() {
-        // ✨ 第四刀：移除了所有与认证相关的事件监听器
-
-        // --- 导航与视图切换 (保留) ---
         this.dom.navMenu.addEventListener('click', (e) => handleNavigationClick(e, (category, page) => {
             if (category === 'materials') {
                 this._showMaterialsView();
@@ -269,17 +245,11 @@ class GuideApp {
         this.dom.bottomNavSearch.addEventListener('click', viewManager.showMobileSearch);
         this.dom.bottomNavCampus.addEventListener('click', () => this.showCampusSelector());
         this.dom.closeMobileSearchBtn.addEventListener('click', viewManager.hideMobileSearch);
-
-        // --- 主题 (保留，因为它由独立组件管理) ---
-        // this.dom.themeToggleBtn.addEventListener('click', theme.toggleTheme); // 已在 theme.js 中自行处理
-
-        // --- 学习资料共享功能的事件监听 (保留，待重构) ---
         this.dom.materialsContent.addEventListener('click', (e) => {
             if (e.target.closest('.download-material-btn')) this._handleMaterialDownload(e);
             if (e.target.closest('#upload-from-empty-state-btn')) this._handleUploadPrompt();
             if (e.target.closest('.rating-star')) this._handleMaterialRating(e);
         });
-        // ... (其他资料相关事件保持不变)
         this.dom.backToMainFromMaterialsBtn.addEventListener('click', this._hideMaterialsView.bind(this));
         this.dom.uploadMaterialPromptBtn.addEventListener('click', this._handleUploadPrompt.bind(this));
         this.dom.closeUploadMaterialBtn.addEventListener('click', () => this.hideUploadMaterialModal());
@@ -294,8 +264,6 @@ class GuideApp {
         this.dom.materialsSortButtons.addEventListener('click', this._handleSortChange.bind(this));
     }
 
-    // _handleCampusSelection 和其他未重构的方法保持不变
-    // ...
     _handleCampusSelection(e) {
         const button = e.target.closest('.campus-select-btn');
         if (!button) return;
@@ -309,7 +277,6 @@ class GuideApp {
         });
     }
     
-    // 隐藏上传模态框的临时方法
     hideUploadMaterialModal(onHidden) {
         this.dom.uploadMaterialModal.style.opacity = '0';
         this.dom.uploadMaterialDialog.style.transform = 'scale(0.95)';
@@ -319,7 +286,6 @@ class GuideApp {
             if (onHidden) onHidden();
         }, 300);
     }
-    // 显示上传模态框的临时方法
     showUploadMaterialModal() {
         this.dom.uploadMaterialModal.classList.remove('hidden');
         setTimeout(() => {
@@ -328,7 +294,6 @@ class GuideApp {
             this.dom.uploadMaterialDialog.style.opacity = '1';
         }, 10);
     }
-
 
     _updateCampusDisplay() {
         const campusInfo = this.campusData.campuses.find(c => c.id === this.selectedCampus);
@@ -655,8 +620,6 @@ class GuideApp {
     _handleUploadPrompt() {
         if (!this.currentUserData) {
             eventBus.publish('toast:show', { message: '请先登录再分享资料哦', type: 'info' });
-            // 因为 Auth 组件自己管理弹窗，所以这里不再需要手动调用 modals.showAuthModal()
-            // 而是可以考虑发布一个“请求登录”的事件
             eventBus.publish('auth:requestLogin');
             return;
         }
@@ -677,7 +640,6 @@ class GuideApp {
         this.dom.materialMajorSelect.disabled = true;
     }
     
-    // ... (其他待重构的方法保持不变) ...
     async _handleUploadMaterialSubmit() {
         const form = this.dom.uploadMaterialForm;
         const fileInput = this.dom.materialFileInput;
