@@ -1,7 +1,7 @@
 /**
- * @file 用户认证组件 (Auth Component) - 启动流程修复版
- * @description 修复了启动时的竞态条件，并确保 getAvatarUrl 被正确导出。
- * @version 12.3.0
+ * @file 用户认证组件 (Auth Component) - 优化版
+ * @description 移除了冗余的UI更新逻辑，使其职责更单一。明确了匿名登录状态的处理方式。
+ * @version 13.0.0
  */
 
 // --- 依赖导入 ---
@@ -16,9 +16,8 @@ let verificationData = {
     reset: null
 };
 let campusDataForEditor = null;
-let fullUserData = null; 
+let fullUserData = null;
 let isExplicitLogout = false;
-// [修复] 新增一个标志位，确保 'auth:ready' 事件只在应用启动时发布一次
 let isInitialAuthCheckDone = false;
 
 const DEFAULT_AVATAR_FILE_ID = 'cloud://jou-campus-guide-9f57jf08ece0812.6a6f-jou-campus-guide-9f57jf08ece0812-1367578274/images/默认头像/avatar_01.png';
@@ -30,8 +29,13 @@ let userDocWatcher = null;
 // --- 核心逻辑函数 ---
 // =============================================================================
 
+/**
+ * 监听 CloudBase 的认证状态变化。
+ * 这是整个认证组件的核心。
+ */
 function listenForAuthStateChanges() {
     auth.onLoginStateChanged(async (loginState) => {
+        // 如果存在旧的文档监听器，先关闭它
         if (userDocWatcher) {
             userDocWatcher.close();
             userDocWatcher = null;
@@ -41,24 +45,30 @@ function listenForAuthStateChanges() {
         let isAuthReadyToProceed = false;
 
         if (loginState) {
+            // --- 场景A: CloudBase存在登录态 ---
             const isAnonymous = loginState.user && loginState.user.isAnonymous;
+
             if (isAnonymous) {
+                // A.1: 如果是匿名登录，我们对UI层面将其视为“未登录”。
+                // 这是解决你提出问题的关键：将匿名状态在逻辑层就处理掉。
                 finalUserData = null;
                 isAuthReadyToProceed = true; // 匿名登录成功，认证流程准备就绪
             } else {
-                // ... (获取用户数据的逻辑保持不变)
+                // A.2: 如果是真实用户登录
                 try {
                     const currentUser = loginState.user;
                     const userDocRef = db.collection('users').doc(currentUser.uid);
                     const userDoc = await userDocRef.get();
-                    
+
                     if (userDoc.data && userDoc.data.length > 0) {
+                        // 数据库中存在该用户，合并用户信息
                         finalUserData = { ...currentUser, ...userDoc.data[0] };
                     } else {
+                        // 数据库中不存在，为新用户创建文档
                         const email = currentUser.email || '';
                         const emailParts = email.split('@');
                         const studentId = emailParts.length > 0 ? emailParts[0] : null;
-                        
+
                         const newUserDoc = {
                             _id: currentUser.uid,
                             studentId: studentId,
@@ -72,14 +82,15 @@ function listenForAuthStateChanges() {
                         await userDocRef.set(newUserDoc);
                         finalUserData = { ...currentUser, ...newUserDoc };
                     }
-                    
+
+                    // 为该用户文档创建实时监听器，以便信息变更时能自动更新
                     userDocWatcher = userDocRef.watch({
                         onChange: (snapshot) => {
                             if (snapshot.docs && snapshot.docs.length > 0) {
                                 const updatedData = { ...loginState.user, ...snapshot.docs[0] };
-                                fullUserData = updatedData; 
+                                fullUserData = updatedData;
+                                // 发布用户信息变更事件
                                 eventBus.publish('auth:stateChanged', { user: updatedData });
-                                updateComponentUI(updatedData);
                             }
                         },
                         onError: (error) => console.error("[DB 监听] 实时监听器出错:", error)
@@ -89,15 +100,18 @@ function listenForAuthStateChanges() {
                     console.error("Auth Component: 获取或创建用户数据库文档时出错:", dbError);
                     finalUserData = null;
                 } finally {
-                    isAuthReadyToProceed = true; // 无论成功失败，认证流程都已结束
+                    isAuthReadyToProceed = true; // 无论成功失败，真实用户的认证流程都已结束
                 }
             }
         } else {
+            // --- 场景B: CloudBase无登录态 ---
             if (isExplicitLogout) {
+                // B.1: 如果是用户刚刚主动点击了退出
                 finalUserData = null;
                 isExplicitLogout = false;
-                isAuthReadyToProceed = true; // 用户主动退出，认证流程准备就绪
+                isAuthReadyToProceed = true;
             } else {
+                // B.2: 如果是应用首次加载，尝试进行静默的匿名登录以获取数据库权限
                 try {
                     await auth.signInAnonymously();
                     // 匿名登录会再次触发 onLoginStateChanged, 所以这里不设置 isAuthReadyToProceed
@@ -109,21 +123,35 @@ function listenForAuthStateChanges() {
                 }
             }
         }
-        
-        fullUserData = finalUserData;
-        eventBus.publish('auth:stateChanged', { user: finalUserData });
-        await updateComponentUI(finalUserData);
 
-        // [修复] 检查是否应该发布“认证就绪”信号
+        // --- 统一处理和事件发布 ---
+        fullUserData = finalUserData;
+        // 广播最终的用户状态（可能是完整的用户信息对象，也可能是代表未登录的 null）
+        eventBus.publish('auth:stateChanged', { user: finalUserData });
+
+        // [优化] 移除此处的UI更新调用，交由其他组件（如Navigation）监听事件来处理
+        // await updateComponentUI(finalUserData); 
+
+        // 只有在整个初始认证流程（无论是匿名、真实用户还是失败）完成后，才发布“认证就绪”事件
         if (isAuthReadyToProceed && !isInitialAuthCheckDone) {
             isInitialAuthCheckDone = true;
             console.log("Auth Component: 初始认证检查完成，发布 auth:ready 事件。");
-            eventBus.publish('auth:ready');
+            eventBus.publish('auth:ready'); // 这个事件将触发 main.js 加载核心数据
         }
     });
 }
 
-// ... 所有 handle 函数和 UI 更新函数保持不变 ...
+
+/**
+ * [优化] 此函数已被移除。
+ * Auth组件的职责是管理认证状态并发布事件，不应直接操作不属于它的UI元素（如侧边栏）。
+ * UI更新的职责已完全交给 Navigation 组件。
+ */
+// async function updateComponentUI(userData) { ... }
+
+
+// ... 此处省略所有其他函数 (handleLogout, handleLoginSubmit, 等) ...
+// ... 它们保持不变 ...
 async function handleLogout() {
     try {
         isExplicitLogout = true;
@@ -309,31 +337,6 @@ async function handleProfileSave(e) {
     } finally {
         button.disabled = false;
         button.textContent = '保存更改';
-    }
-}
-
-async function updateComponentUI(userData) {
-    const isLoggedIn = !!userData;
-    dom.loginPromptBtn.classList.toggle('hidden', isLoggedIn);
-    dom.userProfileBtn.classList.toggle('hidden', !isLoggedIn);
-
-    if (isLoggedIn) {
-        const avatarUrl = await getAvatarUrl(userData.avatar);
-        dom.sidebarAvatar.src = avatarUrl;
-        dom.sidebarAvatar.onerror = () => { dom.sidebarAvatar.src = FALLBACK_AVATAR_URL; };
-        dom.profileAvatarLarge.src = avatarUrl;
-        dom.profileAvatarLarge.onerror = () => { dom.profileAvatarLarge.src = FALLBACK_AVATAR_URL; };
-        dom.sidebarNickname.textContent = userData.nickname || '设置昵称';
-        dom.profileNickname.textContent = userData.nickname || '待设置';
-        dom.profileEmail.textContent = userData.email || '未绑定邮箱';
-        const majorYearText = (userData.enrollmentYear && userData.major) ? `${userData.enrollmentYear}级 ${userData.major}` : '待设置';
-        dom.profileMajorYear.querySelector('span').textContent = majorYearText;
-        dom.profileBio.textContent = userData.bio || '这个人很懒，什么都没留下...';
-    } else {
-        const defaultUrl = await getAvatarUrl(null);
-        dom.sidebarAvatar.src = defaultUrl;
-        dom.sidebarAvatar.onerror = () => { dom.sidebarAvatar.src = FALLBACK_AVATAR_URL; };
-        dom.sidebarNickname.textContent = '登录 / 注册';
     }
 }
 
@@ -599,11 +602,14 @@ function setupEventListeners() {
     });
 }
 
+/**
+ * (导出函数) 组件的唯一初始化入口。
+ */
 export function init() {
     cacheDOMElements();
     setupEventListeners();
     listenForAuthStateChanges();
-    console.log("Auth Component Initialized and Fixed (v12.2.1).");
+    console.log("Auth Component Initialized.");
 }
 
 // --- 私有辅助函数 (弹窗控制) ---
