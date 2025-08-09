@@ -10,7 +10,7 @@
  * - [重构] 更新了部分函数调用以匹配 auth.js 中视图切换的新逻辑。
  */
 
-import { getGuideData, getCampusData, getMaterials, addMaterial, incrementDownloadCount, addRating, checkIfUserRated } from './data/dataManager.js';
+import { getGuideData, getCampusData, getMaterials, addMaterial, incrementDownloadCount, addRating, checkIfUserRated } from '../services/api.js';
 import * as renderer from './ui/renderer.js';
 import { createNavigation, handleNavigationClick, updateActiveNav } from './ui/navigation.js';
 import * as authUI from './ui/auth.js';
