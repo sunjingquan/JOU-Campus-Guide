@@ -48,19 +48,6 @@ function hideModal(modalElement, dialogElement, onHidden) {
 
 // --- 具体的模态框控制函数 ---
 
-export function showFeedbackModal() {
-    showModal(dom.feedbackModal, dom.feedbackDialog);
-}
-
-export function hideFeedbackModal() {
-    hideModal(dom.feedbackModal, dom.feedbackDialog, () => {
-        // 隐藏后重置表单
-        dom.feedbackForm.classList.remove('hidden');
-        dom.feedbackSuccessMsg.classList.add('hidden');
-        dom.feedbackForm.reset();
-    });
-}
-
 export function showAuthModal() {
     showModal(dom.authModal, dom.authDialog);
 }

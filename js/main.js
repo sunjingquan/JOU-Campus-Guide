@@ -19,6 +19,9 @@ import * as search from '../components/Search/search.js';
 import * as viewManager from './ui/viewManager.js';
 import * as theme from '../components/Theme/theme..js';
 import { db, app } from './cloudbase.js';
+import { eventBus } from '../services/eventBus.js';
+import * as feedback from '../components/Feedback/feedback.js';
+
 
 class GuideApp {
     constructor() {
@@ -164,7 +167,7 @@ class GuideApp {
         };
     }
 
-    _showToast(message, type = 'info') {
+    _showToast({ message, type = 'info' }) {
         const container = document.getElementById('toast-container');
         if (!container) return;
         const toast = document.createElement('div');
@@ -186,6 +189,8 @@ class GuideApp {
 
     async init() {
         theme.init();
+        feedback.init();
+        this._setupAppEventListeners();
         this._setupEventListeners();
 
         authUI.listenForAuthStateChanges(async (userData) => {
@@ -225,6 +230,20 @@ class GuideApp {
                 console.error("Main: 获取或处理应用数据时失败!", error);
                 this.dom.loadingOverlay.innerHTML = `<div class="text-center text-red-500 p-4"><p class="font-bold">应用加载失败</p><p class="text-sm mt-2">无法连接到服务器，请检查网络后重试。</p><p class="text-xs mt-2 text-gray-400">${error.message}</p></div>`;
             }
+        });
+    }
+
+    /**
+     * 新增方法：统一管理应用级的事件监听
+     * main.js 作为“指挥中心”，在这里收听所有组件发出的广播
+     */
+    _setupAppEventListeners() {
+        // 监听“显示toast消息”事件
+        eventBus.subscribe('toast:show', (data) => this._showToast(data));
+
+        // 监听“搜索结果被点击”事件
+        eventBus.subscribe('search:resultClicked', (dataset) => {
+            this._handleSearchResultClick(dataset);
         });
     }
 
@@ -324,9 +343,6 @@ class GuideApp {
         this.dom.closeMobileSearchBtn.addEventListener('click', viewManager.hideMobileSearch);
 
         // --- 反馈与主题 ---
-        this.dom.feedbackForm.addEventListener('submit', this._handleFeedbackSubmit.bind(this));
-        this.dom.feedbackBtn.addEventListener('click', modals.showFeedbackModal);
-        this.dom.closeFeedbackBtn.addEventListener('click', modals.hideFeedbackModal);
         this.dom.themeToggleBtn.addEventListener('click', theme.toggleTheme);
 
         // --- 认证相关 (登录、注册、重置) ---
@@ -413,49 +429,6 @@ class GuideApp {
         this.dom.materialsSortButtons.addEventListener('click', this._handleSortChange.bind(this));
     }
 
-    async _handleFeedbackSubmit(e) {
-        e.preventDefault();
-        const submitButton = this.dom.feedbackForm.querySelector('button[type="submit"]');
-        submitButton.disabled = true;
-        submitButton.textContent = '提交中...';
-
-        const content = this.dom.feedbackForm.content.value.trim();
-        const contact = this.dom.feedbackForm.contact.value.trim();
-
-        if (!content) {
-            this._showToast('反馈内容不能为空', 'error');
-            submitButton.disabled = false;
-            submitButton.textContent = '提交';
-            return;
-        }
-
-        try {
-            const feedbackData = {
-                content: content,
-                contact: contact,
-                submittedAt: db.serverDate(),
-                userAgent: navigator.userAgent,
-                campus: this.selectedCampus,
-                userId: this.currentUserData ? this.currentUserData._id : 'anonymous',
-                studentId: this.currentUserData ? this.currentUserData.studentId : 'anonymous'
-            };
-            await db.collection('feedback').add(feedbackData);
-
-            this.dom.feedbackForm.classList.add('hidden');
-            this.dom.feedbackSuccessMsg.classList.remove('hidden');
-
-            setTimeout(() => {
-                modals.hideFeedbackModal();
-            }, 3000);
-
-        } catch (error) {
-            console.error('提交反馈失败:', error);
-            this._showToast('提交失败，请稍后再试', 'error');
-        } finally {
-            submitButton.disabled = false;
-            submitButton.textContent = '提交';
-        }
-    }
 
     _handleCampusSelection(e) {
         const button = e.target.closest('.campus-select-btn');
