@@ -15,7 +15,7 @@ import * as renderer from './ui/renderer.js';
 import { createNavigation, handleNavigationClick, updateActiveNav } from './ui/navigation.js';
 import * as authUI from './ui/auth.js';
 import * as modals from './ui/modals.js';
-import * as search from './ui/search.js';
+import * as search from '../components/Search/search.js';
 import * as viewManager from './ui/viewManager.js';
 import * as theme from './ui/theme.js';
 import { db, app } from './cloudbase.js';
