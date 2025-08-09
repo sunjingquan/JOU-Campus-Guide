@@ -1,7 +1,7 @@
 /**
- * @file 应用主入口 (Main Entry Point) - Auth组件修复版
- * @description 增加了向Auth组件注入数据的逻辑。
- * @version 11.1.0
+ * @file 应用主入口 (Main Entry Point) - 启动流程修复版
+ * @description 实现了先完成认证再加载数据的有序启动流程，解决了竞态条件问题。
+ * @version 12.1.0
  */
 
 // --- 核心服务和旧模块导入 ---
@@ -14,10 +14,10 @@ import * as auth from '../components/Auth/auth.js';
 import * as theme from '../components/Theme/theme..js';
 import * as feedback from '../components/Feedback/feedback.js';
 import * as search from '../components/Search/search.js';
+import * as navigation from '../components/Navigation/navigation.js';
 
 // --- 旧UI模块导入 (待重构) ---
 import * as renderer from './ui/renderer.js';
-import { createNavigation, handleNavigationClick, updateActiveNav } from './ui/navigation.js';
 import * as viewManager from './ui/viewManager.js';
 
 class GuideApp {
@@ -48,11 +48,9 @@ class GuideApp {
     }
 
     _cacheDOMElements() {
-        // ... (这里的缓存内容保持不变，因为我们上次已经清理过了)
         this.dom = {
             loadingOverlay: document.getElementById('loading-overlay'),
             mainView: document.getElementById('main-view'),
-            navMenu: document.getElementById('nav-menu'),
             contentArea: document.getElementById('content-area'),
             contentTitle: document.getElementById('content-title'),
             menuToggle: document.getElementById('menu-toggle'),
@@ -131,32 +129,44 @@ class GuideApp {
         }, 4000);
     }
 
+    /**
+     * [修复] init 函数现在只负责初始化组件和设置监听，不再直接加载数据。
+     */
     async init() {
+        // 1. 初始化所有不依赖核心数据的组件
         theme.init();
         feedback.init();
-        auth.init();
+        auth.init(); // auth.init() 现在会触发认证流程
 
-        this._setupAppEventListeners();
+        // 2. 设置应用级的事件监听器
+        this._setupAppEventListeners(); 
+        
+        // 3. 设置剩余的、待重构的事件监听
         this._setupEventListeners();
+    }
 
+    /**
+     * [修复] 新增一个函数，专门用于在认证就绪后加载数据和启动应用。
+     */
+    async loadDataAndRunApp() {
         try {
+            console.log("Main: 接收到 auth:ready 信号，开始加载核心数据...");
             [this.guideData, this.campusData] = await Promise.all([
                 getGuideData(),
                 getCampusData()
             ]);
 
-            if (!this.guideData || this.guideData.length === 0) {
-               throw new Error("指南数据加载失败或为空。");
-            }
-             if (!this.campusData || !this.campusData.colleges) {
-               throw new Error("校区数据加载失败或为空。");
+            if (!this.guideData || this.guideData.length === 0 || !this.campusData || !this.campusData.colleges) {
+               throw new Error("核心数据加载失败或为空。");
             }
 
-            // [修复] 在获取到数据后，立即将其注入到 Auth 组件中
+            console.log("Main: 核心数据获取成功。");
+
+            // 将数据注入给需要它的组件
             await auth.provideCampusData(this.campusData);
-            
             viewManager.updateCampusData(this.campusData);
 
+            // 启动应用主逻辑
             this.selectedCampus = localStorage.getItem('selectedCampus');
             if (this.selectedCampus) {
                 this.runApp();
@@ -164,17 +174,21 @@ class GuideApp {
                 this.showCampusSelector();
             }
 
+            // 隐藏加载动画
             setTimeout(() => {
                 this.dom.loadingOverlay.style.opacity = '0';
                 setTimeout(() => this.dom.loadingOverlay.style.display = 'none', 500);
             }, 500);
 
         } catch (error) {
-            console.error("Main: 获取或处理应用数据时失败!", error);
+            console.error("Main: 加载或处理核心数据时失败!", error);
             this.dom.loadingOverlay.innerHTML = `<div class="text-center text-red-500 p-4"><p class="font-bold">应用加载失败</p><p class="text-sm mt-2">无法连接到服务器，请检查网络后重试。</p><p class="text-xs mt-2 text-gray-400">${error.message}</p></div>`;
         }
     }
-
+    
+    /**
+     * [修复] 在这里订阅 auth:ready 事件。
+     */
     _setupAppEventListeners() {
         eventBus.subscribe('toast:show', (data) => this._showToast(data));
         eventBus.subscribe('search:resultClicked', (dataset) => {
@@ -183,11 +197,31 @@ class GuideApp {
         eventBus.subscribe('auth:stateChanged', (data) => {
             this.currentUserData = data.user;
         });
+
+        // 新增：监听认证就绪事件，这是启动数据加载的唯一入口
+        eventBus.subscribe('auth:ready', () => {
+            this.loadDataAndRunApp();
+        });
     }
     
-    // ... 其他所有方法保持不变 ...
+    // ... runApp 和其他所有方法保持不变 ...
     runApp() {
-        createNavigation(this.dom.navMenu, this.guideData);
+        navigation.init({
+            guideData: this.guideData,
+            onLinkClick: (category, page) => {
+                if (category === 'materials') {
+                    this._showMaterialsView();
+                } else {
+                    this._hideMaterialsView();
+                    viewManager.hideDetailView();
+                    this._updateActiveState(category, page);
+                    const targetElement = document.getElementById(`page-${category}-${page}`);
+                    if (targetElement) this._scrollToElement(targetElement);
+                }
+                if (window.innerWidth < 768) viewManager.toggleSidebar();
+            }
+        });
+
         this._renderAllContent();
         this._updateCampusDisplay();
         this._setupIntersectionObserver();
@@ -202,37 +236,7 @@ class GuideApp {
         viewManager.updateCampus(this.selectedCampus);
     }
     
-    showCampusSelector() {
-        this.dom.campusModal.classList.remove('hidden');
-        setTimeout(() => {
-            this.dom.campusModal.style.opacity = '1';
-            this.dom.campusDialog.style.transform = 'scale(1)';
-            this.dom.campusDialog.style.opacity = '1';
-        }, 10);
-    }
-    hideCampusSelector(onHidden) {
-        this.dom.campusModal.style.opacity = '0';
-        this.dom.campusDialog.style.transform = 'scale(0.95)';
-        this.dom.campusDialog.style.opacity = '0';
-        setTimeout(() => {
-            this.dom.campusModal.classList.add('hidden');
-            if (onHidden) onHidden();
-        }, 300);
-    }
-
     _setupEventListeners() {
-        this.dom.navMenu.addEventListener('click', (e) => handleNavigationClick(e, (category, page) => {
-            if (category === 'materials') {
-                this._showMaterialsView();
-            } else {
-                this._hideMaterialsView();
-                viewManager.hideDetailView();
-                this._updateActiveState(category, page);
-                const targetElement = document.getElementById(`page-${category}-${page}`);
-                if (targetElement) this._scrollToElement(targetElement);
-            }
-            if (window.innerWidth < 768) viewManager.toggleSidebar();
-        }));
         this.dom.homeButtonTop.addEventListener('click', this._handleHomeClick.bind(this));
         this.dom.menuToggle.addEventListener('click', viewManager.toggleSidebar);
         this.dom.sidebarOverlay.addEventListener('click', viewManager.toggleSidebar);
@@ -264,17 +268,36 @@ class GuideApp {
         this.dom.materialsSortButtons.addEventListener('click', this._handleSortChange.bind(this));
     }
 
-    _handleCampusSelection(e) {
-        const button = e.target.closest('.campus-select-btn');
-        if (!button) return;
-        const campus = button.dataset.campus;
-        localStorage.setItem('selectedCampus', campus);
-        this.selectedCampus = campus;
-        search.updateCampus(campus);
-        viewManager.updateCampus(campus);
-        this.hideCampusSelector(() => {
-            this.runApp();
-        });
+    _updateActiveState(categoryKey, pageKey) {
+        const category = this.guideData.find(c => c.key === categoryKey);
+        const pageData = category?.pages.find(p => p.pageKey === pageKey);
+        if (pageData) {
+            this.dom.contentTitle.textContent = pageData.title;
+        }
+        navigation.setActive(categoryKey, pageKey); 
+        
+        this.dom.bottomNav.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+        if (categoryKey === 'home') {
+            this.dom.bottomNavHome.classList.add('active');
+        }
+    }
+    
+    showCampusSelector() {
+        this.dom.campusModal.classList.remove('hidden');
+        setTimeout(() => {
+            this.dom.campusModal.style.opacity = '1';
+            this.dom.campusDialog.style.transform = 'scale(1)';
+            this.dom.campusDialog.style.opacity = '1';
+        }, 10);
+    }
+    hideCampusSelector(onHidden) {
+        this.dom.campusModal.style.opacity = '0';
+        this.dom.campusDialog.style.transform = 'scale(0.95)';
+        this.dom.campusDialog.style.opacity = '0';
+        setTimeout(() => {
+            this.dom.campusModal.classList.add('hidden');
+            if (onHidden) onHidden();
+        }, 300);
     }
     
     hideUploadMaterialModal(onHidden) {
@@ -293,6 +316,19 @@ class GuideApp {
             this.dom.uploadMaterialDialog.style.transform = 'scale(1)';
             this.dom.uploadMaterialDialog.style.opacity = '1';
         }, 10);
+    }
+
+    _handleCampusSelection(e) {
+        const button = e.target.closest('.campus-select-btn');
+        if (!button) return;
+        const campus = button.dataset.campus;
+        localStorage.setItem('selectedCampus', campus);
+        this.selectedCampus = campus;
+        search.updateCampus(campus);
+        viewManager.updateCampus(campus);
+        this.hideCampusSelector(() => {
+            this.runApp();
+        });
     }
 
     _updateCampusDisplay() {
@@ -357,19 +393,6 @@ class GuideApp {
         document.querySelectorAll('.content-section').forEach(section => {
             this.observer.observe(section);
         });
-    }
-
-    _updateActiveState(categoryKey, pageKey) {
-        const category = this.guideData.find(c => c.key === categoryKey);
-        const pageData = category?.pages.find(p => p.pageKey === pageKey);
-        if (pageData) {
-            this.dom.contentTitle.textContent = pageData.title;
-        }
-        updateActiveNav(categoryKey, pageKey);
-        this.dom.bottomNav.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-        if (categoryKey === 'home') {
-            this.dom.bottomNavHome.classList.add('active');
-        }
     }
 
     _handleHomeClick(e) {
@@ -577,7 +600,7 @@ class GuideApp {
         this.dom.detailView.classList.add('hidden');
         this.dom.materialsView.classList.remove('hidden');
         this.dom.materialsView.classList.add('flex');
-        updateActiveNav('materials', null);
+        navigation.setActive('materials', null);
         this._populateFilterCollegeSelect();
         this._loadAndRenderMaterials();
     }
