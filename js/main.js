@@ -17,7 +17,7 @@ import * as authUI from './ui/auth.js';
 import * as modals from './ui/modals.js';
 import * as search from '../components/Search/search.js';
 import * as viewManager from './ui/viewManager.js';
-import * as theme from './ui/theme.js';
+import * as theme from '../components/Theme/theme..js';
 import { db, app } from './cloudbase.js';
 
 class GuideApp {
@@ -185,7 +185,7 @@ class GuideApp {
     }
 
     async init() {
-        theme.init(this.dom);
+        theme.init();
         this._setupEventListeners();
 
         authUI.listenForAuthStateChanges(async (userData) => {
