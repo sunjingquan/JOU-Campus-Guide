@@ -1,14 +1,8 @@
 /**
- * @file UI 模板模块 (UI Templates)
- * @description 该模块是所有UI组件的“HTML蓝图”。它包含一系列纯函数，
- * 每个函数接收从 guide_data.json 获取的纯净JSON数据，并返回与旧版 guideData.js 视觉效果完全一致的HTML字符串。
- * @version 4.4.1
- * @changes
- * - [错误修复] 修复了 `createRatingStarsHtml` 函数中因缺少 `material` 变量导致的 ReferenceError。
- * - [代码优化] 调整了 `createRatingStarsHtml` 函数的参数，现在它接收 docId，使其职责更清晰。
- * - [功能新增] 在 `createMaterialCardHtml` 中，将静态的评分显示替换为可交互的五星评分组件。
- * - [代码重构] 新增 `createRatingStarsHtml` 辅助函数，专门用于生成五星评分的HTML结构，使代码更清晰。
- * - [体验优化] 在 `createMaterialsListHtml` 的空状态视图中增加了一个“立即上传”按钮，以引导用户贡献内容。
+ * @file 内容渲染器 - 模板模块
+ * @description 该模块是所有核心页面UI组件的“HTML蓝图”。
+ * 它包含一系列纯函数，接收纯净的JSON数据，并返回HTML字符串。
+ * @version 1.0.0
  */
 
 // --- 辅助函数 ---
@@ -238,7 +232,6 @@ export function createChecklistHtml(content) {
 export function createStepsHtml(content) {
     const steps = content.steps || [];
 
-    // 第一部分: 生成所有绝对定位的“圆点”
     const dotsHtml = steps.map((_, index) => {
         const topStyleMapping = { 0: 'top: 6px;', 1: 'top: 33.33%;', 2: 'top: 66.66%;', 3: 'bottom: 6px;' };
         const style = topStyleMapping[index] || '';
@@ -247,7 +240,6 @@ export function createStepsHtml(content) {
         return `<div class="absolute w-4 h-4 bg-blue-600 rounded-full -left-2 ${ringClass}" style="${style}"></div>`;
     }).join('');
 
-    // 第二部分: 生成所有按顺序排列的“文本块”
     const textBlocksHtml = steps.map((step, index) => {
         const title = step.title.replace(/第.步：/, '');
         return `
@@ -262,8 +254,6 @@ export function createStepsHtml(content) {
         `;
     }).join('');
 
-    // 第三部分: 组合成最终的HTML
-    // 外部容器是相对定位的参考系，内部包含“圆点”和“文本块容器”
     return `
         <div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto">
             <div class="relative border-l-4 border-blue-500 py-6">
@@ -282,7 +272,6 @@ export function createStepsHtml(content) {
 export function createPointsHtml(content) {
     const points = content.points || [];
 
-    // 【样式已修复】在这里定义图标和颜色的映射关系，以还原旧版样式
     const iconConfig = {
         'calendar-days': { color: 'text-indigo-500' },
         'shield-check': { color: 'text-red-500' },
@@ -704,143 +693,4 @@ export function createCanteenDetailsHtml(details) {
             </div>
         `;
     }).join('');
-}
-
-// ===================================================================================
-// --- 学习资料共享模板 ---
-// ===================================================================================
-
-/**
- * [错误修复] 辅助函数: 创建五星评分组件的HTML
- * @param {string} docId - 资料的文档ID
- * @param {number} rating - 平均分 (0-5)
- * @param {number} ratingCount - 评分人数
- * @returns {string} 
- */
-function createRatingStarsHtml(docId, rating = 0, ratingCount = 0) {
-    let starsHtml = '';
-    const fullStars = Math.floor(rating);
-    const halfStar = rating % 1 >= 0.5 ? 1 : 0;
-    const emptyStars = 5 - fullStars - halfStar;
-
-    for (let i = 0; i < fullStars; i++) {
-        starsHtml += `<i data-lucide="star" class="rating-star star-filled" data-value="${i + 1}"></i>`;
-    }
-    if (halfStar) {
-        starsHtml += `<i data-lucide="star-half" class="rating-star star-filled" data-value="${fullStars + 1}"></i>`;
-    }
-    for (let i = 0; i < emptyStars; i++) {
-        starsHtml += `<i data-lucide="star" class="rating-star" data-value="${fullStars + halfStar + i + 1}"></i>`;
-    }
-
-    const ratingText = ratingCount > 0
-        ? `<span class="rating-score">${rating.toFixed(1)}</span><span class="rating-count">(${ratingCount}人)</span>`
-        : `<span class="rating-score">暂无评分</span>`;
-
-    return `
-        <div class="material-rating-container flex items-center" title="点击评分">
-            <div class="material-rating-stars flex text-yellow-400 cursor-pointer" data-doc-id="${escapeHtml(docId)}">
-                ${starsHtml}
-            </div>
-            <div class="ml-2 text-xs text-gray-500 dark:text-gray-400">
-                ${ratingText}
-            </div>
-        </div>
-    `;
-}
-
-
-/**
- * 模板: 单个学习资料卡片
- * @param {object} material - 从 'study_materials' 集合获取的单个资料对象
- * @returns {string} 渲染好的HTML字符串
- */
-export function createMaterialCardHtml(material) {
-    // 根据文件类型选择不同的图标和颜色
-    const fileTypeMap = {
-        '历年考卷': { icon: 'file-text', color: 'text-red-500' },
-        '复习笔记': { icon: 'notebook-pen', color: 'text-blue-500' },
-        '课程作业': { icon: 'file-pen-line', color: 'text-green-500' },
-        '课件PPT': { icon: 'presentation', color: 'text-orange-500' },
-        '其他资料': { icon: 'file-question', color: 'text-gray-500' }
-    };
-    const typeInfo = fileTypeMap[material.materialType] || fileTypeMap['其他资料'];
-
-    // 格式化上传时间
-    const uploadDate = material.createdAt ? new Date(material.createdAt).toLocaleDateString() : '未知日期';
-
-    // [错误修复] 调用辅助函数时，传入 docId
-    const ratingComponentHtml = createRatingStarsHtml(material._id, material.rating, material.ratingCount);
-
-    return `
-        <div class="material-card bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden flex flex-col transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
-            <div class="p-5 flex-grow">
-                <div class="flex items-start justify-between">
-                    <div class="flex items-center min-w-0">
-                        <i data-lucide="${typeInfo.icon}" class="w-8 h-8 ${typeInfo.color} flex-shrink-0 mr-4"></i>
-                        <div class="min-w-0">
-                            <h4 class="font-bold text-lg text-gray-900 dark:text-gray-100 truncate" title="${escapeHtml(material.courseName)}">${escapeHtml(material.courseName)}</h4>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">${escapeHtml(material.teacher) || '未知教师'}</p>
-                        </div>
-                    </div>
-                    <span class="text-xs font-semibold ${typeInfo.color} bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full whitespace-nowrap">${escapeHtml(material.materialType)}</span>
-                </div>
-                <p class="text-sm text-gray-600 dark:text-gray-300 mt-4 h-10 overflow-hidden">
-                    ${escapeHtml(material.description) || '上传者没有留下任何描述...'}
-                </p>
-            </div>
-            <div class="bg-gray-50 dark:bg-gray-800/50 px-5 py-3 border-t dark:border-gray-700">
-                <div class="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
-                    <div class="flex items-center" title="上传者">
-                        <i data-lucide="user" class="w-3 h-3 mr-1.5"></i>
-                        <span class="truncate">${escapeHtml(material.uploaderNickname) || '匿名用户'}</span>
-                    </div>
-                    <div class="flex items-center" title="上传日期">
-                        <i data-lucide="calendar" class="w-3 h-3 mr-1.5"></i>
-                        <span>${uploadDate}</span>
-                    </div>
-                </div>
-                <div class="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 mt-2">
-                     <div class="flex items-center" title="下载次数">
-                        <i data-lucide="download" class="w-3 h-3 mr-1.5"></i>
-                        <span>${material.downloadCount || 0}</span>
-                    </div>
-                    ${ratingComponentHtml}
-                </div>
-                 <button class="download-material-btn mt-4 w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors flex items-center justify-center" data-file-path="${escapeHtml(material.fileCloudPath)}" data-doc-id="${escapeHtml(material._id)}">
-                    <i data-lucide="download-cloud" class="w-4 h-4 mr-2"></i>
-                    <span>下载</span>
-                </button>
-            </div>
-        </div>
-    `;
-}
-
-/**
- * 模板: 学习资料列表
- * @param {Array<object>} materials - 从 'study_materials' 集合获取的资料对象数组
- * @returns {string} 渲染好的HTML字符串
- */
-export function createMaterialsListHtml(materials) {
-    if (!materials || materials.length === 0) {
-        return `
-            <div class="text-center py-16">
-                <i data-lucide="folder-search" class="w-24 h-24 text-gray-300 dark:text-gray-600 mx-auto"></i>
-                <h3 class="mt-4 text-xl font-semibold text-gray-800 dark:text-gray-200">空空如也</h3>
-                <p class="mt-2 text-gray-500 dark:text-gray-400">还没有人分享资料，快来当第一个贡献者吧！</p>
-                <button id="upload-from-empty-state-btn" class="mt-6 bg-blue-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors flex items-center justify-center mx-auto">
-                    <i data-lucide="upload-cloud" class="w-5 h-5 mr-2"></i>
-                    <span>立即上传</span>
-                </button>
-            </div>
-        `;
-    }
-
-    const cardsHtml = materials.map(createMaterialCardHtml).join('');
-
-    return `
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            ${cardsHtml}
-        </div>
-    `;
 }
