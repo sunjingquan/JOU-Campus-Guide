@@ -1,7 +1,7 @@
 /**
  * @file 用户认证组件 (Auth Component) - 优化版
  * @description 移除了冗余的UI更新逻辑，使其职责更单一。明确了匿名登录状态的处理方式。
- * @version 13.0.0
+ * @version 14.0.0
  */
 
 // --- 依赖导入 ---
@@ -45,30 +45,25 @@ function listenForAuthStateChanges() {
         let isAuthReadyToProceed = false;
 
         if (loginState) {
-            // --- 场景A: CloudBase存在登录态 ---
             const isAnonymous = loginState.user && loginState.user.isAnonymous;
 
             if (isAnonymous) {
-                // A.1: 如果是匿名登录，我们对UI层面将其视为“未登录”。
-                // 这是解决你提出问题的关键：将匿名状态在逻辑层就处理掉。
                 finalUserData = null;
-                isAuthReadyToProceed = true; // 匿名登录成功，认证流程准备就绪
+                isAuthReadyToProceed = true;
             } else {
-                // A.2: 如果是真实用户登录
-                try {
-                    const currentUser = loginState.user;
-                    const userDocRef = db.collection('users').doc(currentUser.uid);
-                    const userDoc = await userDocRef.get();
+                // --- 【修复点 2】将数据获取和实时监听分离，增强程序健壮性 ---
+                const currentUser = loginState.user;
+                const userDocRef = db.collection('users').doc(currentUser.uid);
 
+                // 步骤 1: 先尝试获取一次性的用户数据
+                try {
+                    const userDoc = await userDocRef.get();
                     if (userDoc.data && userDoc.data.length > 0) {
-                        // 数据库中存在该用户，合并用户信息
                         finalUserData = { ...currentUser, ...userDoc.data[0] };
                     } else {
-                        // 数据库中不存在，为新用户创建文档
                         const email = currentUser.email || '';
                         const emailParts = email.split('@');
                         const studentId = emailParts.length > 0 ? emailParts[0] : null;
-
                         const newUserDoc = {
                             _id: currentUser.uid,
                             studentId: studentId,
@@ -82,75 +77,96 @@ function listenForAuthStateChanges() {
                         await userDocRef.set(newUserDoc);
                         finalUserData = { ...currentUser, ...newUserDoc };
                     }
-
-                    // 为该用户文档创建实时监听器，以便信息变更时能自动更新
-                    userDocWatcher = userDocRef.watch({
-                        onChange: (snapshot) => {
-                            if (snapshot.docs && snapshot.docs.length > 0) {
-                                const updatedData = { ...loginState.user, ...snapshot.docs[0] };
-                                fullUserData = updatedData;
-                                // 发布用户信息变更事件
-                                eventBus.publish('auth:stateChanged', { user: updatedData });
-                            }
-                        },
-                        onError: (error) => console.error("[DB 监听] 实时监听器出错:", error)
-                    });
-
                 } catch (dbError) {
                     console.error("Auth Component: 获取或创建用户数据库文档时出错:", dbError);
-                    finalUserData = null;
-                } finally {
-                    isAuthReadyToProceed = true; // 无论成功失败，真实用户的认证流程都已结束
+                    finalUserData = null; // 如果连基本信息都获取失败，则认为未登录
                 }
+
+                // 步骤 2: 如果成功获取到数据，再尝试建立实时监听
+                if (finalUserData) {
+                    try {
+                        userDocWatcher = userDocRef.watch({
+                            onChange: (snapshot) => {
+                                if (snapshot.docs && snapshot.docs.length > 0) {
+                                    const updatedData = { ...loginState.user, ...snapshot.docs[0] };
+                                    fullUserData = updatedData;
+                                    eventBus.publish('auth:stateChanged', { user: updatedData });
+                                }
+                            },
+                            onError: (error) => {
+                                console.error("[DB 监听] 实时监听器出错:", error);
+                                if (userDocWatcher) {
+                                    userDocWatcher.close();
+                                    userDocWatcher = null;
+                                }
+                            }
+                        });
+                    } catch (watchError) {
+                        console.error("Auth Component: 无法建立用户文档的实时监听。应用可继续运行，但个人信息不会实时更新。", watchError);
+                        // 注意：这里不再将 finalUserData 设为 null，保证即使监听失败，用户依然是登录状态
+                    }
+                }
+                isAuthReadyToProceed = true;
             }
         } else {
-            // --- 场景B: CloudBase无登录态 ---
             if (isExplicitLogout) {
-                // B.1: 如果是用户刚刚主动点击了退出
                 finalUserData = null;
                 isExplicitLogout = false;
                 isAuthReadyToProceed = true;
             } else {
-                // B.2: 如果是应用首次加载，尝试进行静默的匿名登录以获取数据库权限
                 try {
                     await auth.signInAnonymously();
-                    // 匿名登录会再次触发 onLoginStateChanged, 所以这里不设置 isAuthReadyToProceed
                 } catch (err) {
                     console.error("Auth Component: 匿名登录失败:", err);
                     eventBus.publish('toast:show', { message: '无法连接服务，请检查网络后重试', type: 'error' });
                     finalUserData = null;
-                    isAuthReadyToProceed = true; // 匿名登录失败，认证流程也结束了
+                    isAuthReadyToProceed = true;
                 }
             }
         }
 
-        // --- 统一处理和事件发布 ---
         fullUserData = finalUserData;
-        // 广播最终的用户状态（可能是完整的用户信息对象，也可能是代表未登录的 null）
         eventBus.publish('auth:stateChanged', { user: finalUserData });
 
-        // [优化] 移除此处的UI更新调用，交由其他组件（如Navigation）监听事件来处理
-        // await updateComponentUI(finalUserData); 
-
-        // 只有在整个初始认证流程（无论是匿名、真实用户还是失败）完成后，才发布“认证就绪”事件
         if (isAuthReadyToProceed && !isInitialAuthCheckDone) {
             isInitialAuthCheckDone = true;
             console.log("Auth Component: 初始认证检查完成，发布 auth:ready 事件。");
-            eventBus.publish('auth:ready'); // 这个事件将触发 main.js 加载核心数据
+            eventBus.publish('auth:ready');
         }
     });
 }
 
-
 /**
- * [优化] 此函数已被移除。
- * Auth组件的职责是管理认证状态并发布事件，不应直接操作不属于它的UI元素（如侧边栏）。
- * UI更新的职责已完全交给 Navigation 组件。
+ * --- 【新增修复函数】 ---
+ * 填充个人中心“查看”视图的数据。
+ * @param {object} userData - 完整的用户信息对象
  */
-// async function updateComponentUI(userData) { ... }
+async function populateProfileView(userData) {
+    if (!userData || !dom.profileViewContainer) return;
+
+    // 获取并设置头像
+    const avatarUrl = await getAvatarUrl(userData.avatar);
+    dom.profileAvatarLarge.src = avatarUrl;
+    dom.profileAvatarLarge.onerror = () => {
+        dom.profileAvatarLarge.src = FALLBACK_AVATAR_URL; // 如果加载失败，使用备用头像
+    };
+
+    // 填充其他文本信息
+    dom.profileNickname.textContent = userData.nickname || '未设置昵称';
+    dom.profileEmail.textContent = userData.email || '未提供邮箱';
+    dom.profileBio.textContent = userData.bio || '这个人很懒，什么都没留下...';
+
+    const majorYearSpan = dom.profileMajorYear.querySelector('span');
+    if (majorYearSpan) {
+        const yearText = userData.enrollmentYear ? `${userData.enrollmentYear}级` : '';
+        const majorText = userData.major || '未设置专业';
+        const combinedText = `${yearText} ${majorText}`.trim();
+        majorYearSpan.textContent = combinedText || '未设置专业信息'; // 如果都为空，则显示提示
+    }
+}
 
 
-// ... 此处省略所有其他函数 (handleLogout, handleLoginSubmit, 等) ...
+// ... 此处省略所有其他未修改的函数 (handleLogout, handleLoginSubmit, 等) ...
 // ... 它们保持不变 ...
 async function handleLogout() {
     try {
@@ -558,10 +574,19 @@ function setupEventListeners() {
         handleAuthViewChange('login');
         showAuthModal();
     });
-    dom.userProfileBtn.addEventListener('click', () => {
+
+    // --- 【修复点 1】修改个人中心按钮的点击事件 ---
+    dom.userProfileBtn.addEventListener('click', async () => {
+        // 确保全局用户信息存在
+        if (fullUserData) {
+            // 在显示弹窗前，调用新函数来填充数据
+            await populateProfileView(fullUserData);
+        }
+        // 切换到“查看”视图并显示弹窗
         handleProfileViewChange('view');
         showProfileModal();
     });
+
     dom.logoutButton.addEventListener('click', handleLogout);
 
     dom.closeAuthBtn.addEventListener('click', hideAuthModal);
