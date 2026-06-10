@@ -1,5 +1,6 @@
 # Local Netlify folder
 .netlify
+.DS_Store
 .tmp.drivedownload
 .tmp.driveupload
 迎新网站方案2.code-workspace

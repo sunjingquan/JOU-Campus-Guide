@@ -17,6 +17,7 @@ import * as navigation from '../components/Navigation/navigation.js';
 import * as materials from '../components/Materials/materials.js';
 import * as contentRenderer from '../components/ContentRenderer/contentRenderer.js';
 import * as detailView from '../components/DetailView/detailView.js';
+import * as watermark from '../components/Watermark/watermark.js';
 
 class GuideApp {
     constructor() {
@@ -26,6 +27,8 @@ class GuideApp {
         this.observer = null;
         this.isScrollingProgrammatically = false;
         this.scrollTimeout = null;
+        this.authReadyTimeout = null;
+        this.hasStartedDataLoad = false;
 
         // 启动器只关心最顶层的几个元素
         this.dom = {
@@ -43,8 +46,14 @@ class GuideApp {
         
         // 初始化无数据依赖的组件
         theme.init();
+        watermark.init({ text: '江海大移动' });
         feedback.init();
         auth.init(); // auth.init() 将触发 'auth:ready' 事件
+        this.authReadyTimeout = setTimeout(() => {
+            if (!this.hasStartedDataLoad) {
+                this._showStartupError('CloudBase 连接超时，请检查本地网络、CloudBase SDK 或数据库权限后刷新重试。');
+            }
+        }, 12000);
     }
 
     /**
@@ -73,9 +82,19 @@ class GuideApp {
      * 加载核心数据并初始化所有依赖数据的组件
      */
     async _loadDataAndRunApp() {
+        if (this.hasStartedDataLoad) return;
+        this.hasStartedDataLoad = true;
+        clearTimeout(this.authReadyTimeout);
+
         try {
-            [this.guideData, this.campusData] = await Promise.all([getGuideData(), getCampusData()]);
-            if (!this.guideData || !this.campusData) throw new Error("核心数据加载失败。");
+            [this.guideData, this.campusData] = await this._withTimeout(
+                Promise.all([getGuideData(), getCampusData()]),
+                12000,
+                'CloudBase 数据读取超时。'
+            );
+            if (!Array.isArray(this.guideData) || this.guideData.length === 0 || !this.campusData) {
+                throw new Error("核心数据加载失败。");
+            }
 
             this.selectedCampus = localStorage.getItem('selectedCampus') || 'cangwu'; // 提供一个默认值
             localStorage.setItem('selectedCampus', this.selectedCampus);
@@ -94,8 +113,28 @@ class GuideApp {
 
         } catch (error) {
             console.error("App Launcher: 应用启动失败!", error);
-            this.dom.loadingOverlay.innerHTML = `<p class="text-red-500">应用加载失败，请刷新重试。</p>`;
+            this._showStartupError('应用加载失败，请检查 CloudBase 连接后刷新重试。');
         }
+    }
+
+    _withTimeout(promise, timeoutMs, timeoutMessage) {
+        return Promise.race([
+            promise,
+            new Promise((_, reject) => {
+                setTimeout(() => reject(new Error(timeoutMessage)), timeoutMs);
+            })
+        ]);
+    }
+
+    _showStartupError(message) {
+        if (!this.dom.loadingOverlay) return;
+        this.dom.loadingOverlay.innerHTML = `
+            <div class="px-6 text-center">
+                <p class="text-lg font-semibold text-red-500">应用加载失败</p>
+                <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">${message}</p>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-500">本地测试时请确认网络可以访问 CloudBase，并通过本地静态服务打开页面。</p>
+            </div>
+        `;
     }
     
     /**
