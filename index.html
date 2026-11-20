@@ -1,643 +1,534 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>江苏海洋大学校园指南 (功能更新)</title>
-    <!-- 引入Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Tailwind CSS 配置 -->
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f4f6fa" />
+    <meta name="color-scheme" content="light dark" />
+    <meta
+      name="description"
+      content="江苏海洋大学校园指南（酱海带出品）：大一校区查询、开学必备勾选清单、苍梧/通灌/宋跳三校区宿舍食堂实拍、宽带 WebVPN 配置与常见问答。"
+    />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="canonical" href="https://jianghaidai.com/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="江苏海洋大学校园指南 · 酱海带" />
+    <meta
+      property="og:description"
+      content="覆盖苍梧、通灌、宋跳三校区：新生校区秒查、行李勾选清单、宿舍食堂实拍与数字化校园实用手册。"
+    />
+    <meta property="og:url" content="https://jianghaidai.com/" />
+    <title>江苏海洋大学校园指南 · 酱海带</title>
     <script>
-        tailwind.config = {
-            darkMode: 'class',
-        }
+      (() => {
+        document.documentElement.classList.add("js");
+        let mode = "system";
+        let theme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        try {
+          const saved = localStorage.getItem("jhd-theme") || localStorage.getItem("theme");
+          if (saved === "light" || saved === "dark") {
+            mode = saved;
+            theme = saved;
+          }
+        } catch (_) {}
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.dataset.themeMode = mode;
+        const meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.content = theme === "dark" ? "#0b0e14" : "#f4f6fa";
+      })();
     </script>
-    <!-- 引入Lucide图标库 -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- 引入Inter字体 -->
-    <link rel="preconnect" href="https://rsms.me/">
-    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
-    <!-- 引入自定义样式表 -->
-    <link rel="stylesheet" href="css/style.css">
-    <!-- 新增: 排序按钮激活样式 -->
-    <style>
-        .sort-btn.active {
-            background-color: #3b82f6; /* blue-500 */
-            color: white;
-        }
-        html.dark .sort-btn.active {
-             background-color: #2563eb; /* blue-600 */
-        }
-    </style>
-</head>
+    <link rel="stylesheet" href="/css/style.css?v=20261121" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">跳到主要内容</a>
 
-<body class="bg-gray-50 dark:bg-gray-950">
-    <!-- 加载动画 -->
-    <div id="loading-overlay"
-        class="fixed inset-0 bg-white dark:bg-gray-950 z-[100] flex flex-col items-center justify-center transition-opacity duration-500">
-        <div class="loader"></div>
-        <p class="mt-4 text-lg font-semibold text-gray-700 dark:text-gray-300">江苏海洋大学校园指南</p>
-        <p class="text-sm text-gray-500">正在加载...</p>
-    </div>
+    <!-- 内联 SVG 图标集（零外部 CDN 依赖） -->
+    <svg class="icon-sprite" aria-hidden="true">
+      <symbol id="i-wave" viewBox="0 0 40 40">
+        <path d="M6 14.5c4-3.7 8-3.7 12 0s8 3.7 16 0" />
+        <path d="M6 22.5c4-3.7 8-3.7 12 0s8 3.7 16 0" opacity=".72" />
+        <path d="M6 30.5c4-3.7 8-3.7 12 0s8 3.7 16 0" opacity=".45" />
+      </symbol>
+      <symbol id="i-compass" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" />
+        <polygon points="15.5 8.5 13.4 13.4 8.5 15.5 10.6 10.6 15.5 8.5" />
+      </symbol>
+      <symbol id="i-backpack" viewBox="0 0 24 24">
+        <path d="M5 10a7 7 0 0 1 14 0v9a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-9Z" />
+        <path d="M9 4.5V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1.5" />
+        <path d="M8 14h8M8 17.5h8" />
+      </symbol>
+      <symbol id="i-coffee" viewBox="0 0 24 24">
+        <path d="M17 8h1a4 4 0 1 1 0 8h-1" />
+        <path d="M3 8h14v7a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8Z" />
+        <path d="M6 3v2M10 3v2M14 3v2" />
+      </symbol>
+      <symbol id="i-graduation-cap" viewBox="0 0 24 24">
+        <path d="M22 10 12 5 2 10l10 5 10-5Z" />
+        <path d="M6 12v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5" />
+      </symbol>
+      <symbol id="i-laptop" viewBox="0 0 24 24">
+        <rect x="3" y="4" width="18" height="12" rx="2" />
+        <path d="M2 20h20" />
+      </symbol>
+      <symbol id="i-help-circle" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M9.3 9a3 3 0 0 1 5.6 1.4c0 2-2.9 2.4-2.9 4.1" />
+        <path d="M12 17.5h.01" />
+      </symbol>
+      <symbol id="i-search" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="7" />
+        <path d="m20 20-3.8-3.8" />
+      </symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="3.5" />
+        <path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4m10.6 10.6 1.4 1.4m0-13.4-1.4 1.4M6.7 17.3l-1.4 1.4" />
+      </symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24">
+        <path d="M20 14.1A8.3 8.3 0 0 1 9.9 4 7.6 7.6 0 1 0 20 14.1Z" />
+      </symbol>
+      <symbol id="i-map-pin" viewBox="0 0 24 24">
+        <path d="M12 21s-6.5-5.6-6.5-10.5a6.5 6.5 0 1 1 13 0C18.5 15.4 12 21 12 21Z" />
+        <circle cx="12" cy="10.5" r="2.3" />
+      </symbol>
+      <symbol id="i-check" viewBox="0 0 24 24">
+        <path d="m5 12.5 4.3 4.3L19 7" />
+      </symbol>
+      <symbol id="i-check-square" viewBox="0 0 24 24">
+        <rect x="3.5" y="3.5" width="17" height="17" rx="4" />
+        <path d="m8 12.2 2.7 2.8L16.2 9.5" />
+      </symbol>
+      <symbol id="i-bed" viewBox="0 0 24 24">
+        <path d="M3 7v11M21 18v-6a2 2 0 0 0-2-2H3M3 14h18" />
+        <path d="M7 10V8a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2" />
+      </symbol>
+      <symbol id="i-utensils" viewBox="0 0 24 24">
+        <path d="M4 3v7a3 3 0 0 0 6 0V3M7 3v18M16 3c0 5 0 9 0 18M16 3a4 4 0 0 1 4 4v4h-4" />
+      </symbol>
+      <symbol id="i-wifi" viewBox="0 0 24 24">
+        <path d="M2 8.8a15 15 0 0 1 20 0M5.5 12.5a10 10 0 0 1 13 0M9 16.2a5 5 0 0 1 6 0" />
+        <circle cx="12" cy="19.5" r="1" fill="currentColor" />
+      </symbol>
+      <symbol id="i-flag" viewBox="0 0 24 24">
+        <path d="M5 21V4m0 0h12l-2.5 4.5L17 13H5" />
+      </symbol>
+      <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7" /></symbol>
+      <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 19-7-7 7-7" /></symbol>
+      <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></symbol>
+      <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5" /></symbol>
+      <symbol id="i-external" viewBox="0 0 24 24">
+        <path d="M14 5h5v5M19 5l-8 8" />
+        <path d="M18 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />
+      </symbol>
+      <symbol id="i-copy" viewBox="0 0 24 24">
+        <rect x="8" y="8" width="11" height="11" rx="2" />
+        <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" />
+      </symbol>
+      <symbol id="i-share" viewBox="0 0 24 24">
+        <path d="M8.5 9.5 12 6l3.5 3.5M12 6v9" />
+        <path d="M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" />
+      </symbol>
+      <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" /></symbol>
+      <symbol id="i-message" viewBox="0 0 24 24">
+        <path d="M21 12a8 8 0 0 1-8 8H7l-4 3v-6.5A8 8 0 1 1 21 12Z" />
+      </symbol>
+      <symbol id="i-calendar" viewBox="0 0 24 24">
+        <rect x="3.5" y="4.5" width="17" height="16" rx="2.5" />
+        <path d="M3.5 9.5h17M8 3v3M16 3v3" />
+      </symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24">
+        <path d="M12 3 5 6v5.3c0 4.4 2.8 7.8 7 9.7 4.2-1.9 7-5.3 7-9.7V6l-7-3Z" />
+        <path d="m8.8 12.2 2.2 2.2 4.5-4.7" />
+      </symbol>
+      <symbol id="i-folder" viewBox="0 0 24 24">
+        <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" />
+      </symbol>
+      <symbol id="i-zap" viewBox="0 0 24 24">
+        <polygon points="13 2 4 14 11 14 10 22 20 10 13 10 13 2" />
+      </symbol>
+      <symbol id="i-heart" viewBox="0 0 24 24">
+        <path d="M12 20.3S3.5 15.2 3.5 9.4a4.9 4.9 0 0 1 8.5-3.3 4.9 4.9 0 0 1 8.5 3.3c0 5.8-8.5 10.9-8.5 10.9Z" />
+      </symbol>
+      <symbol id="i-info" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 11v5M12 8h.01" />
+      </symbol>
+      <symbol id="i-shopping-bag" viewBox="0 0 24 24">
+        <path d="M6 7h12l1 13H5L6 7Z" />
+        <path d="M9 7V5a3 3 0 0 1 6 0v2" />
+      </symbol>
+      <symbol id="i-package" viewBox="0 0 24 24">
+        <path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z" />
+        <path d="m4 7.5 8 4.5 8-4.5M12 12v9" />
+      </symbol>
+      <symbol id="i-navigation" viewBox="0 0 24 24">
+        <polygon points="3 11 21 3 13 21 11 13 3 11" />
+      </symbol>
+      <symbol id="i-book-open" viewBox="0 0 24 24">
+        <path d="M2 5.5A3.5 3.5 0 0 1 5.5 2H12v18H5.5A3.5 3.5 0 0 0 2 23.5v-18ZM22 5.5A3.5 3.5 0 0 0 18.5 2H12v18h6.5a3.5 3.5 0 0 1 3.5 3.5v-18Z" />
+      </symbol>
+      <symbol id="i-trending-up" viewBox="0 0 24 24">
+        <path d="m22 7-8.5 8.5-5-5L2 17" />
+        <path d="M16 7h6v6" />
+      </symbol>
+      <symbol id="i-smartphone" viewBox="0 0 24 24">
+        <rect x="6" y="2.5" width="12" height="19" rx="2.5" />
+        <path d="M12 18h.01" />
+      </symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3.2 2" />
+      </symbol>
+      <symbol id="i-award" viewBox="0 0 24 24">
+        <circle cx="12" cy="8.5" r="5.5" />
+        <path d="m8.5 13.2-1.5 7.8 5-2.7 5 2.7-1.5-7.8" />
+      </symbol>
+      <symbol id="i-credit-card" viewBox="0 0 24 24">
+        <rect x="2.5" y="5" width="19" height="14" rx="2.5" />
+        <path d="M2.5 10h19" />
+      </symbol>
+      <symbol id="i-message-circle" viewBox="0 0 24 24">
+        <path d="M20.5 11.5a8.5 8.5 0 0 1-12.5 7.5L3.5 20.5 5 16a8.5 8.5 0 1 1 15.5-4.5Z" />
+      </symbol>
+      <symbol id="i-globe" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" />
+      </symbol>
+      <symbol id="i-key" viewBox="0 0 24 24">
+        <circle cx="7.5" cy="15.5" r="4.5" />
+        <path d="m10.8 12.2 9.7-9.7M16 7l3 3M19 4l2 2" />
+      </symbol>
+      <symbol id="i-zoom-in" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="7" />
+        <path d="m20 20-3.8-3.8M11 8v6M8 11h6" />
+      </symbol>
+      <symbol id="i-rotate-ccw" viewBox="0 0 24 24">
+        <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+        <path d="M3 3v5h5" />
+      </symbol>
+      <symbol id="i-download" viewBox="0 0 24 24">
+        <path d="M12 3.5v11m0 0 4-4m-4 4-4-4M5 19.5h14" />
+      </symbol>
+      <symbol id="i-star" viewBox="0 0 24 24">
+        <polygon points="12 2.5 14.9 8.4 21.5 9.3 16.7 14 17.8 20.5 12 17.4 6.2 20.5 7.3 14 2.5 9.3 9.1 8.4 12 2.5" />
+      </symbol>
+    </svg>
 
-    <!-- 校区选择器模态窗口 -->
-    <div id="campus-selector-modal"
-        class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-[100] p-4 hidden">
-        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-3xl transform transition-all scale-95 opacity-0 flex flex-col max-h-full"
-            id="campus-selector-dialog">
-            <div class="p-6 md:p-8 text-center flex-shrink-0">
-                <h2 class="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">欢迎来到江苏海洋大学！</h2>
-                <p class="text-gray-600 dark:text-gray-400">请选择你的校区，以便我们为你提供更精准的指南。</p>
-            </div>
-            <div class="overflow-y-auto px-6 md:px-8 pb-6 md:pb-8">
-                <div class="space-y-4 md:space-y-0 md:grid md:grid-cols-3 md:gap-6">
-                    <!-- 苍梧校区卡片 -->
-                    <button data-campus="cangwu"
-                        class="campus-select-btn w-full text-left rounded-xl shadow-lg group transform hover:scale-105 transition-transform duration-300 overflow-hidden bg-gray-100 dark:bg-gray-800">
-                        <div class="md:hidden flex items-center p-2">
-                            <div class="w-24 h-16 rounded-lg bg-gray-200 dark:bg-gray-700 flex-shrink-0">
-                                <img src="/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA.jpg" alt="[苍梧校区的图片]"
-                                    class="w-full h-full object-contain">
-                            </div>
-                            <div class="ml-4">
-                                <h3 class="text-gray-800 dark:text-gray-100 text-lg font-bold">苍梧校区</h3>
-                            </div>
-                        </div>
-                        <div class="hidden md:block relative h-56">
-                            <img src="/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA.jpg" alt="[苍梧校区的图片]"
-                                class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110">
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                            <div class="absolute bottom-0 left-0 p-4">
-                                <h3 class="text-white text-2xl font-bold drop-shadow-lg">苍梧校区</h3>
-                            </div>
-                        </div>
-                    </button>
-                    <!-- 通灌校区卡片 -->
-                    <button data-campus="tongguan"
-                        class="campus-select-btn w-full text-left rounded-xl shadow-lg group transform hover:scale-105 transition-transform duration-300 overflow-hidden bg-gray-100 dark:bg-gray-800">
-                        <div class="flex items-center p-2 md:hidden">
-                            <div class="w-24 h-16 rounded-lg bg-gray-200 dark:bg-gray-700 flex-shrink-0">
-                                <img src="/uploads/images/%E9%80%9A%E7%81%8C%E6%A0%A1%E5%8C%BA.jpg" alt="[通灌校区的图片]"
-                                    class="w-full h-full object-contain">
-                            </div>
-                            <div class="ml-4">
-                                <h3 class="text-gray-800 dark:text-gray-100 text-lg font-bold">通灌校区</h3>
-                            </div>
-                        </div>
-                        <div class="hidden md:block relative h-56">
-                            <img src="/uploads/images/%E9%80%9A%E7%81%8C%E6%A0%A1%E5%8C%BA.jpg" alt="[通灌校区的图片]"
-                                class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110">
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                            <div class="absolute bottom-0 left-0 p-4">
-                                <h3 class="text-white text-2xl font-bold drop-shadow-lg">通灌校区</h3>
-                            </div>
-                        </div>
-                    </button>
-                    <!-- 宋跳校区卡片 -->
-                    <button data-campus="songtiao"
-                        class="campus-select-btn w-full text-left rounded-xl shadow-lg group transform hover:scale-105 transition-transform duration-300 overflow-hidden bg-gray-100 dark:bg-gray-800">
-                        <div class="flex items-center p-2 md:hidden">
-                            <div class="w-24 h-16 rounded-lg bg-gray-200 dark:bg-gray-700 flex-shrink-0">
-                                <img src="/uploads/images/%E5%AE%8B%E8%B7%B3%E6%A0%A1%E5%8C%BA.jpg" alt="[宋跳校区的图片]"
-                                    class="w-full h-full object-contain">
-                            </div>
-                            <div class="ml-4">
-                                <h3 class="text-gray-800 dark:text-gray-100 text-lg font-bold">宋跳校区</h3>
-                            </div>
-                        </div>
-                        <div class="hidden md:block relative h-56">
-                            <img src="/uploads/images/%E5%AE%8B%E8%B7%B3%E6%A0%A1%E5%8C%BA.jpg" alt="[宋跳校区的图片]"
-                                class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110">
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                            <div class="absolute bottom-0 left-0 p-4">
-                                <h3 class="text-white text-2xl font-bold drop-shadow-lg">宋跳校区</h3>
-                            </div>
-                        </div>
-                    </button>
-                </div>
-            </div>
+    <!-- 顶栏：统一酱海带生态导航 -->
+    <header class="site-header" data-header>
+      <div class="header-inner">
+        <div class="header-left">
+          <button
+            class="icon-btn mobile-only"
+            type="button"
+            id="sidebar-toggle-btn"
+            aria-label="打开章节目录"
+            aria-expanded="false"
+            aria-controls="guide-sidebar"
+          >
+            <svg><use href="#i-menu" /></svg>
+          </button>
+          <a class="brand" href="#/home/home" aria-label="江苏海洋大学校园指南首页">
+            <span class="brand-mark"><svg><use href="#i-wave" /></svg></span>
+            <span class="brand-text">
+              <strong>酱海带 · 校园指南</strong>
+              <small>江苏海洋大学</small>
+            </span>
+          </a>
         </div>
-    </div>
 
-    <!-- 主视图 -->
-    <div id="main-view" class="flex h-screen relative">
-        <!-- 移动端遮罩层 -->
-        <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden md:hidden"></div>
+        <nav class="eco-nav" aria-label="酱海带生态导航">
+          <a href="#/home/home" class="is-active" aria-current="page">校园指南</a>
+          <a href="https://bbs.jianghaidai.com/" target="_blank" rel="noopener">
+            <span>校园社区</span>
+            <svg><use href="#i-external" /></svg>
+          </a>
+          <a href="https://app.jianghaidai.com/" target="_blank" rel="noopener">
+            <span>客户端下载</span>
+            <svg><use href="#i-external" /></svg>
+          </a>
+        </nav>
 
-        <!-- 侧边栏导航 -->
-        <aside id="sidebar"
-            class="w-72 bg-blue-900 dark:bg-gray-900 text-white p-5 overflow-y-auto transition-transform transform -translate-x-full md:translate-x-0 fixed md:relative h-full z-50 shadow-lg flex flex-col">
-            <div class="text-center mb-10">
-                <h1 class="text-3xl font-bold tracking-wider">江苏海洋大学</h1>
-                <p class="text-sm text-blue-200 dark:text-gray-400 mt-1">校园指南</p>
+        <div class="header-actions">
+          <button
+            class="search-trigger"
+            type="button"
+            id="open-search-btn"
+            aria-label="搜索指南、宿舍、食堂与专业"
+          >
+            <svg><use href="#i-search" /></svg>
+            <span class="search-trigger-placeholder">搜索指南、宿舍、专业...</span>
+            <kbd class="search-kbd">/</kbd>
+          </button>
+
+          <button
+            class="campus-pill"
+            type="button"
+            id="open-campus-btn"
+            title="切换当前校区"
+            aria-label="切换当前校区"
+          >
+            <svg><use href="#i-map-pin" /></svg>
+            <span id="header-campus-label">苍梧校区</span>
+          </button>
+
+          <button
+            class="icon-btn"
+            type="button"
+            id="theme-toggle-btn"
+            aria-label="切换深浅色主题"
+            title="切换主题"
+          >
+            <svg class="theme-sun"><use href="#i-sun" /></svg>
+            <svg class="theme-moon"><use href="#i-moon" /></svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 移动端侧栏遮罩 -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop" hidden></div>
+
+    <!-- 主体双栏知识库布局 -->
+    <div class="guide-layout">
+      <aside class="guide-sidebar" id="guide-sidebar" aria-label="指南章节目录">
+        <div class="sidebar-mobile-head mobile-only">
+          <span>章节目录</span>
+          <button class="icon-btn" type="button" id="sidebar-close-btn" aria-label="关闭章节目录">
+            <svg><use href="#i-close" /></svg>
+          </button>
+        </div>
+
+        <nav class="sidebar-nav" id="sidebar-nav">
+          <!-- 动态生成目录树 -->
+        </nav>
+
+        <div class="sidebar-footer">
+          <a class="sidebar-app-card" href="https://app.jianghaidai.com/" target="_blank" rel="noopener">
+            <div class="sidebar-app-icon"><svg><use href="#i-download" /></svg></div>
+            <div>
+              <strong>下载酱海带 App</strong>
+              <small>查课表 · 锁屏提醒 · 成绩考试</small>
             </div>
-            <nav id="nav-menu" class="flex-grow"></nav>
-            <!-- 底部工具栏 -->
-            <div class="mt-auto pt-4 border-t border-blue-800 dark:border-gray-700 space-y-2">
-                <a href="https://app.jianghaidai.com/" target="_blank" rel="noopener noreferrer"
-                    class="w-full flex items-center justify-center px-4 py-3 text-sm font-semibold text-blue-900 bg-white rounded-lg shadow-sm hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-colors dark:bg-blue-600 dark:text-white dark:hover:bg-blue-500"
-                    aria-label="下载酱海带校园助手">
-                    <i data-lucide="download" class="w-5 h-5 mr-3"></i>
-                    <span>下载酱海带 App</span>
-                </a>
-                <!-- 登录/用户状态 -->
-                <div id="auth-container">
-                    <!-- 未登录状态 -->
-                    <button id="login-prompt-btn"
-                        class="w-full flex items-center justify-center px-4 py-3 text-sm text-blue-200 dark:text-gray-300 rounded-md hover:bg-blue-800 dark:hover:bg-gray-700 transition-colors">
-                        <i data-lucide="user-circle" class="w-5 h-5 mr-3"></i>
-                        <span>登录 / 注册</span>
-                    </button>
-                    <!-- 已登录状态 -->
-                    <div id="user-profile-btn"
-                        class="hidden w-full p-2 rounded-lg hover:bg-blue-800 dark:hover:bg-gray-700 transition-colors cursor-pointer">
-                        <div class="flex items-center">
-                            <img id="sidebar-avatar" src="" alt="[用户头像]"
-                                class="w-10 h-10 rounded-full bg-blue-700 object-cover border-2 border-blue-400">
-                            <div class="ml-3 text-left">
-                                <p class="font-semibold text-base text-white truncate" id="sidebar-nickname">昵称</p>
-                                <p class="text-xs text-blue-200 dark:text-gray-400">查看个人中心</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <button id="feedback-btn"
-                    class="w-full flex items-center justify-center px-4 py-2 text-sm text-blue-200 dark:text-gray-300 rounded-md hover:bg-blue-800 dark:hover:bg-gray-700 transition-colors">
-                    <i data-lucide="message-square-plus" class="w-4 h-4 mr-2"></i>
-                    <span>信息反馈</span>
-                </button>
-                <button id="theme-toggle-btn"
-                    class="w-full flex items-center justify-center px-4 py-2 text-sm text-blue-200 dark:text-gray-300 rounded-md hover:bg-blue-800 dark:hover:bg-gray-700 transition-colors">
-                    <span id="theme-icon-sun" class="mr-2">
-                        <i data-lucide="sun" class="w-4 h-4"></i>
-                    </span>
-                    <span id="theme-icon-moon" class="mr-2 hidden">
-                        <i data-lucide="moon" class="w-4 h-4"></i>
-                    </span>
-                    <span id="theme-text">切换模式</span>
-                </button>
-                <button id="change-campus-btn"
-                    class="w-full flex items-center justify-center px-4 py-2 text-sm text-blue-200 dark:text-gray-300 rounded-md hover:bg-blue-800 dark:hover:bg-gray-700 transition-colors">
-                    <i data-lucide="map-pin" class="w-4 h-4 mr-2"></i>
-                    <span id="current-campus-display"></span>
-                </button>
-            </div>
-        </aside>
-
-        <!-- 主内容区域 -->
-        <main class="flex-1 flex flex-col overflow-hidden">
-            <header
-                class="bg-white dark:bg-gray-900 dark:border-b dark:border-gray-800 shadow-md p-3 flex justify-between items-center z-10 space-x-4 flex-shrink-0">
-                <button id="menu-toggle" class="md:hidden text-gray-700 dark:text-gray-300 flex-shrink-0"><i
-                        data-lucide="menu"></i></button>
-                <div class="flex items-center min-w-0">
-                    <h2 id="content-title"
-                        class="text-xl font-semibold text-gray-800 dark:text-gray-100 truncate hidden sm:block">
-                    </h2>
-                </div>
-                <!-- 桌面端搜索栏 -->
-                <div class="relative w-full max-w-xs ml-auto hidden md:block">
-                    <form id="search-form" class="w-full">
-                        <input type="search" id="search-input" placeholder="实时搜索指南..."
-                            class="w-full pl-10 pr-4 py-2 rounded-full border bg-gray-100 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 focus:bg-white dark:focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
-                        <i data-lucide="search"
-                            class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
-                    </form>
-                    <div id="live-search-results"
-                        class="absolute left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 hidden">
-                        <!-- 实时搜索结果将动态插入这里 -->
-                    </div>
-                </div>
-                <a href="https://app.jianghaidai.com/" target="_blank" rel="noopener noreferrer"
-                    class="inline-flex items-center justify-center px-3 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors flex-shrink-0"
-                    aria-label="下载酱海带校园助手">
-                    <i data-lucide="download" class="w-5 h-5 sm:mr-2"></i>
-                    <span class="hidden sm:inline">下载 App</span>
-                </a>
-                <a href="#" id="home-button-top"
-                    class="text-gray-600 dark:text-gray-400 hover:text-blue-700 dark:hover:text-blue-400 transition-colors flex-shrink-0"><i
-                        data-lucide="home" class="w-5 h-5"></i></a>
-            </header>
-            <div id="content-area"
-                class="flex-1 px-4 md:px-8 overflow-y-auto bg-gray-50 dark:bg-gray-950 pb-16 md:pb-0">
-                <!-- 内容将通过JS动态加载到这里 -->
-            </div>
-        </main>
-    </div>
-
-    <!-- 详情视图 -->
-    <div id="detail-view"
-        class="fixed inset-0 bg-gray-50 dark:bg-gray-950 z-40 flex-col transform translate-x-full hidden">
-        <header
-            class="bg-white dark:bg-gray-900 dark:border-b dark:border-gray-800 shadow-md p-4 flex items-center z-10 flex-shrink-0">
-            <button id="back-to-main-btn"
-                class="text-gray-600 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-400 transition-colors">
-                <i data-lucide="chevron-left" class="w-6 h-6"></i>
+          </a>
+          <div class="sidebar-utility-row">
+            <button type="button" class="ghost-action" id="sidebar-feedback-btn">
+              <svg><use href="#i-message" /></svg>
+              <span>勘误反馈</span>
             </button>
-            <h2 id="detail-title" class="text-xl font-semibold text-gray-800 dark:text-gray-100 truncate ml-4">详情</h2>
-        </header>
-        <div id="detail-content" class="flex-1 p-4 md:p-8 overflow-y-auto">
-            <!-- 详细内容将加载到这里 -->
+            <a
+              class="ghost-action"
+              href="https://bbs.jianghaidai.com/"
+              target="_blank"
+              rel="noopener"
+            >
+              <svg><use href="#i-message-circle" /></svg>
+              <span>去社区提问</span>
+            </a>
+          </div>
         </div>
-    </div>
+      </aside>
 
-    <!-- =================================================================================== -->
-    <!-- ===================== 学习资料共享中心视图 (Materials View) ===================== -->
-    <!-- =================================================================================== -->
-    <div id="materials-view" class="fixed inset-0 bg-gray-50 dark:bg-gray-950 z-30 flex-col hidden">
-        <!-- 资料共享视图的头部 -->
-        <header
-            class="bg-white dark:bg-gray-900 dark:border-b dark:border-gray-800 shadow-md p-3 flex justify-between items-center z-10 flex-shrink-0">
-            <!-- 返回主视图的按钮 -->
-            <button id="back-to-main-from-materials-btn"
-                class="text-gray-600 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-400 transition-colors">
-                <i data-lucide="arrow-left" class="w-6 h-6"></i>
-            </button>
-            <!-- 视图标题 -->
-            <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100">学习资料共享</h2>
-            <!-- 上传按钮 -->
-            <button id="upload-material-prompt-btn"
-                class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors flex items-center">
-                <i data-lucide="upload-cloud" class="w-5 h-5 mr-2"></i>
-                <span>上传资料</span>
-            </button>
-        </header>
-
-        <!-- ===================== 新增: 筛选与搜索栏 ===================== -->
-        <div id="materials-filter-bar" class="p-4 bg-white dark:bg-gray-900 border-b dark:border-gray-800 flex-shrink-0">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <!-- 学院和专业筛选 -->
-                <div class="grid grid-cols-2 gap-2">
-                    <select id="materials-college-filter" class="custom-select w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                        <option value="">所有学院</option>
-                    </select>
-                    <select id="materials-major-filter" class="custom-select w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none" disabled>
-                        <option value="">所有专业</option>
-                    </select>
-                </div>
-                <!-- 关键词搜索 -->
-                <div class="relative">
-                     <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
-                    <input type="search" id="materials-search-input" placeholder="搜索课程或教师..." class="w-full pl-10 pr-4 py-2 rounded-md border bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                </div>
-                <!-- 排序方式 -->
-                <div id="materials-sort-buttons" class="flex items-center justify-center md:justify-end space-x-2 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-                    <button data-sort="createdAt" class="sort-btn active flex-1 text-sm font-semibold px-3 py-1 rounded-md transition-colors">最新上传</button>
-                    <button data-sort="downloadCount" class="sort-btn flex-1 text-sm font-semibold px-3 py-1 rounded-md transition-colors">最多下载</button>
-                </div>
+      <main class="guide-main" id="main-content" tabindex="-1">
+        <div class="article-stage" id="article-container">
+          <!-- 首屏骨架占位，数据就绪后即时替换 -->
+          <div class="skeleton-card" aria-busy="true" aria-label="正在加载江苏海洋大学校园指南">
+            <div class="skeleton-line skeleton-kicker"></div>
+            <div class="skeleton-line skeleton-title"></div>
+            <div class="skeleton-line skeleton-sub"></div>
+            <div class="skeleton-grid">
+              <div class="skeleton-box"></div>
+              <div class="skeleton-box"></div>
+              <div class="skeleton-box"></div>
             </div>
+          </div>
+          <noscript>
+            <div class="noscript-banner">
+              <h1>江苏海洋大学校园指南</h1>
+              <p>浏览完整交互式指南（含校区查询、行李勾选清单、三校区宿舍与食堂导览）请启用浏览器 JavaScript。</p>
+              <p>
+                快捷入口：
+                <a href="https://app.jianghaidai.com/">酱海带校园助手官方下载</a> ·
+                <a href="https://bbs.jianghaidai.com/">酱海带校园社区</a>
+              </p>
+            </div>
+          </noscript>
         </div>
-        <!-- ===================== 新增结束 ===================== -->
 
-        <!-- 资料共享视图的内容区 -->
-        <div id="materials-content" class="flex-1 p-4 md:p-8 overflow-y-auto">
-            <!-- 资料卡片将通过JS动态加载到这里 -->
-            <p class="text-center text-gray-500">正在加载资料...</p>
-        </div>
+        <footer class="guide-footer">
+          <div class="guide-footer-inner">
+            <p>
+              © <span id="footer-year">2026</span> 酱海带 · 江苏海洋大学非官方校园指南 ·
+              涉及报到、教学与管理规定请以学校官方通知为准
+            </p>
+            <div class="guide-footer-links">
+              <button type="button" class="link-btn" id="footer-feedback-btn">提交勘误</button>
+              <a href="https://bbs.jianghaidai.com/" target="_blank" rel="noopener">校园社区</a>
+              <a href="https://app.jianghaidai.com/" target="_blank" rel="noopener">下载 App</a>
+            </div>
+          </div>
+        </footer>
+      </main>
     </div>
 
+    <!-- 移动端底部快捷栏 -->
+    <nav class="mobile-tabbar mobile-only" aria-label="移动端快捷导航">
+      <a href="#/home/home" class="tabbar-item is-active" data-tab="home">
+        <svg><use href="#i-compass" /></svg>
+        <span>总览</span>
+      </a>
+      <button type="button" class="tabbar-item" id="mobile-tab-menu" data-tab="menu">
+        <svg><use href="#i-menu" /></svg>
+        <span>目录</span>
+      </button>
+      <button type="button" class="tabbar-item" id="mobile-tab-search" data-tab="search">
+        <svg><use href="#i-search" /></svg>
+        <span>搜索</span>
+      </button>
+      <button type="button" class="tabbar-item" id="mobile-tab-campus" data-tab="campus">
+        <svg><use href="#i-map-pin" /></svg>
+        <span id="mobile-campus-label">苍梧</span>
+      </button>
+      <a href="https://app.jianghaidai.com/" target="_blank" rel="noopener" class="tabbar-item">
+        <svg><use href="#i-download" /></svg>
+        <span>App</span>
+      </a>
+    </nav>
 
-    <!-- 移动端底部导航栏 -->
-    <footer id="bottom-nav"
-        class="fixed bottom-0 left-0 right-0 h-16 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex justify-around items-center z-30 md:hidden">
-        <button id="bottom-nav-home"
-            class="nav-btn flex flex-col items-center text-gray-600 dark:text-gray-400 transition-colors">
-            <i data-lucide="home" class="w-6 h-6"></i>
-            <span class="text-xs mt-1">主页</span>
+    <!-- 全局即时搜索弹窗 -->
+    <dialog class="modal-dialog search-dialog" id="search-dialog" aria-label="全局搜索">
+      <div class="search-modal-box">
+        <div class="search-modal-header">
+          <svg class="search-modal-icon"><use href="#i-search" /></svg>
+          <input
+            type="search"
+            id="global-search-input"
+            placeholder="搜索章节、专业所属校区、宿舍、食堂、社团或常见问题..."
+            autocomplete="off"
+          />
+          <button type="button" class="esc-btn" id="close-search-btn" aria-label="关闭搜索">ESC</button>
+        </div>
+        <div class="search-modal-results" id="global-search-results" role="listbox">
+          <!-- 动态搜索结果 -->
+        </div>
+      </div>
+    </dialog>
+
+    <!-- 三校区切换弹窗 -->
+    <dialog class="modal-dialog" id="campus-dialog" aria-labelledby="campus-dialog-title">
+      <div class="modal-card modal-card-wide">
+        <div class="modal-head">
+          <div>
+            <span class="modal-kicker">Campus Switcher</span>
+            <h2 id="campus-dialog-title">选择你关注的校区</h2>
+          </div>
+          <button type="button" class="icon-btn" data-close-dialog="campus-dialog" aria-label="关闭校区选择">
+            <svg><use href="#i-close" /></svg>
+          </button>
+        </div>
+        <p class="modal-desc">切换校区后，「食堂导览」与「宿舍导览」将优先展示对应校区的实拍详情。</p>
+        <div class="campus-picker-grid" id="campus-picker-grid">
+          <button type="button" class="campus-option-card" data-select-campus="cangwu">
+            <img src="/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA.jpg" alt="苍梧校区实景" loading="lazy" />
+            <div class="campus-option-body">
+              <strong>苍梧校区</strong>
+              <span>海州区苍梧路 · 主校区</span>
+            </div>
+          </button>
+          <button type="button" class="campus-option-card" data-select-campus="tongguan">
+            <img src="/uploads/images/%E9%80%9A%E7%81%8C%E6%A0%A1%E5%8C%BA.jpg" alt="通灌校区实景" loading="lazy" />
+            <div class="campus-option-body">
+              <strong>通灌校区</strong>
+              <span>海州区通灌南路 · 商院/艺设等</span>
+            </div>
+          </button>
+          <button type="button" class="campus-option-card" data-select-campus="songtiao">
+            <img src="/uploads/images/%E5%AE%8B%E8%B7%B3%E6%A0%A1%E5%8C%BA.jpg" alt="宋跳校区实景" loading="lazy" />
+            <div class="campus-option-body">
+              <strong>宋跳校区</strong>
+              <span>高新区苍梧东路 · 应用技术学院</span>
+            </div>
+          </button>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- 免登录勘误与反馈弹窗 -->
+    <dialog class="modal-dialog" id="feedback-dialog" aria-labelledby="feedback-dialog-title">
+      <div class="modal-card">
+        <div class="modal-head">
+          <div>
+            <span class="modal-kicker">Feedback &amp; Errata</span>
+            <h2 id="feedback-dialog-title">指南勘误与建议</h2>
+          </div>
+          <button type="button" class="icon-btn" data-close-dialog="feedback-dialog" aria-label="关闭反馈窗口">
+            <svg><use href="#i-close" /></svg>
+          </button>
+        </div>
+        <form id="feedback-form" class="feedback-form">
+          <p class="feedback-context" id="feedback-page-context">关联章节：指南总览</p>
+          <label class="field-label" for="feedback-content">
+            <span>发现的信息变动或补充建议 <em>*</em></span>
+            <textarea
+              id="feedback-content"
+              name="content"
+              rows="4"
+              required
+              maxlength="1800"
+              placeholder="例如：苍梧二食堂二楼新增窗口、某宿舍楼门禁方式变动、希望补充的内容..."
+            ></textarea>
+          </label>
+          <label class="field-label" for="feedback-contact">
+            <span>联系方式（选填，方便核实致谢）</span>
+            <input
+              type="text"
+              id="feedback-contact"
+              name="contact"
+              maxlength="120"
+              placeholder="QQ / 邮箱 / 社区昵称"
+            />
+          </label>
+          <div class="feedback-actions">
+            <a
+              class="ghost-link"
+              href="https://bbs.jianghaidai.com/"
+              target="_blank"
+              rel="noopener"
+            >
+              需要互动答疑？去社区发帖 <svg><use href="#i-external" /></svg>
+            </a>
+            <button type="submit" class="btn btn-primary" id="feedback-submit-btn">提交反馈</button>
+          </div>
+        </form>
+      </div>
+    </dialog>
+
+    <!-- 全屏图片灯箱 -->
+    <dialog class="modal-dialog lightbox-dialog" id="lightbox-dialog" aria-label="实景大图预览">
+      <div class="lightbox-stage">
+        <button type="button" class="lightbox-close icon-btn" data-close-dialog="lightbox-dialog" aria-label="关闭大图">
+          <svg><use href="#i-close" /></svg>
         </button>
-        <button id="bottom-nav-menu"
-            class="nav-btn flex flex-col items-center text-gray-600 dark:text-gray-400 transition-colors">
-            <i data-lucide="menu" class="w-6 h-6"></i>
-            <span class="text-xs mt-1">菜单</span>
+        <button type="button" class="lightbox-nav lightbox-prev" id="lightbox-prev" aria-label="上一张">
+          <svg><use href="#i-chevron-left" /></svg>
         </button>
-        <button id="bottom-nav-search"
-            class="nav-btn flex flex-col items-center text-gray-600 dark:text-gray-400 transition-colors">
-            <i data-lucide="search" class="w-6 h-6"></i>
-            <span class="text-xs mt-1">搜索</span>
+        <figure class="lightbox-figure">
+          <img id="lightbox-img" src="" alt="" />
+          <figcaption id="lightbox-caption"></figcaption>
+        </figure>
+        <button type="button" class="lightbox-nav lightbox-next" id="lightbox-next" aria-label="下一张">
+          <svg><use href="#i-chevron-right" /></svg>
         </button>
-        <button id="bottom-nav-campus"
-            class="nav-btn flex flex-col items-center text-gray-600 dark:text-gray-400 transition-colors">
-            <i data-lucide="map-pin" class="w-6 h-6"></i>
-            <span class="text-xs mt-1">校区</span>
-        </button>
-    </footer>
+      </div>
+    </dialog>
 
-    <!-- 移动端搜索遮罩层 -->
-    <div id="mobile-search-overlay"
-        class="fixed inset-0 bg-gray-50 dark:bg-gray-950 z-[100] flex-col hidden transform translate-y-full">
-        <header class="p-4 flex items-center border-b dark:border-gray-800 flex-shrink-0">
-            <div class="relative flex-1">
-                <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
-                <input type="search" id="mobile-search-input" placeholder="搜索指南..."
-                    class="w-full pl-10 pr-4 py-2 rounded-full border bg-gray-100 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-            <button id="close-mobile-search-btn" class="ml-4 text-blue-600 dark:text-blue-400 font-semibold">取消</button>
-        </header>
-        <div id="mobile-search-results-container" class="flex-1 p-4 overflow-y-auto">
-            <!-- 移动端搜索结果将加载到这里 -->
-        </div>
+    <!-- 全局轻量提示条 -->
+    <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true">
+      <svg><use href="#i-check" /></svg>
+      <span id="toast-text"></span>
     </div>
 
-
-    <!-- 反馈模态窗口 -->
-    <div id="feedback-modal"
-        class="fixed inset-0 bg-black bg-opacity-60 z-[100] flex items-center justify-center p-4 hidden">
-        <div id="feedback-dialog"
-            class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6 transform transition-all scale-95 opacity-0">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100">信息反馈</h3>
-                <button id="close-feedback-btn" class="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-            <form id="feedback-form" name="feedback" >
-                <div class="space-y-4">
-                    <div>
-                        <label for="feedback-content"
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">反馈内容</label>
-                        <textarea id="feedback-content" name="content" rows="4" required
-                            class="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                            placeholder="请详细描述您发现的问题或建议..."></textarea>
-                    </div>
-                    <div>
-                        <label for="feedback-contact"
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">联系方式 (可选)</label>
-                        <input type="text" id="feedback-contact" name="contact"
-                            class="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                            placeholder="QQ / 微信 / 邮箱">
-                    </div>
-                </div>
-                <div class="mt-6 text-right">
-                    <button type="submit"
-                        class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">提交</button>
-                </div>
-            </form>
-            <div id="feedback-success-msg" class="hidden text-center py-8">
-                <i data-lucide="check-circle" class="w-16 h-16 text-green-500 mx-auto mb-4"></i>
-                <p class="text-lg font-semibold text-gray-800 dark:text-gray-100">感谢您的反馈！</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400">我们会尽快处理。</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- 社区单点登录模态窗口 -->
-    <div id="auth-modal"
-        class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-[100] p-4 hidden">
-        <div id="auth-dialog"
-            class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md transform transition-all scale-95 opacity-0 overflow-hidden">
-            <div class="relative">
-                <button id="close-auth-btn"
-                    class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors z-10">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
-                <div class="pt-8 px-8 text-center">
-                    <div class="w-14 h-14 rounded-2xl bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto mb-4">
-                        <i data-lucide="shield-check" class="w-8 h-8"></i>
-                    </div>
-                    <h2 id="auth-title" class="text-2xl font-bold text-gray-900 dark:text-gray-100">酱海带统一登录</h2>
-                    <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                        校园指南已与酱海带校园社区打通，使用同一套账号即可分享学习资料、参与评分与管理。
-                    </p>
-                </div>
-                <div class="p-8 space-y-4">
-                    <button type="button" id="sso-login-btn"
-                        class="w-full flex items-center justify-center py-3 px-4 rounded-xl shadow-sm text-base font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                        <i data-lucide="log-in" class="w-5 h-5 mr-2"></i>
-                        <span>使用酱海带社区账号登录</span>
-                    </button>
-                    <p class="text-center text-xs text-gray-500 dark:text-gray-400">
-                        点击后将跳转至 <a href="https://bbs.jianghaidai.com/" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 hover:underline">bbs.jianghaidai.com</a> 完成安全授权
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 用户中心模态窗口 -->
-    <div id="profile-modal"
-        class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-[100] p-4 hidden">
-        <div id="profile-dialog"
-            class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl transform transition-all scale-95 opacity-0 flex flex-col max-h-[90vh]">
-            <div class="p-4 border-b dark:border-gray-700 flex justify-between items-center flex-shrink-0">
-                <h3 id="profile-title" class="text-lg font-semibold text-gray-800 dark:text-gray-100">个人中心</h3>
-                <button id="close-profile-btn"
-                    class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
-            </div>
-
-            <!-- 内容区 -->
-            <div class="flex-grow overflow-y-auto">
-                <!-- 查看视图 -->
-                <div id="profile-view-container" class="p-6 md:p-8">
-                    <div class="text-center">
-                        <img id="profile-avatar-large" src=""
-                            class="w-28 h-28 rounded-full mx-auto mb-4 border-4 border-indigo-200 dark:border-indigo-600 shadow-lg">
-                        <h2 id="profile-nickname" class="text-3xl font-bold text-gray-900 dark:text-gray-100"></h2>
-                        <p id="profile-email" class="text-sm text-gray-500 dark:text-gray-400 mt-1"></p>
-                        <div
-                            class="mt-2 flex justify-center items-center space-x-4 text-sm text-gray-600 dark:text-gray-300">
-                            <span id="profile-major-year" class="flex items-center"><i data-lucide="graduation-cap"
-                                    class="w-4 h-4 mr-1.5"></i><span></span></span>
-                        </div>
-                    </div>
-                    <div class="mt-8 text-center">
-                        <p id="profile-bio" class="text-gray-700 dark:text-gray-300 italic max-w-lg mx-auto"></p>
-                    </div>
-                    <!-- [修改] 调整按钮布局和新增“修改密码”按钮 -->
-                    <div class="mt-8 pt-6 border-t dark:border-gray-700 flex justify-center space-x-2 md:space-x-4">
-                        <button id="edit-profile-btn"
-                            class="flex items-center justify-center px-5 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors">
-                            <i data-lucide="edit-3" class="w-4 h-4 mr-2"></i>
-                            <span>编辑资料</span>
-                        </button>
-                        <a href="https://bbs.jianghaidai.com/my/preferences/account" target="_blank" rel="noopener noreferrer"
-                            class="flex items-center justify-center px-5 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
-                            <i data-lucide="external-link" class="w-4 h-4 mr-2"></i>
-                            <span>社区账号设置</span>
-                        </a>
-                        <button id="logout-button"
-                            class="flex items-center justify-center px-5 py-2 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors">
-                            <i data-lucide="log-out" class="w-4 h-4 mr-2"></i>
-                            <span>退出登录</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- 编辑视图 -->
-                <form id="profile-edit-container" class="hidden p-6 md:p-8 space-y-6">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">选择头像</label>
-                        <div id="avatar-selection-grid" class="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 gap-3">
-                            <!-- Avatars will be injected by JS -->
-                        </div>
-                    </div>
-                    <div>
-                        <label for="edit-nickname"
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">昵称</label>
-                        <input type="text" id="edit-nickname"
-                            class="mt-1 w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                            maxlength="15">
-                    </div>
-                    <div>
-                        <label for="edit-bio"
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">个性签名</label>
-                        <textarea id="edit-bio" rows="3"
-                            class="mt-1 w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                            placeholder="介绍一下自己吧~" maxlength="100"></textarea>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label for="edit-enrollment-year"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">入学年份</label>
-                            <select id="edit-enrollment-year"
-                                class="custom-select mt-1 w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                                <!-- Years will be injected by JS -->
-                            </select>
-                        </div>
-                        <div>
-                            <label for="edit-major"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">专业</label>
-                            <select id="edit-major"
-                                class="custom-select mt-1 w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                                <!-- Majors will be injected by JS -->
-                            </select>
-                        </div>
-                    </div>
-                    <div class="pt-4 flex justify-end space-x-3">
-                        <button type="button" id="cancel-edit-profile-btn"
-                            class="px-5 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">取消</button>
-                        <button type="submit" id="save-profile-btn"
-                            class="px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700">保存更改</button>
-                    </div>
-                </form>
-
-                <!-- [新增] 修改密码视图 -->
-                <form id="profile-change-password-container" class="hidden p-6 md:p-8 space-y-6">
-                    <div>
-                        <label for="current-password"
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">当前密码</label>
-                        <input type="password" id="current-password" required autocomplete="current-password"
-                            class="mt-1 w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label for="new-password"
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">新密码</label>
-                        <input type="password" id="new-password" required autocomplete="new-password"
-                            class="mt-1 w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                            placeholder="至少8位">
-                    </div>
-                    <div>
-                        <label for="confirm-new-password"
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">确认新密码</label>
-                        <input type="password" id="confirm-new-password" required autocomplete="new-password"
-                            class="mt-1 w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                    </div>
-                    <div class="pt-4 flex justify-end space-x-3">
-                        <button type="button" id="cancel-change-password-btn"
-                            class="px-5 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">取消</button>
-                        <button type="submit" id="save-password-btn"
-                            class="px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700">保存更改</button>
-                    </div>
-                </form>
-
-            </div>
-        </div>
-    </div>
-    
-    <!-- =================================================================================== -->
-    <!-- ===================== 上传资料模态窗口 (Upload Material Modal) ===================== -->
-    <!-- =================================================================================== -->
-    <div id="upload-material-modal" class="fixed inset-0 bg-black bg-opacity-60 z-[100] flex items-center justify-center p-4 hidden">
-        <div id="upload-material-dialog" class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg p-6 transform transition-all scale-95 opacity-0 max-h-[90vh] flex flex-col">
-            <!-- 模态框头部 -->
-            <div class="flex justify-between items-center mb-4 flex-shrink-0">
-                <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100">分享你的学习资料</h3>
-                <button id="close-upload-material-btn" class="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-            
-            <!-- 上传表单 -->
-            <form id="upload-material-form" class="overflow-y-auto space-y-4 pr-2">
-                <div>
-                    <label for="material-course-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">课程名称 <span class="text-red-500">*</span></label>
-                    <input type="text" id="material-course-name" name="courseName" required class="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="例如：高等数学">
-                </div>
-                <div>
-                    <label for="material-teacher" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">授课教师</label>
-                    <input type="text" id="material-teacher" name="teacher" class="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="选填，方便同学查找">
-                </div>
-
-                <!-- ===================== 学院和专业选择框 ===================== -->
-                <div>
-                    <label for="material-college" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">所属学院 <span class="text-red-500">*</span></label>
-                    <select id="material-college" name="college" required class="custom-select w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                        <option value="">-- 请选择学院 --</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="material-major" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">所属专业 <span class="text-red-500">*</span></label>
-                    <select id="material-major" name="major" required class="custom-select w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none" disabled>
-                        <option value="">-- 请先选择学院 --</option>
-                    </select>
-                </div>
-                
-                <div>
-                    <label for="material-type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">资料类型 <span class="text-red-500">*</span></label>
-                    <select id="material-type" name="materialType" required class="custom-select w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                        <option value="历年考卷">历年考卷</option>
-                        <option value="复习笔记">复习笔记</option>
-                        <option value="课程作业">课程作业</option>
-                        <option value="课件PPT">课件PPT</option>
-                        <option value="其他资料">其他资料</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="material-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">资料描述</label>
-                    <textarea id="material-description" name="description" rows="3" class="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="选填，可以介绍一下资料的特点、年份、适用范围等"></textarea>
-                </div>
-                <div>
-                    <label for="material-file-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">选择文件 <span class="text-red-500">*</span></label>
-                    <input type="file" id="material-file-input" name="materialFile" required class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900/50 dark:file:text-blue-300 dark:hover:file:bg-blue-900">
-                    <p id="material-file-name" class="text-sm text-gray-500 mt-2 truncate"></p>
-                </div>
-                 <!-- 版权声明 -->
-                <div class="flex items-start space-x-3">
-                    <input id="material-tos-checkbox" type="checkbox" required class="mt-1 h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
-                    <div class="text-sm">
-                        <label for="material-tos-checkbox" class="font-medium text-gray-700 dark:text-gray-300">我已阅读并同意</label>
-                        <p class="text-gray-500 dark:text-gray-400">我保证上传的资料不侵犯他人版权，并仅用于学术交流参考。严禁上传任何违法、违规或与学习无关的内容。</p>
-                    </div>
-                </div>
-            </form>
-            
-            <!-- 上传进度与成功提示 -->
-            <div id="upload-progress-container" class="hidden mt-4">
-                <p id="upload-status-text" class="text-sm font-medium text-center text-gray-700 dark:text-gray-300 mb-2">正在上传...</p>
-                <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                    <div id="upload-progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
-                </div>
-            </div>
-            <div id="upload-success-msg" class="hidden text-center py-8">
-                <i data-lucide="check-circle" class="w-16 h-16 text-green-500 mx-auto mb-4"></i>
-                <p class="text-lg font-semibold text-gray-800 dark:text-gray-100">分享成功，感谢你的贡献！</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400">窗口将在3秒后自动关闭。</p>
-            </div>
-
-            <!-- 底部按钮 -->
-            <div id="upload-form-footer" class="mt-6 text-right flex-shrink-0">
-                <button type="button" id="submit-material-btn" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:bg-gray-400">提交</button>
-            </div>
-        </div>
-    </div>
-
-
-    <!-- 主应用脚本入口 -->
-    <script type="module" src="js/app.js"></script>
-
-    <div id="toast-container"></div>
-</body>
-
+    <script type="module" src="/js/app.js?v=20261121"></script>
+  </body>
 </html>
