@@ -6,9 +6,8 @@
  */
 
 // --- 依赖导入 ---
-import { app, db } from '../../js/cloudbase.js';
 import { eventBus } from '../../services/eventBus.js';
-import { getMaterials, addMaterial, incrementDownloadCount, addRating, checkIfUserRated } from '../../services/api.js';
+import { getMaterials, uploadMaterialWithProgress, requestMaterialDownloadUrl, addRating, checkIfUserRated } from '../../services/api.js';
 import { createMaterialsListHtml } from './materials.templates.js';
 
 // --- 模块内变量 ---
@@ -94,9 +93,10 @@ async function _loadAndRenderMaterials() {
 
     // 如果用户已登录，检查并禁用已评分项
     if (currentUserData) {
+        const ratedById = new Map(materials.map((m) => [m._id, Boolean(m.userRated)]));
         dom.materialsContent.querySelectorAll('.material-rating-stars').forEach(async container => {
             const docId = container.dataset.docId;
-            const hasRated = await checkIfUserRated(docId, currentUserData._id);
+            const hasRated = ratedById.has(docId) ? ratedById.get(docId) : await checkIfUserRated(docId, currentUserData._id);
             if (hasRated) {
                 container.classList.add('disabled');
                 container.parentElement.setAttribute('title', '您已评过分');
@@ -176,39 +176,22 @@ async function _handleUploadMaterialSubmit() {
     dom.uploadProgressBar.style.width = '0%';
 
     try {
-        const userIdentifier = currentUserData.studentId || currentUserData._id;
-        const cloudPath = `study_materials/${userIdentifier}/${Date.now()}-${file.name}`;
-        
-        // 1. 上传文件到云存储
-        const uploadResult = await app.uploadFile({
-            cloudPath,
-            filePath: file,
-            onUploadProgress: (progressEvent) => {
-                const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                dom.uploadStatusText.textContent = `正在上传... ${percentCompleted}%`;
-                dom.uploadProgressBar.style.width = `${percentCompleted}%`;
-            }
-        });
-
-        // 2. 将文件信息写入数据库
-        dom.uploadStatusText.textContent = '正在写入数据库...';
         const formData = new FormData(form);
-        const materialData = {
-            uploaderId: currentUserData._id,
-            uploaderStudentId: currentUserData.studentId || null,
-            uploaderNickname: currentUserData.nickname,
+        const materialMeta = {
             courseName: formData.get('courseName'),
             teacher: formData.get('teacher'),
             college: formData.get('college'),
             major: formData.get('major'),
             materialType: formData.get('materialType'),
             description: formData.get('description'),
-            fileName: file.name,
-            fileCloudPath: uploadResult.fileID,
-            fileSize: file.size
+            fileName: file.name
         };
 
-        await addMaterial(materialData);
+        await uploadMaterialWithProgress(file, materialMeta, (progressEvent) => {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            dom.uploadStatusText.textContent = `正在上传... ${percentCompleted}%`;
+            dom.uploadProgressBar.style.width = `${percentCompleted}%`;
+        });
 
         // 3. 更新UI为成功状态
         dom.uploadMaterialForm.classList.add('hidden');
@@ -255,10 +238,9 @@ async function _handleMaterialDownload(e) {
     downloadBtn.innerHTML = `<span class="loader-small"></span>正在获取链接...`;
 
     try {
-        const { fileList } = await app.getTempFileURL({ fileList: [filePath] });
-        if (fileList[0] && fileList[0].tempFileURL) {
-            window.open(fileList[0].tempFileURL, '_blank');
-            incrementDownloadCount(docId);
+        const { downloadUrl } = await requestMaterialDownloadUrl(docId);
+        if (downloadUrl) {
+            window.open(downloadUrl, '_blank');
             
             // 立即更新界面上的下载次数
             const countElement = downloadBtn.closest('.material-card').querySelector('[data-lucide="download"] + span');

@@ -1,660 +1,263 @@
 /**
- * @file 用户认证组件 (Auth Component) - 优化版
- * @description 移除了冗余的UI更新逻辑，使其职责更单一。明确了匿名登录状态的处理方式。
- * @version 14.0.0
+ * @file 用户认证组件（酱海带社区 DiscourseConnect SSO 统一认证版）
+ * @description 对接 bbs.jianghaidai.com 原生单点登录，全站共享同一套社区身份与管理员权限。
  */
 
-// --- 依赖导入 ---
-import { app, auth, db } from '../../js/cloudbase.js';
+import { getCurrentSession, logoutSession, updateMyProfile } from '../../services/api.js';
 import { eventBus } from '../../services/eventBus.js';
 
-// --- 模块内变量 ---
+const DEFAULT_AVATAR_URL = '/uploads/images/%E9%BB%98%E8%AE%A4%E5%A4%B4%E5%83%8F/avatar_01.png';
+
 let dom = {};
-let avatarUrlCache = new Map();
-let verificationData = {
-    register: null,
-    reset: null
-};
 let campusDataForEditor = null;
 let fullUserData = null;
-let isExplicitLogout = false;
-let isInitialAuthCheckDone = false;
 
-const DEFAULT_AVATAR_FILE_ID = 'cloud://jou-campus-guide-9f57jf08ece0812.6a6f-jou-campus-guide-9f57jf08ece0812-1367578274/images/默认头像/avatar_01.png';
-const FALLBACK_AVATAR_URL = 'https://6a6f-jou-campus-guide-9f57jf08ece0812-1367578274.tcb.qcloud.la/images/%E9%BB%98%E8%AE%A4%E5%A4%B4%E5%83%8F/avatar_01.png?sign=94c44b27adbfba6ce88b12e681b9d360&t=1753770580';
-
-let userDocWatcher = null;
-
-// =============================================================================
-// --- 核心逻辑函数 ---
-// =============================================================================
-
-/**
- * 监听 CloudBase 的认证状态变化。
- * 这是整个认证组件的核心。
- */
-function listenForAuthStateChanges() {
-    auth.onLoginStateChanged(async (loginState) => {
-        // 如果存在旧的文档监听器，先关闭它
-        if (userDocWatcher) {
-            userDocWatcher.close();
-            userDocWatcher = null;
-        }
-
-        let finalUserData = null;
-        let isAuthReadyToProceed = false;
-
-        if (loginState) {
-            const isAnonymous = loginState.user && loginState.user.isAnonymous;
-
-            if (isAnonymous) {
-                finalUserData = null;
-                isAuthReadyToProceed = true;
-            } else {
-                // --- 【修复点 2】将数据获取和实时监听分离，增强程序健壮性 ---
-                const currentUser = loginState.user;
-                const userDocRef = db.collection('users').doc(currentUser.uid);
-
-                // 步骤 1: 先尝试获取一次性的用户数据
-                try {
-                    const userDoc = await userDocRef.get();
-                    if (userDoc.data && userDoc.data.length > 0) {
-                        finalUserData = { ...currentUser, ...userDoc.data[0] };
-                    } else {
-                        const email = currentUser.email || '';
-                        const emailParts = email.split('@');
-                        const studentId = emailParts.length > 0 ? emailParts[0] : null;
-                        const newUserDoc = {
-                            _id: currentUser.uid,
-                            studentId: studentId,
-                            nickname: `用户_${currentUser.uid.slice(0, 6)}`,
-                            email: email,
-                            avatar: DEFAULT_AVATAR_FILE_ID,
-                            bio: '这个人很懒，什么都没留下...',
-                            enrollmentYear: new Date().getFullYear().toString(),
-                            major: ''
-                        };
-                        await userDocRef.set(newUserDoc);
-                        finalUserData = { ...currentUser, ...newUserDoc };
-                    }
-                } catch (dbError) {
-                    console.error("Auth Component: 获取或创建用户数据库文档时出错:", dbError);
-                    finalUserData = null; // 如果连基本信息都获取失败，则认为未登录
-                }
-
-                // 步骤 2: 如果成功获取到数据，再尝试建立实时监听
-                if (finalUserData) {
-                    try {
-                        userDocWatcher = userDocRef.watch({
-                            onChange: (snapshot) => {
-                                if (snapshot.docs && snapshot.docs.length > 0) {
-                                    const updatedData = { ...loginState.user, ...snapshot.docs[0] };
-                                    fullUserData = updatedData;
-                                    eventBus.publish('auth:stateChanged', { user: updatedData });
-                                }
-                            },
-                            onError: (error) => {
-                                console.error("[DB 监听] 实时监听器出错:", error);
-                                if (userDocWatcher) {
-                                    userDocWatcher.close();
-                                    userDocWatcher = null;
-                                }
-                            }
-                        });
-                    } catch (watchError) {
-                        console.error("Auth Component: 无法建立用户文档的实时监听。应用可继续运行，但个人信息不会实时更新。", watchError);
-                        // 注意：这里不再将 finalUserData 设为 null，保证即使监听失败，用户依然是登录状态
-                    }
-                }
-                isAuthReadyToProceed = true;
-            }
-        } else {
-            if (isExplicitLogout) {
-                finalUserData = null;
-                isExplicitLogout = false;
-                isAuthReadyToProceed = true;
-            } else {
-                try {
-                    await auth.signInAnonymously();
-                } catch (err) {
-                    console.error("Auth Component: 匿名登录失败:", err);
-                    eventBus.publish('toast:show', { message: '无法连接服务，请检查网络后重试', type: 'error' });
-                    finalUserData = null;
-                    isAuthReadyToProceed = true;
-                }
-            }
-        }
-
-        fullUserData = finalUserData;
-        eventBus.publish('auth:stateChanged', { user: finalUserData });
-
-        if (isAuthReadyToProceed && !isInitialAuthCheckDone) {
-            isInitialAuthCheckDone = true;
-            console.log("Auth Component: 初始认证检查完成，发布 auth:ready 事件。");
-            eventBus.publish('auth:ready');
-        }
-    });
+export async function getAvatarUrl(avatarValue) {
+  if (!avatarValue || typeof avatarValue !== 'string') {
+    return DEFAULT_AVATAR_URL;
+  }
+  if (avatarValue.startsWith('/uploads/') || avatarValue.startsWith('https://')) {
+    return avatarValue;
+  }
+  return DEFAULT_AVATAR_URL;
 }
 
-/**
- * --- 【新增修复函数】 ---
- * 填充个人中心“查看”视图的数据。
- * @param {object} userData - 完整的用户信息对象
- */
+async function checkInitialSession() {
+  try {
+    const res = await getCurrentSession();
+    fullUserData = res.user || null;
+  } catch (err) {
+    console.warn('Auth Component: 会话检查失败，按未登录访客继续运行:', err);
+    fullUserData = null;
+  }
+  eventBus.publish('auth:stateChanged', { user: fullUserData });
+  eventBus.publish('auth:ready');
+}
+
 async function populateProfileView(userData) {
-    if (!userData || !dom.profileViewContainer) return;
+  if (!userData || !dom.profileViewContainer) return;
 
-    // 获取并设置头像
-    const avatarUrl = await getAvatarUrl(userData.avatar);
-    dom.profileAvatarLarge.src = avatarUrl;
-    dom.profileAvatarLarge.onerror = () => {
-        dom.profileAvatarLarge.src = FALLBACK_AVATAR_URL; // 如果加载失败，使用备用头像
-    };
+  const avatarUrl = await getAvatarUrl(userData.avatar);
+  dom.profileAvatarLarge.src = avatarUrl;
+  dom.profileAvatarLarge.onerror = () => {
+    dom.profileAvatarLarge.src = DEFAULT_AVATAR_URL;
+  };
 
-    // 填充其他文本信息
-    dom.profileNickname.textContent = userData.nickname || '未设置昵称';
-    dom.profileEmail.textContent = userData.email || '未提供邮箱';
-    dom.profileBio.textContent = userData.bio || '这个人很懒，什么都没留下...';
+  const roleBadge = userData.isAdmin ? ' · 社区管理员' : '';
+  dom.profileNickname.textContent = userData.nickname || userData.username || '海带用户';
+  dom.profileEmail.textContent = (userData.username ? `@${userData.username}` : (userData.email || '')) + roleBadge;
+  dom.profileBio.textContent = userData.bio || '这个人很懒，什么都没留下...';
 
-    const majorYearSpan = dom.profileMajorYear.querySelector('span');
-    if (majorYearSpan) {
-        const yearText = userData.enrollmentYear ? `${userData.enrollmentYear}级` : '';
-        const majorText = userData.major || '未设置专业';
-        const combinedText = `${yearText} ${majorText}`.trim();
-        majorYearSpan.textContent = combinedText || '未设置专业信息'; // 如果都为空，则显示提示
-    }
+  const majorYearSpan = dom.profileMajorYear?.querySelector('span');
+  if (majorYearSpan) {
+    const yearText = userData.enrollmentYear ? `${userData.enrollmentYear}级` : '';
+    const majorText = userData.major || '未设置专业';
+    majorYearSpan.textContent = `${yearText} ${majorText}`.trim() || '未设置专业信息';
+  }
 }
 
-
-// ... 此处省略所有其他未修改的函数 (handleLogout, handleLoginSubmit, 等) ...
-// ... 它们保持不变 ...
 async function handleLogout() {
-    try {
-        isExplicitLogout = true;
-        await auth.signOut();
-        avatarUrlCache.clear();
-        eventBus.publish('toast:show', { message: '已成功退出登录', type: 'info' });
-        hideProfileModal();
-    } catch (error) {
-        isExplicitLogout = false;
-        eventBus.publish('toast:show', { message: '退出登录失败', type: 'error' });
-    }
-}
-
-async function handleLoginSubmit(e) {
-    e.preventDefault();
-    const button = dom.loginForm.querySelector('button[type="submit"]');
-    button.disabled = true;
-    button.textContent = '登录中...';
-    const emailPrefix = dom.loginForm.email_prefix.value;
-    const password = dom.loginForm.password.value;
-    const email = `${emailPrefix}@jou.edu.cn`;
-    try {
-        await auth.signIn({ username: email, password: password });
-        eventBus.publish('toast:show', { message: '登录成功！', type: 'success' });
-        hideAuthModal();
-    } catch (error) {
-        eventBus.publish('toast:show', { message: `登录失败: ${error.message || '请检查学号和密码'}`, type: 'error' });
-    } finally {
-        button.disabled = false;
-        button.textContent = '登 录';
-    }
-}
-
-async function handleRegisterSubmit(e) {
-    e.preventDefault();
-    if (!verificationData.register || !verificationData.register.verification_token) {
-        eventBus.publish('toast:show', { message: '请先发送并正确输入邮箱验证码', type: 'error' });
-        return;
-    }
-    const button = dom.registerForm.querySelector('button[type="submit"]');
-    button.disabled = true;
-    button.textContent = '注册中...';
-    const emailPrefix = dom.registerForm.email_prefix.value;
-    const password = dom.registerForm.password.value;
-    const verificationCode = dom.registerForm.verification_code.value;
-    const email = `${emailPrefix}@jou.edu.cn`;
-
-    if (password.length < 8) {
-        eventBus.publish('toast:show', { message: '密码长度至少需要8位', type: 'error' });
-        button.disabled = false;
-        button.textContent = '注 册';
-        return;
-    }
-    try {
-        await auth.signUp({
-            email: email,
-            password: password,
-            verification_code: verificationCode,
-            verification_token: verificationData.register.verification_token
-        });
-        eventBus.publish('toast:show', { message: '注册成功！已自动登录。', type: 'success' });
-        verificationData.register = null;
-        hideAuthModal();
-    } catch (error) {
-        eventBus.publish('toast:show', { message: `注册失败: ${error.message || '请检查信息是否正确'}`, type: 'error' });
-    } finally {
-        button.disabled = false;
-        button.textContent = '注 册';
-    }
-}
-
-async function handlePasswordResetSubmit(e) {
-    e.preventDefault();
-    const button = dom.resetPasswordForm.querySelector('button[type="submit"]');
-    button.disabled = true;
-    button.textContent = '重置中...';
-
-    const emailPrefix = dom.resetPasswordForm.email_prefix.value;
-    const email = `${emailPrefix}@jou.edu.cn`;
-    const verificationCode = dom.resetPasswordForm.verification_code.value;
-    const newPassword = dom.resetPasswordForm.new_password.value;
-
-    if (!verificationData.reset || !verificationData.reset.verification_id) {
-        eventBus.publish('toast:show', { message: '请先发送并获取验证码', type: 'error' });
-        button.disabled = false;
-        button.textContent = '确认重置';
-        return;
-    }
-    if (newPassword.length < 8) {
-        eventBus.publish('toast:show', { message: '新密码长度至少需要8位', type: 'error' });
-        button.disabled = false;
-        button.textContent = '确认重置';
-        return;
-    }
-
-    try {
-        const verifyResult = await auth.verify({
-            verification_id: verificationData.reset.verification_id,
-            verification_code: verificationCode
-        });
-
-        await auth.resetPassword({
-            email: email,
-            new_password: newPassword,
-            verification_token: verifyResult.verification_token,
-        });
-
-        eventBus.publish('toast:show', { message: '密码重置成功！', type: 'success' });
-        verificationData.reset = null;
-        handleAuthViewChange('login');
-    } catch (error) {
-        eventBus.publish('toast:show', { message: `重置失败: ${error.message}`, type: 'error' });
-    } finally {
-        button.disabled = false;
-        button.textContent = '确认重置';
-    }
-}
-
-async function handleChangePasswordSubmit(e) {
-    e.preventDefault();
-    const button = dom.savePasswordBtn;
-    button.disabled = true;
-    button.textContent = '保存中...';
-
-    const currentPassword = dom.currentPasswordInput.value;
-    const newPassword = dom.newPasswordInput.value;
-    const confirmPassword = dom.confirmNewPasswordInput.value;
-
-    if (newPassword !== confirmPassword) {
-        eventBus.publish('toast:show', { message: '两次输入的新密码不一致', type: 'error' });
-        button.disabled = false;
-        button.textContent = '保存更改';
-        return;
-    }
-    if (newPassword.length < 8) {
-        eventBus.publish('toast:show', { message: '新密码长度至少需要8位', type: 'error' });
-        button.disabled = false;
-        button.textContent = '保存更改';
-        return;
-    }
-
-    try {
-        const sudoRes = await auth.sudo({ password: currentPassword });
-        await auth.setPassword({
-            new_password: newPassword,
-            sudo_token: sudoRes.sudo_token
-        });
-        eventBus.publish('toast:show', { message: '密码修改成功！', type: 'success' });
-        handleProfileViewChange('view');
-    } catch (error) {
-        eventBus.publish('toast:show', { message: `修改失败: ${error.message || '请检查当前密码是否正确'}`, type: 'error' });
-    } finally {
-        button.disabled = false;
-        button.textContent = '保存更改';
-    }
+  try {
+    await logoutSession();
+    fullUserData = null;
+    eventBus.publish('auth:stateChanged', { user: null });
+    eventBus.publish('toast:show', { message: '已成功退出登录', type: 'info' });
+    hideProfileModal();
+  } catch {
+    eventBus.publish('toast:show', { message: '退出登录失败，请稍后再试', type: 'error' });
+  }
 }
 
 async function handleProfileSave(e) {
-    e.preventDefault();
-    if (!fullUserData) {
-        eventBus.publish('toast:show', { message: '请先登录', type: 'error' });
-        return;
-    }
-    const button = dom.saveProfileBtn;
-    button.disabled = true;
-    button.textContent = '保存中...';
-    try {
-        const selectedAvatarFileID = dom.avatarSelectionGrid.querySelector('.avatar-option.selected')?.dataset.avatar;
-        const updatedData = {
-            nickname: dom.editNickname.value.trim(),
-            bio: dom.editBio.value.trim(),
-            enrollmentYear: dom.editEnrollmentYear.value,
-            major: dom.editMajor.value,
-        };
-        if (selectedAvatarFileID) {
-            updatedData.avatar = selectedAvatarFileID;
-        }
-        await db.collection('users').doc(fullUserData._id).update(updatedData);
-        eventBus.publish('toast:show', { message: '个人资料更新成功！', type: 'success' });
-        handleProfileViewChange('view');
-    } catch (error) {
-        eventBus.publish('toast:show', { message: '资料更新失败，请稍后再试', type: 'error' });
-    } finally {
-        button.disabled = false;
-        button.textContent = '保存更改';
-    }
-}
-
-function handleAuthViewChange(viewName) {
-    dom.loginFormContainer.classList.toggle('hidden', viewName !== 'login');
-    dom.registerFormContainer.classList.toggle('hidden', viewName !== 'register');
-    dom.resetPasswordFormContainer.classList.toggle('hidden', viewName !== 'reset');
-    const titles = { login: '欢迎回来', register: '创建新账户', reset: '重置你的密码' };
-    dom.authTitle.textContent = titles[viewName];
+  e.preventDefault();
+  if (!fullUserData) {
+    eventBus.publish('toast:show', { message: '请先登录', type: 'error' });
+    return;
+  }
+  const button = dom.saveProfileBtn;
+  button.disabled = true;
+  button.textContent = '保存中...';
+  try {
+    const selectedAvatar = dom.avatarSelectionGrid?.querySelector('.avatar-option.selected')?.dataset.avatar;
+    const updatedUser = await updateMyProfile({
+      nickname: dom.editNickname.value.trim(),
+      bio: dom.editBio.value.trim(),
+      enrollmentYear: dom.editEnrollmentYear.value,
+      major: dom.editMajor.value,
+      ...(selectedAvatar ? { avatar: selectedAvatar } : {})
+    });
+    fullUserData = updatedUser;
+    await populateProfileView(fullUserData);
+    eventBus.publish('auth:stateChanged', { user: fullUserData });
+    eventBus.publish('toast:show', { message: '个人资料更新成功！', type: 'success' });
+    handleProfileViewChange('view');
+  } catch (err) {
+    eventBus.publish('toast:show', { message: err.message || '资料更新失败，请稍后再试', type: 'error' });
+  } finally {
+    button.disabled = false;
+    button.textContent = '保存更改';
+  }
 }
 
 function handleProfileViewChange(viewName) {
-    dom.profileViewContainer.classList.toggle('hidden', viewName !== 'view');
-    dom.profileEditContainer.classList.toggle('hidden', viewName !== 'edit');
-    dom.profileChangePasswordContainer.classList.toggle('hidden', viewName !== 'changePassword');
-
-    const titles = {
-        view: '个人中心',
-        edit: '编辑个人资料',
-        changePassword: '修改密码'
-    };
-    dom.profileTitle.textContent = titles[viewName];
-
-    if (viewName === 'changePassword') {
-        dom.profileChangePasswordContainer.reset();
-    }
+  dom.profileViewContainer?.classList.toggle('hidden', viewName !== 'view');
+  dom.profileEditContainer?.classList.toggle('hidden', viewName !== 'edit');
+  dom.profileChangePasswordContainer?.classList.add('hidden');
+  if (dom.profileTitle) {
+    dom.profileTitle.textContent = viewName === 'edit' ? '编辑个人资料' : '个人中心';
+  }
 }
 
 function populateProfileEditForm(userData) {
-    if (!userData) return;
-    dom.editNickname.value = userData.nickname || '';
-    dom.editBio.value = userData.bio || '';
-    dom.editEnrollmentYear.value = userData.enrollmentYear || '';
-    dom.editMajor.value = userData.major || '';
-    dom.avatarSelectionGrid.querySelectorAll('.avatar-option').forEach(opt => {
-        opt.classList.remove('selected');
-    });
-    const selectedOption = dom.avatarSelectionGrid.querySelector(`[data-avatar="${userData.avatar}"]`);
-    if (selectedOption) {
-        selectedOption.classList.add('selected');
-    } else {
-        const firstOption = dom.avatarSelectionGrid.querySelector('.avatar-option');
-        if (firstOption) firstOption.classList.add('selected');
-    }
+  if (!userData) return;
+  dom.editNickname.value = userData.nickname || '';
+  dom.editBio.value = userData.bio || '';
+  dom.editEnrollmentYear.value = userData.enrollmentYear || '';
+  dom.editMajor.value = userData.major || '';
+  initializeAvatarChoices(userData.avatar);
 }
 
-export async function getAvatarUrl(fileID) {
-    const finalFileID = fileID && fileID.startsWith('cloud://') ? fileID : DEFAULT_AVATAR_FILE_ID;
-    if (avatarUrlCache.has(finalFileID)) {
-        return avatarUrlCache.get(finalFileID);
-    }
-    try {
-        const { fileList } = await app.getTempFileURL({ fileList: [finalFileID] });
-        if (fileList[0] && fileList[0].tempFileURL) {
-            const tempUrl = fileList[0].tempFileURL;
-            avatarUrlCache.set(finalFileID, tempUrl);
-            return tempUrl;
-        }
-        return FALLBACK_AVATAR_URL;
-    } catch (error) {
-        console.error(`获取头像(${finalFileID})临时URL失败:`, error);
-        return FALLBACK_AVATAR_URL;
-    }
-}
-
-async function sendVerificationCode(email, btn, type) {
-    btn.disabled = true;
-    btn.textContent = '发送中...';
-    try {
-        const verificationResult = await auth.getVerification({ email: email });
-        verificationData[type] = { verification_id: verificationResult.verification_id };
-        eventBus.publish('toast:show', { message: '验证码已发送，请检查邮箱', type: 'success' });
-        let countdown = 60;
-        btn.textContent = `${countdown}秒后重发`;
-        const interval = setInterval(() => {
-            countdown--;
-            btn.textContent = `${countdown}秒后重发`;
-            if (countdown <= 0) {
-                clearInterval(interval);
-                btn.disabled = false;
-                btn.textContent = '发送验证码';
-            }
-        }, 1000);
-    } catch (error) {
-        eventBus.publish('toast:show', { message: `发送失败: ${error.message}`, type: 'error' });
-        btn.disabled = false;
-        btn.textContent = '发送验证码';
-    }
-}
-
-async function handleVerifyCode() {
-    const verificationCode = dom.registerForm.verification_code.value;
-    if (!verificationData.register || !verificationData.register.verification_id || !verificationCode) {
-        return;
-    }
-    try {
-        const verifyResult = await auth.verify({
-            verification_id: verificationData.register.verification_id,
-            verification_code: verificationCode
-        });
-        verificationData.register.verification_token = verifyResult.verification_token;
-    } catch(error) {
-        eventBus.publish('toast:show', { message: `验证码错误: ${error.message}`, type: 'error' });
-        verificationData.register = null;
-    }
+function initializeAvatarChoices(currentAvatar) {
+  if (!dom.avatarSelectionGrid) return;
+  dom.avatarSelectionGrid.innerHTML = '';
+  const choices = [DEFAULT_AVATAR_URL];
+  if (currentAvatar && !choices.includes(currentAvatar)) {
+    choices.unshift(currentAvatar);
+  }
+  choices.forEach((url) => {
+    const opt = document.createElement('div');
+    opt.className = 'avatar-option p-1' + (url === currentAvatar ? ' selected' : '');
+    opt.dataset.avatar = url;
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = '头像选项';
+    img.className = 'w-full h-full rounded-full object-cover';
+    img.onerror = () => { img.src = DEFAULT_AVATAR_URL; };
+    opt.appendChild(img);
+    dom.avatarSelectionGrid.appendChild(opt);
+  });
 }
 
 export async function provideCampusData(campusData) {
-    campusDataForEditor = campusData;
-    if (dom.editEnrollmentYear) {
-        await initializeProfileEditor();
-    }
+  campusDataForEditor = campusData;
+  if (dom.editEnrollmentYear && campusDataForEditor) {
+    initializeProfileEditor();
+  }
 }
 
-async function initializeProfileEditor() {
-    if (!dom || !campusDataForEditor) {
-        console.error("Auth Component: 无法初始化个人中心编辑器，DOM或校区数据未提供。");
-        return;
-    }
-    
-    const yearSelect = dom.editEnrollmentYear;
-    const currentYear = new Date().getFullYear();
-    yearSelect.innerHTML = '';
-    for (let i = 0; i < 10; i++) {
-        const year = currentYear - i;
-        yearSelect.add(new Option(`${year}年`, year));
-    }
+function initializeProfileEditor() {
+  if (!dom.editEnrollmentYear || !campusDataForEditor) return;
 
-    const majorSelect = dom.editMajor;
-    const allMajors = [...new Set(campusDataForEditor.colleges.flatMap(c => c.majors))];
-    allMajors.sort((a, b) => a.localeCompare(b, 'zh-CN'));
-    majorSelect.innerHTML = '<option value="">未选择</option>';
-    allMajors.forEach(major => majorSelect.add(new Option(major, major)));
-    
-    const avatarGrid = dom.avatarSelectionGrid;
-    avatarGrid.innerHTML = '';
-    const selectableAvatarFileIDs = [
-        'cloud://jou-campus-guide-9f57jf08ece0812.6a6f-jou-campus-guide-9f57jf08ece0812-1367578274/images/默认头像/avatar_01.png',
-    ];
-    
-    const uncachedFileIDs = selectableAvatarFileIDs.filter(id => !avatarUrlCache.has(id));
-    if (uncachedFileIDs.length > 0) {
-        try {
-            const { fileList } = await app.getTempFileURL({ fileList: uncachedFileIDs });
-            fileList.forEach(item => {
-                if (item.tempFileURL) {
-                    avatarUrlCache.set(item.fileID, item.tempFileURL);
-                }
-            });
-        } catch (error) {
-            console.error("Auth Component: 批量获取头像URL失败:", error);
-        }
-    }
+  const yearSelect = dom.editEnrollmentYear;
+  const currentYear = new Date().getFullYear();
+  yearSelect.innerHTML = '';
+  for (let i = 0; i < 10; i++) {
+    const year = currentYear - i;
+    yearSelect.add(new Option(`${year}年`, String(year)));
+  }
 
-    selectableAvatarFileIDs.forEach(fileID => {
-        const displayUrl = avatarUrlCache.get(fileID) || FALLBACK_AVATAR_URL;
-        const avatarOption = document.createElement('div');
-        avatarOption.className = 'avatar-option p-1';
-        avatarOption.dataset.avatar = fileID;
-        avatarOption.innerHTML = `<img src="${displayUrl}" alt="头像选项" class="w-full h-full rounded-full object-cover" onerror="this.src='${FALLBACK_AVATAR_URL}'">`;
-        avatarGrid.appendChild(avatarOption);
-    });
+  const majorSelect = dom.editMajor;
+  const allMajors = [...new Set((campusDataForEditor.colleges || []).flatMap((c) => c.majors || []))];
+  allMajors.sort((a, b) => a.localeCompare(b, 'zh-CN'));
+  majorSelect.innerHTML = '<option value="">未选择</option>';
+  allMajors.forEach((major) => majorSelect.add(new Option(major, major)));
+  initializeAvatarChoices(fullUserData?.avatar);
 }
 
 function cacheDOMElements() {
-    dom = {
-        loginPromptBtn: document.getElementById('login-prompt-btn'),
-        userProfileBtn: document.getElementById('user-profile-btn'),
-        logoutButton: document.getElementById('logout-button'),
-        editProfileBtn: document.getElementById('edit-profile-btn'),
-        authModal: document.getElementById('auth-modal'),
-        authDialog: document.getElementById('auth-dialog'),
-        closeAuthBtn: document.getElementById('close-auth-btn'),
-        authTitle: document.getElementById('auth-title'),
-        loginFormContainer: document.getElementById('login-form-container'),
-        loginForm: document.getElementById('login-form'),
-        registerFormContainer: document.getElementById('register-form-container'),
-        registerForm: document.getElementById('register-form'),
-        resetPasswordFormContainer: document.getElementById('reset-password-form-container'),
-        resetPasswordForm: document.getElementById('reset-password-form'),
-        goToRegister: document.getElementById('go-to-register'),
-        goToLoginFromRegister: document.getElementById('go-to-login-from-register'),
-        forgotPasswordLink: document.getElementById('forgot-password-link'),
-        goToLoginFromReset: document.getElementById('go-to-login-from-reset'),
-        sendVerificationCodeBtn: document.getElementById('send-verification-code-btn'),
-        sendResetCodeBtn: document.getElementById('send-reset-code-btn'),
-        sidebarAvatar: document.getElementById('sidebar-avatar'),
-        sidebarNickname: document.getElementById('sidebar-nickname'),
-        profileModal: document.getElementById('profile-modal'),
-        profileDialog: document.getElementById('profile-dialog'),
-        closeProfileBtn: document.getElementById('close-profile-btn'),
-        profileTitle: document.getElementById('profile-title'),
-        profileViewContainer: document.getElementById('profile-view-container'),
-        profileEditContainer: document.getElementById('profile-edit-container'),
-        profileAvatarLarge: document.getElementById('profile-avatar-large'),
-        profileNickname: document.getElementById('profile-nickname'),
-        profileEmail: document.getElementById('profile-email'),
-        profileMajorYear: document.getElementById('profile-major-year'),
-        profileBio: document.getElementById('profile-bio'),
-        cancelEditProfileBtn: document.getElementById('cancel-edit-profile-btn'),
-        saveProfileBtn: document.getElementById('save-profile-btn'),
-        avatarSelectionGrid: document.getElementById('avatar-selection-grid'),
-        editNickname: document.getElementById('edit-nickname'),
-        editBio: document.getElementById('edit-bio'),
-        editEnrollmentYear: document.getElementById('edit-enrollment-year'),
-        editMajor: document.getElementById('edit-major'),
-        changePasswordPromptBtn: document.getElementById('change-password-prompt-btn'),
-        profileChangePasswordContainer: document.getElementById('profile-change-password-container'),
-        currentPasswordInput: document.getElementById('current-password'),
-        newPasswordInput: document.getElementById('new-password'),
-        confirmNewPasswordInput: document.getElementById('confirm-new-password'),
-        savePasswordBtn: document.getElementById('save-password-btn'),
-        cancelChangePasswordBtn: document.getElementById('cancel-change-password-btn'),
-    };
+  dom = {
+    loginPromptBtn: document.getElementById('login-prompt-btn'),
+    userProfileBtn: document.getElementById('user-profile-btn'),
+    logoutButton: document.getElementById('logout-button'),
+    editProfileBtn: document.getElementById('edit-profile-btn'),
+    authModal: document.getElementById('auth-modal'),
+    authDialog: document.getElementById('auth-dialog'),
+    closeAuthBtn: document.getElementById('close-auth-btn'),
+    ssoLoginBtn: document.getElementById('sso-login-btn'),
+    profileModal: document.getElementById('profile-modal'),
+    profileDialog: document.getElementById('profile-dialog'),
+    closeProfileBtn: document.getElementById('close-profile-btn'),
+    profileTitle: document.getElementById('profile-title'),
+    profileViewContainer: document.getElementById('profile-view-container'),
+    profileEditContainer: document.getElementById('profile-edit-container'),
+    profileChangePasswordContainer: document.getElementById('profile-change-password-container'),
+    profileAvatarLarge: document.getElementById('profile-avatar-large'),
+    profileNickname: document.getElementById('profile-nickname'),
+    profileEmail: document.getElementById('profile-email'),
+    profileMajorYear: document.getElementById('profile-major-year'),
+    profileBio: document.getElementById('profile-bio'),
+    cancelEditProfileBtn: document.getElementById('cancel-edit-profile-btn'),
+    saveProfileBtn: document.getElementById('save-profile-btn'),
+    avatarSelectionGrid: document.getElementById('avatar-selection-grid'),
+    editNickname: document.getElementById('edit-nickname'),
+    editBio: document.getElementById('edit-bio'),
+    editEnrollmentYear: document.getElementById('edit-enrollment-year'),
+    editMajor: document.getElementById('edit-major')
+  };
+}
+
+function startSsoRedirect() {
+  const returnTo = window.location.pathname + window.location.hash;
+  window.location.href = `/api/auth/sso/login?returnTo=${encodeURIComponent(returnTo || '/')}`;
 }
 
 function setupEventListeners() {
-    dom.loginPromptBtn.addEventListener('click', () => {
-        handleAuthViewChange('login');
-        showAuthModal();
-    });
+  dom.loginPromptBtn?.addEventListener('click', () => showAuthModal());
+  dom.ssoLoginBtn?.addEventListener('click', () => startSsoRedirect());
+  dom.closeAuthBtn?.addEventListener('click', hideAuthModal);
 
-    // --- 【修复点 1】修改个人中心按钮的点击事件 ---
-    dom.userProfileBtn.addEventListener('click', async () => {
-        // 确保全局用户信息存在
-        if (fullUserData) {
-            // 在显示弹窗前，调用新函数来填充数据
-            await populateProfileView(fullUserData);
-        }
-        // 切换到“查看”视图并显示弹窗
-        handleProfileViewChange('view');
-        showProfileModal();
-    });
+  dom.userProfileBtn?.addEventListener('click', async () => {
+    if (fullUserData) {
+      await populateProfileView(fullUserData);
+    }
+    handleProfileViewChange('view');
+    showProfileModal();
+  });
 
-    dom.logoutButton.addEventListener('click', handleLogout);
+  dom.logoutButton?.addEventListener('click', handleLogout);
+  dom.closeProfileBtn?.addEventListener('click', hideProfileModal);
+  dom.editProfileBtn?.addEventListener('click', () => {
+    populateProfileEditForm(fullUserData);
+    handleProfileViewChange('edit');
+  });
+  dom.cancelEditProfileBtn?.addEventListener('click', () => handleProfileViewChange('view'));
+  dom.profileEditContainer?.addEventListener('submit', handleProfileSave);
+  dom.avatarSelectionGrid?.addEventListener('click', (e) => {
+    const selectedAvatar = e.target.closest('.avatar-option');
+    if (selectedAvatar) {
+      dom.avatarSelectionGrid.querySelectorAll('.avatar-option').forEach((opt) => opt.classList.remove('selected'));
+      selectedAvatar.classList.add('selected');
+    }
+  });
 
-    dom.closeAuthBtn.addEventListener('click', hideAuthModal);
-    dom.loginForm.addEventListener('submit', handleLoginSubmit);
-    dom.registerForm.addEventListener('submit', handleRegisterSubmit);
-    dom.resetPasswordForm.addEventListener('submit', handlePasswordResetSubmit);
-    dom.sendVerificationCodeBtn.addEventListener('click', () => sendVerificationCode(`${dom.registerForm.email_prefix.value}@jou.edu.cn`, dom.sendVerificationCodeBtn, 'register'));
-    dom.registerForm.querySelector('#register-verification-code').addEventListener('blur', handleVerifyCode);
-    dom.sendResetCodeBtn.addEventListener('click', () => sendVerificationCode(`${dom.resetPasswordForm.email_prefix.value}@jou.edu.cn`, dom.sendResetCodeBtn, 'reset'));
-    
-    dom.goToRegister.addEventListener('click', (e) => { e.preventDefault(); handleAuthViewChange('register'); });
-    dom.goToLoginFromRegister.addEventListener('click', (e) => { e.preventDefault(); handleAuthViewChange('login'); });
-    dom.forgotPasswordLink.addEventListener('click', (e) => { e.preventDefault(); handleAuthViewChange('reset'); });
-    dom.goToLoginFromReset.addEventListener('click', (e) => { e.preventDefault(); handleAuthViewChange('login'); });
-
-    dom.closeProfileBtn.addEventListener('click', hideProfileModal);
-    dom.editProfileBtn.addEventListener('click', () => {
-        populateProfileEditForm(fullUserData); 
-        handleProfileViewChange('edit');
-    });
-    dom.cancelEditProfileBtn.addEventListener('click', () => handleProfileViewChange('view'));
-    dom.profileEditContainer.addEventListener('submit', handleProfileSave);
-    dom.avatarSelectionGrid.addEventListener('click', (e) => {
-        const selectedAvatar = e.target.closest('.avatar-option');
-        if (selectedAvatar) {
-            dom.avatarSelectionGrid.querySelectorAll('.avatar-option').forEach(opt => opt.classList.remove('selected'));
-            selectedAvatar.classList.add('selected');
-        }
-    });
-    
-    dom.changePasswordPromptBtn.addEventListener('click', () => handleProfileViewChange('changePassword'));
-    dom.profileChangePasswordContainer.addEventListener('submit', handleChangePasswordSubmit);
-    dom.cancelChangePasswordBtn.addEventListener('click', () => handleProfileViewChange('view'));
-
-    eventBus.subscribe('auth:requestLogin', () => {
-        handleAuthViewChange('login');
-        showAuthModal();
-    });
+  eventBus.subscribe('auth:requestLogin', () => showAuthModal());
 }
 
-/**
- * (导出函数) 组件的唯一初始化入口。
- */
 export function init() {
-    cacheDOMElements();
-    setupEventListeners();
-    listenForAuthStateChanges();
-    console.log("Auth Component Initialized.");
+  cacheDOMElements();
+  setupEventListeners();
+  checkInitialSession();
 }
 
-// --- 私有辅助函数 (弹窗控制) ---
 function showModal(modalElement, dialogElement) {
-    modalElement.classList.remove('hidden');
-    setTimeout(() => {
-        modalElement.style.opacity = '1';
-        dialogElement.style.transform = 'scale(1)';
-        dialogElement.style.opacity = '1';
-    }, 10);
+  if (!modalElement || !dialogElement) return;
+  modalElement.classList.remove('hidden');
+  setTimeout(() => {
+    modalElement.style.opacity = '1';
+    dialogElement.style.transform = 'scale(1)';
+    dialogElement.style.opacity = '1';
+  }, 10);
 }
 
 function hideModal(modalElement, dialogElement, onHidden) {
-    modalElement.style.opacity = '0';
-    dialogElement.style.transform = 'scale(0.95)';
-    dialogElement.style.opacity = '0';
-    setTimeout(() => {
-        modalElement.classList.add('hidden');
-        if (onHidden) onHidden();
-    }, 300);
+  if (!modalElement || !dialogElement) return;
+  modalElement.style.opacity = '0';
+  dialogElement.style.transform = 'scale(0.95)';
+  dialogElement.style.opacity = '0';
+  setTimeout(() => {
+    modalElement.classList.add('hidden');
+    if (onHidden) onHidden();
+  }, 300);
 }
 
 function showAuthModal() { showModal(dom.authModal, dom.authDialog); }

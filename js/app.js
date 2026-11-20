@@ -51,7 +51,7 @@ class GuideApp {
         auth.init(); // auth.init() 将触发 'auth:ready' 事件
         this.authReadyTimeout = setTimeout(() => {
             if (!this.hasStartedDataLoad) {
-                this._showStartupError('CloudBase 连接超时，请检查本地网络、CloudBase SDK 或数据库权限后刷新重试。');
+                this._showStartupError('服务连接超时，请检查网络连接后刷新重试。');
             }
         }, 12000);
     }
@@ -90,7 +90,7 @@ class GuideApp {
             [this.guideData, this.campusData] = await this._withTimeout(
                 Promise.all([getGuideData(), getCampusData()]),
                 12000,
-                'CloudBase 数据读取超时。'
+                '指南数据读取超时。'
             );
             if (!Array.isArray(this.guideData) || this.guideData.length === 0 || !this.campusData) {
                 throw new Error("核心数据加载失败。");
@@ -113,7 +113,7 @@ class GuideApp {
 
         } catch (error) {
             console.error("App Launcher: 应用启动失败!", error);
-            this._showStartupError('应用加载失败，请检查 CloudBase 连接后刷新重试。');
+            this._showStartupError('应用加载失败，请检查网络连接后刷新重试。');
         }
     }
 
@@ -132,7 +132,7 @@ class GuideApp {
             <div class="px-6 text-center">
                 <p class="text-lg font-semibold text-red-500">应用加载失败</p>
                 <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">${message}</p>
-                <p class="mt-1 text-xs text-gray-500 dark:text-gray-500">本地测试时请确认网络可以访问 CloudBase，并通过本地静态服务打开页面。</p>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-500">本地测试时请通过 node server/index.mjs 启动服务后访问。</p>
             </div>
         `;
     }

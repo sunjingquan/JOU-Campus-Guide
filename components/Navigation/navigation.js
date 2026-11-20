@@ -61,9 +61,21 @@ function createNavigationMenu(data) {
             return;
         }
 
+        const safeIcon = String(categoryData.icon || 'book').replace(/[^a-z0-9-]/gi, '');
         const categoryHeader = document.createElement('button');
         categoryHeader.className = 'category-header w-full flex items-center justify-between px-4 py-2 text-sm font-semibold text-blue-200 dark:text-gray-300 rounded-md hover:bg-blue-800 dark:hover:bg-gray-700 transition-colors';
-        categoryHeader.innerHTML = `<span class="flex items-center"><i data-lucide="${categoryData.icon}" class="w-4 h-4 mr-3"></i>${categoryData.title}</span><i data-lucide="chevron-down" class="accordion-icon w-4 h-4"></i>`;
+        const leftSpan = document.createElement('span');
+        leftSpan.className = 'flex items-center';
+        const iconEl = document.createElement('i');
+        iconEl.setAttribute('data-lucide', safeIcon);
+        iconEl.className = 'w-4 h-4 mr-3';
+        const titleSpan = document.createElement('span');
+        titleSpan.textContent = String(categoryData.title || '');
+        leftSpan.append(iconEl, titleSpan);
+        const chevronEl = document.createElement('i');
+        chevronEl.setAttribute('data-lucide', 'chevron-down');
+        chevronEl.className = 'accordion-icon w-4 h-4';
+        categoryHeader.append(leftSpan, chevronEl);
         categoryDiv.appendChild(categoryHeader);
 
         const pageList = document.createElement('ul');
@@ -283,8 +295,14 @@ function _createNavLink(categoryKey, pageKey, icon, text, isHeader) {
     const link = document.createElement('a');
     link.href = `#${categoryKey}`;
     if (isHeader) {
+        const safeIcon = String(icon || 'home').replace(/[^a-z0-9-]/gi, '');
         link.className = 'sidebar-link flex items-center px-4 py-3 text-base font-semibold rounded-lg hover:bg-blue-700 dark:hover:bg-gray-700 transition-colors mb-4';
-        link.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5 mr-3"></i> ${text}`;
+        const iconEl = document.createElement('i');
+        iconEl.setAttribute('data-lucide', safeIcon);
+        iconEl.className = 'w-5 h-5 mr-3';
+        const textSpan = document.createElement('span');
+        textSpan.textContent = String(text || '');
+        link.append(iconEl, textSpan);
     } else {
         link.className = 'sidebar-link block pl-11 pr-4 py-2.5 text-sm rounded-md hover:bg-blue-700 dark:hover:bg-gray-700 transition-colors';
         link.textContent = text;
