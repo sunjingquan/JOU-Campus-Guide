@@ -5,6 +5,13 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
+import {
+  escapeHtml,
+  toRouteHref,
+  resolveRouteFromPathname,
+  buildRouteRenderBundle,
+  DEFAULT_COMMUNITY_TOPICS
+} from '../js/templates.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, '..');
@@ -13,6 +20,9 @@ const DATA_DIR = process.env.JHD_GUIDE_DATA_DIR || path.join(PROJECT_ROOT, 'data
 const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
 const PORT = Number(process.env.PORT || 4173);
 const HOST = process.env.HOST || '127.0.0.1';
+const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || 'https://jianghaidai.com').replace(/\/$/, '');
+const DISCOURSE_LATEST_URL =
+  process.env.DISCOURSE_LATEST_URL || 'https://bbs.jianghaidai.com/latest.json';
 const DOWNLOAD_REDIRECT_URL = 'https://app.jianghaidai.com/';
 
 fs.mkdirSync(path.join(UPLOADS_DIR, 'images'), { recursive: true });
@@ -38,6 +48,8 @@ const MIME_MAP = {
   '.js': 'application/javascript; charset=utf-8',
   '.mjs': 'application/javascript; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
+  '.xml': 'application/xml; charset=utf-8',
+  '.txt': 'text/plain; charset=utf-8',
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
@@ -48,6 +60,7 @@ const MIME_MAP = {
 
 const rateBuckets = new Map();
 const jsonCache = new Map();
+let htmlShellCache = null;
 
 function loadVersionedJson(filename) {
   const filePath = path.join(CONTENT_DIR, filename);
@@ -60,9 +73,146 @@ function loadVersionedJson(filename) {
   const data = JSON.parse(raw);
   const body = JSON.stringify({ data });
   const etag = `"${crypto.createHash('sha1').update(body).digest('hex').slice(0, 20)}"`;
-  const entry = { mtimeMs: stat.mtimeMs, body, etag };
+  const entry = { mtimeMs: stat.mtimeMs, data, body, etag };
   jsonCache.set(filename, entry);
   return entry;
+}
+
+function loadIndexHtmlTemplate() {
+  const filePath = path.join(PROJECT_ROOT, 'index.html');
+  const stat = fs.statSync(filePath);
+  if (htmlShellCache && htmlShellCache.mtimeMs === stat.mtimeMs) {
+    return htmlShellCache.template;
+  }
+  const template = fs.readFileSync(filePath, 'utf8');
+  htmlShellCache = { mtimeMs: stat.mtimeMs, template };
+  return template;
+}
+
+function createCommunityTracker(fetchImpl) {
+  const tracker = {
+    topics: DEFAULT_COMMUNITY_TOPICS,
+    updatedAt: 0,
+    inflight: null
+  };
+
+  async function refresh() {
+    const now = Date.now();
+    if (now - tracker.updatedAt < 5 * 60 * 1000 && tracker.updatedAt > 0) {
+      return tracker.topics;
+    }
+    if (tracker.inflight) return tracker.inflight;
+
+    tracker.inflight = (async () => {
+      try {
+        const res = await fetchImpl(DISCOURSE_LATEST_URL, {
+          headers: { Accept: 'application/json' },
+          signal: AbortSignal.timeout(2800)
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const payload = await res.json();
+        const rawTopics = payload?.topic_list?.topics;
+        if (Array.isArray(rawTopics) && rawTopics.length > 0) {
+          const parsed = rawTopics
+            .filter((t) => t && t.visible !== false && t.title)
+            .slice(0, 6)
+            .map((t) => ({
+              id: Number(t.id) || 0,
+              title: String(t.fancy_title || t.title)
+                .replace(/<[^>]+>/g, '')
+                .trim(),
+              category: t.pinned ? '置顶精选' : '社区热议',
+              postsCount: Number(t.posts_count || 1),
+              views: Number(t.views || 0),
+              url: `https://bbs.jianghaidai.com/t/${encodeURIComponent(t.slug || 'topic')}/${Number(t.id)}`
+            }));
+          if (parsed.length > 0) {
+            tracker.topics = parsed;
+          }
+        }
+        tracker.updatedAt = Date.now();
+      } catch {
+        tracker.updatedAt = Date.now() - 4 * 60 * 1000;
+      } finally {
+        tracker.inflight = null;
+      }
+      return tracker.topics;
+    })();
+
+    return tracker.inflight;
+  }
+
+  return { tracker, refresh };
+}
+
+function buildSsrHtml(pathname, community) {
+  const guideData = loadVersionedJson('guide.json').data;
+  const campusData = loadVersionedJson('campus.json').data;
+  const resolved = resolveRouteFromPathname(pathname, guideData, campusData);
+
+  if (resolved.isPortal && Date.now() - community.tracker.updatedAt > 5 * 60 * 1000) {
+    community.refresh().catch(() => {});
+  }
+
+  const bundle = buildRouteRenderBundle({
+    resolved,
+    guideData,
+    campusData,
+    selectedCampus: resolved.detailItem?.campusId || 'cangwu',
+    communityTopics: community.tracker.topics
+  });
+
+  const canonicalUrl = `${PUBLIC_BASE_URL}${bundle.canonicalPath}`;
+  const headHtml = [
+    `<title>${escapeHtml(bundle.title)}</title>`,
+    `<meta name="description" content="${escapeHtml(bundle.description)}" />`,
+    `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`,
+    `<meta property="og:type" content="website" />`,
+    `<meta property="og:site_name" content="酱海带 · 江苏海洋大学校园指南" />`,
+    `<meta property="og:title" content="${escapeHtml(bundle.title)}" />`,
+    `<meta property="og:description" content="${escapeHtml(bundle.description)}" />`,
+    `<meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`,
+    `<meta property="og:image" content="${escapeHtml(bundle.ogImage)}" />`
+  ].join('\n    ');
+
+  let html = loadIndexHtmlTemplate();
+  html = html.replace(
+    /<!--SSR_HEAD_START-->[\s\S]*?<!--SSR_HEAD_END-->/,
+    `<!--SSR_HEAD_START-->\n    ${headHtml}\n    <!--SSR_HEAD_END-->`
+  );
+  html = html.replace('<body data-view="portal">', `<body data-view="${escapeHtml(bundle.viewMode)}">`);
+  html = html.replace('<!--SSR_SIDEBAR-->', bundle.sidebarHtml);
+  html = html.replace(
+    /<!--SSR_MAIN_START-->[\s\S]*?<!--SSR_MAIN_END-->/,
+    `<!--SSR_MAIN_START-->${bundle.mainHtml}<!--SSR_MAIN_END-->`
+  );
+  html = html.replace('<!--SSR_TOC-->', bundle.tocHtml);
+
+  return { status: resolved.valid ? 200 : 404, html, resolved };
+}
+
+function buildSitemapXml() {
+  const guideData = loadVersionedJson('guide.json').data;
+  const campusData = loadVersionedJson('campus.json').data;
+  const urls = new Set([`${PUBLIC_BASE_URL}/`]);
+
+  for (const cat of guideData) {
+    if (cat.isHomePage) continue;
+    for (const page of cat.pages || []) {
+      urls.add(`${PUBLIC_BASE_URL}${toRouteHref(cat.key, page.pageKey)}`);
+    }
+  }
+  for (const c of campusData.canteens || []) {
+    urls.add(`${PUBLIC_BASE_URL}${toRouteHref('campusLife', 'canteen', c.id)}`);
+  }
+  for (const d of campusData.dormitories || []) {
+    urls.add(`${PUBLIC_BASE_URL}${toRouteHref('campusLife', 'dormitory', d.id)}`);
+  }
+
+  const items = [...urls]
+    .map((u) => `  <url><loc>${escapeHtml(u)}</loc><changefreq>weekly</changefreq></url>`)
+    .join('\n');
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${items}\n</urlset>\n`;
 }
 
 function checkRateLimit(key, limit, windowMs) {
@@ -112,9 +262,9 @@ async function readJsonBody(req, maxBytes = 64 * 1024) {
 function getClientIp(req) {
   return String(
     req.headers['cf-connecting-ip'] ||
-    req.headers['x-real-ip'] ||
-    req.socket.remoteAddress ||
-    'unknown'
+      req.headers['x-real-ip'] ||
+      req.socket.remoteAddress ||
+      'unknown'
   );
 }
 
@@ -137,28 +287,23 @@ async function serveStaticFile(req, res, baseDir, relSubpath, cacheControl) {
   } catch {
     res.writeHead(400);
     res.end('Bad Request');
-    return;
+    return true;
   }
   const resolvedBase = path.resolve(baseDir);
   const abs = path.resolve(resolvedBase, '.' + path.sep + decoded);
   if (!abs.startsWith(resolvedBase + path.sep) && abs !== resolvedBase) {
     res.writeHead(403);
     res.end('Forbidden');
-    return;
+    return true;
   }
   let stat;
   try {
     stat = await fsp.stat(abs);
   } catch {
-    res.writeHead(404);
-    res.end('Not Found');
-    return;
+    return false;
   }
-  if (!stat.isFile()) {
-    res.writeHead(404);
-    res.end('Not Found');
-    return;
-  }
+  if (!stat.isFile()) return false;
+
   const ext = path.extname(abs).toLowerCase();
   res.writeHead(200, {
     'Content-Type': MIME_MAP[ext] || 'application/octet-stream',
@@ -168,12 +313,14 @@ async function serveStaticFile(req, res, baseDir, relSubpath, cacheControl) {
   });
   if (req.method === 'HEAD') {
     res.end();
-    return;
+    return true;
   }
   fs.createReadStream(abs).pipe(res);
+  return true;
 }
 
-export function createGuideServer() {
+export function createGuideServer({ fetchImpl = globalThis.fetch } = {}) {
+  const community = createCommunityTracker(fetchImpl);
   return http.createServer(async (req, res) => {
     try {
       const urlObj = new URL(req.url || '/', 'http://localhost');
@@ -185,12 +332,51 @@ export function createGuideServer() {
       }
 
       // --- Download Legacy 301 Compatibility ---
-      if ((pathname === '/download' || pathname === '/download/') && (req.method === 'GET' || req.method === 'HEAD')) {
+      if (
+        (pathname === '/download' || pathname === '/download/') &&
+        (req.method === 'GET' || req.method === 'HEAD')
+      ) {
         res.writeHead(301, {
           Location: DOWNLOAD_REDIRECT_URL,
           'Cache-Control': 'public, max-age=300'
         });
         res.end();
+        return;
+      }
+
+      // --- Canonical Home Normalization ---
+      if (
+        (pathname === '/home' || pathname === '/home/home' || pathname === '/index.html') &&
+        (req.method === 'GET' || req.method === 'HEAD')
+      ) {
+        res.writeHead(301, {
+          Location: '/',
+          'Cache-Control': 'public, max-age=300'
+        });
+        res.end();
+        return;
+      }
+
+      // --- Sitemap & Robots ---
+      if (pathname === '/sitemap.xml' && (req.method === 'GET' || req.method === 'HEAD')) {
+        const xml = buildSitemapXml();
+        res.writeHead(200, {
+          'Content-Type': 'application/xml; charset=utf-8',
+          'Cache-Control': 'public, max-age=3600',
+          'X-Content-Type-Options': 'nosniff'
+        });
+        res.end(req.method === 'HEAD' ? undefined : xml);
+        return;
+      }
+
+      if (pathname === '/robots.txt' && (req.method === 'GET' || req.method === 'HEAD')) {
+        const txt = `User-agent: *\nAllow: /\nSitemap: ${PUBLIC_BASE_URL}/sitemap.xml\n`;
+        res.writeHead(200, {
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Cache-Control': 'public, max-age=3600',
+          'X-Content-Type-Options': 'nosniff'
+        });
+        res.end(req.method === 'HEAD' ? undefined : txt);
         return;
       }
 
@@ -204,7 +390,7 @@ export function createGuideServer() {
         }
         return sendJson(res, 200, entry.body, {
           ETag: entry.etag,
-          'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400'
+          'Cache-Control': 'public, max-age=0, s-maxage=120, must-revalidate'
         });
       }
 
@@ -217,8 +403,19 @@ export function createGuideServer() {
         }
         return sendJson(res, 200, entry.body, {
           ETag: entry.etag,
-          'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400'
+          'Cache-Control': 'public, max-age=0, s-maxage=120, must-revalidate'
         });
+      }
+
+      // --- Cached Discourse Community Topics ---
+      if (pathname === '/api/community-feed' && (req.method === 'GET' || req.method === 'HEAD')) {
+        const topics = await community.refresh();
+        return sendJson(
+          res,
+          200,
+          { ok: true, topics },
+          { 'Cache-Control': 'public, max-age=120, s-maxage=300, stale-while-revalidate=3600' }
+        );
       }
 
       // --- Anonymous Feedback / Correction ---
@@ -250,16 +447,28 @@ export function createGuideServer() {
         return sendJson(res, 201, { ok: true, id });
       }
 
+      if (pathname.startsWith('/api/')) {
+        return sendJson(res, 404, { error: 'API endpoint not found' });
+      }
+
       // --- Uploaded Campus Images (/uploads/images/...) ---
-      if (pathname.startsWith('/uploads/images/') && (req.method === 'GET' || req.method === 'HEAD')) {
+      if (
+        pathname.startsWith('/uploads/images/') &&
+        (req.method === 'GET' || req.method === 'HEAD')
+      ) {
         const sub = pathname.slice('/uploads/images/'.length);
-        return await serveStaticFile(
+        const served = await serveStaticFile(
           req,
           res,
           path.join(UPLOADS_DIR, 'images'),
           sub,
           'public, max-age=86400, stale-while-revalidate=604800'
         );
+        if (!served) {
+          res.writeHead(404);
+          res.end('Not Found');
+        }
+        return;
       }
 
       // --- Block Internal Directories ---
@@ -276,13 +485,33 @@ export function createGuideServer() {
         return;
       }
 
-      // --- Static Frontend Files ---
+      // --- Static Frontend Assets & Isomorphic SSR Routes ---
       if (req.method === 'GET' || req.method === 'HEAD') {
-        const targetRel = pathname === '/' ? 'index.html' : pathname.slice(1);
-        const cache = targetRel.endsWith('.html')
-          ? 'public, max-age=0, must-revalidate'
-          : 'public, max-age=300, stale-while-revalidate=3600';
-        return await serveStaticFile(req, res, PROJECT_ROOT, targetRel, cache);
+        if (pathname !== '/' && path.extname(pathname)) {
+          const served = await serveStaticFile(
+            req,
+            res,
+            PROJECT_ROOT,
+            pathname.slice(1),
+            'public, max-age=300, stale-while-revalidate=3600'
+          );
+          if (!served) {
+            res.writeHead(404);
+            res.end('Not Found');
+          }
+          return;
+        }
+
+        const { status, html } = buildSsrHtml(pathname, community);
+        const buf = Buffer.from(html, 'utf8');
+        res.writeHead(status, {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Content-Length': buf.length,
+          'Cache-Control': 'public, max-age=0, s-maxage=120, stale-while-revalidate=3600',
+          'X-Content-Type-Options': 'nosniff'
+        });
+        res.end(req.method === 'HEAD' ? undefined : buf);
+        return;
       }
 
       res.writeHead(405);
@@ -299,7 +528,8 @@ export function createGuideServer() {
   });
 }
 
-const isMain = process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href;
+const isMain =
+  process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href;
 if (isMain) {
   const server = createGuideServer();
   server.listen(PORT, HOST, () => {

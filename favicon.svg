@@ -1,14 +1,20 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
   <defs>
-    <linearGradient id="ocean" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#0A84FF"/>
-      <stop offset="1" stop-color="#00C7A3"/>
+    <linearGradient id="jhd-bg" x1="6" y1="4" x2="58" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#077BF7"/>
+      <stop offset="0.52" stop-color="#00A8C5"/>
+      <stop offset="1" stop-color="#00C49A"/>
     </linearGradient>
+    <radialGradient id="jhd-glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(18 12) rotate(48) scale(38)">
+      <stop stop-color="#FFFFFF" stop-opacity="0.34"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
   </defs>
-  <rect width="64" height="64" rx="17" fill="url(#ocean)"/>
-  <g fill="none" stroke="#fff" stroke-linecap="round" stroke-width="4">
-    <path d="M13 23c6-5 12-5 18 0s12 5 20 0"/>
-    <path d="M13 33c6-5 12-5 18 0s12 5 20 0" opacity=".72"/>
-    <path d="M13 43c6-5 12-5 18 0s12 5 20 0" opacity=".45"/>
-  </g>
+  <rect width="64" height="64" rx="16.5" fill="url(#jhd-bg)"/>
+  <rect width="64" height="64" rx="16.5" fill="url(#jhd-glow)"/>
+  <rect x="0.75" y="0.75" width="62.5" height="62.5" rx="15.75" stroke="#FFFFFF" stroke-opacity="0.26" stroke-width="1.5"/>
+  <path d="M13 24.5C18.8 19.2 25.2 19.2 31.4 24.2C37.6 29.2 44.2 29.2 51 23.2" stroke="#FFFFFF" stroke-width="4.4" stroke-linecap="round"/>
+  <path d="M13 35C18.8 29.7 25.2 29.7 31.4 34.7C37.6 39.7 44.2 39.7 51 33.7" stroke="#FFFFFF" stroke-opacity="0.82" stroke-width="4.1" stroke-linecap="round"/>
+  <path d="M15.5 45C20.8 40.6 26.5 40.6 32 44.8C37.5 49 43.2 49 48.5 44.2" stroke="#FFFFFF" stroke-opacity="0.54" stroke-width="3.7" stroke-linecap="round"/>
+  <circle cx="48.5" cy="16.5" r="2.7" fill="#FFFFFF" fill-opacity="0.92"/>
 </svg>

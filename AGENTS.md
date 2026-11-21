@@ -2,33 +2,21 @@
 
 ## 项目概况
 
-- 江苏海洋大学校园指南全栈轻量站点（零外部依赖原生 ES Module 前端 + Node.js 内置 `node:sqlite` 服务端）。
-- 前端入口：`index.html`，样式位于 `css/style.css`，逻辑与安全模板位于 `js/`、`services/`。
-- 版控正文数据：`content/guide.json`（指南章节正文）与 `content/campus.json`（三校区、食堂、宿舍、学院专业数据），修改并推送 Git 后部署即自动生效。
-- 服务端入口：`server/index.mjs`（零外部 npm 依赖，要求 Node.js 22.5+，提供 `/api/health`、`/api/guide`、`/api/campus`、`/api/feedback` 与 `/uploads/images/*`）。
-- 历史数据导入脚本：`server/seed-from-cloudbase.mjs`（首次初始化本地 `data/uploads/images` 与反馈表时使用）。
+- 江苏海洋大学校园指南全栈数字门户（同构 ES Module 渲染 + Node.js 内置 `node:sqlite` 服务端，零外部依赖）。
+- 双模态信息架构：根路径 `/` 为全宽生态门户首页（即搜框、Bento 工具矩阵、三校区全景速览、社区实时热帖聚合与 App 联动）；章节内页为「左目录树 + 中正文 + 右自动锚点大纲 TOC」三栏阅读器。
+- 干净路径同构直出（SSR + SPA）：服务端复用 `js/templates.js` 直出首屏 HTML、动态 `<title>` / OpenGraph 分享卡片与 `/sitemap.xml`，客户端通过 History API 秒切并自动兼容旧 `#/` 锚点跳转。
+- 版控正文数据：`content/guide.json` 与 `content/campus.json`（已按近年江苏海洋大学教务迎新通告校对苍梧/通灌/宋跳院系分流）。
 
 ## 生产运行架构
 
 - GitHub 仓库：`sunjingquan/JOU-Campus-Guide`
-- 承载环境：家庭服务器 PVE `CT 105 (jhd-guide)`（Debian 12，Nginx + Node systemd + `cloudflared`）
-- 公网隧道：Cloudflare Tunnel `jhd-guide-home`
-- 生产域名：`https://jianghaidai.com`（及 `www.jianghaidai.com`）
-- 官方下载页入口：`https://app.jianghaidai.com/`（兼容 `https://jianghaidai.com/download` 301 跳转）
-- 校园社区入口：`https://bbs.jianghaidai.com/`
+- 承载环境：家庭服务器 PVE `CT 105 (jhd-guide)`（`127.0.0.1:4173`，数据目录 `/var/lib/jhd-guide`）
+- 公网隧道：Cloudflare Tunnel `jhd-guide-home`（`https://jianghaidai.com`）
 
-## 环境变量（生产 `/etc/jhd-guide.env`）
+## 安全与验证规则
 
-- `PORT=4173`
-- `HOST=127.0.0.1`
-- `JHD_GUIDE_DATA_DIR=/var/lib/jhd-guide`
-- `PUBLIC_BASE_URL=https://jianghaidai.com`
-
-## 安全与编辑规则
-
-- 严禁将 `.env`、敏感密钥或运行期 `data/` 目录提交到 Git。
-- 严禁引入境外公共运行时 CDN（如 Tailwind Play CDN、`unpkg`、`placehold.co`），确保国内校园网首屏直出。
-- 导航与动态文本渲染必须使用 `textContent` 或 `escapeHtml()` 转义，禁止将未转义字段直接拼接进 `innerHTML`。
+- 严禁提交 `.env`、敏感凭据或运行期 `data/` 目录；严禁引入境外公共运行时 CDN。
+- 所有动态渲染字段必须经 `escapeHtml()`、`highlightMatch()` 或 `safeUrl()` 安全处理。
 - 本地验证命令：
   1. `node --test tests/guide.test.mjs`
-  2. `node server/index.mjs` 并访问 `http://127.0.0.1:4173/` 检查总览、路由切换、专业校区秒查、清单勾选缓存、食堂/宿舍灯箱与勘误反馈。
+  2. `node server/index.mjs` 访问 `http://127.0.0.1:4173/` 验证门户首页、干净路径 SSR、校区查询、到校交通、自定义清单、宽带账号生成器与勘误反馈。

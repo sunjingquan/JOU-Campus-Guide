@@ -5,20 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#f4f6fa" />
     <meta name="color-scheme" content="light dark" />
+    <!--SSR_HEAD_START-->
+    <title>江苏海洋大学校园指南 · 酱海带实用数字门户</title>
     <meta
       name="description"
-      content="江苏海洋大学校园指南（酱海带出品）：大一校区查询、开学必备勾选清单、苍梧/通灌/宋跳三校区宿舍食堂实拍、宽带 WebVPN 配置与常见问答。"
+      content="江苏海洋大学非官方实用门户（酱海带出品）：同步近年教务校区划分，提供专业校区秒查、高铁到校交通、开学勾选清单、苍梧/通灌/宋跳宿舍食堂实拍与宽带配置。"
     />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="canonical" href="https://jianghaidai.com/" />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="江苏海洋大学校园指南 · 酱海带" />
+    <meta property="og:site_name" content="酱海带 · 江苏海洋大学校园指南" />
+    <meta property="og:title" content="江苏海洋大学校园指南 · 酱海带实用数字门户" />
     <meta
       property="og:description"
-      content="覆盖苍梧、通灌、宋跳三校区：新生校区秒查、行李勾选清单、宿舍食堂实拍与数字化校园实用手册。"
+      content="覆盖苍梧、通灌、宋跳三校区：新生校区秒查、高铁到校路线、行李勾选清单、宿舍食堂实拍与数字化校园实用手册。"
     />
     <meta property="og:url" content="https://jianghaidai.com/" />
-    <title>江苏海洋大学校园指南 · 酱海带</title>
+    <meta property="og:image" content="https://jianghaidai.com/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA.jpg" />
+    <!--SSR_HEAD_END-->
+    <link rel="icon" href="/favicon.svg?v=20261121-v3" type="image/svg+xml" />
     <script>
       (() => {
         document.documentElement.classList.add("js");
@@ -34,20 +38,30 @@
         document.documentElement.dataset.theme = theme;
         document.documentElement.dataset.themeMode = mode;
         const meta = document.querySelector('meta[name="theme-color"]');
-        if (meta) meta.content = theme === "dark" ? "#0b0e14" : "#f4f6fa";
+        if (meta) meta.content = theme === "dark" ? "#090d14" : "#f4f6fa";
       })();
     </script>
-    <link rel="stylesheet" href="/css/style.css?v=20261121" />
+    <link rel="stylesheet" href="/css/style.css?v=20261121-v3" />
   </head>
-  <body>
+  <body data-view="portal">
     <a class="skip-link" href="#main-content">跳到主要内容</a>
 
     <!-- 内联 SVG 图标集（零外部 CDN 依赖） -->
     <svg class="icon-sprite" aria-hidden="true">
-      <symbol id="i-wave" viewBox="0 0 40 40">
-        <path d="M6 14.5c4-3.7 8-3.7 12 0s8 3.7 16 0" />
-        <path d="M6 22.5c4-3.7 8-3.7 12 0s8 3.7 16 0" opacity=".72" />
-        <path d="M6 30.5c4-3.7 8-3.7 12 0s8 3.7 16 0" opacity=".45" />
+      <symbol id="i-brand" viewBox="0 0 64 64">
+        <defs>
+          <linearGradient id="jhd-mark-g" x1="6" y1="4" x2="58" y2="60" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#077BF7" />
+            <stop offset="0.52" stop-color="#00A8C5" />
+            <stop offset="1" stop-color="#00C49A" />
+          </linearGradient>
+        </defs>
+        <rect width="64" height="64" rx="16.5" fill="url(#jhd-mark-g)" stroke="none" />
+        <rect x="1" y="1" width="62" height="62" rx="15.5" fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="1.5" />
+        <path d="M13 24.5C18.8 19.2 25.2 19.2 31.4 24.2C37.6 29.2 44.2 29.2 51 23.2" fill="none" stroke="#fff" stroke-width="4.4" stroke-linecap="round" />
+        <path d="M13 35C18.8 29.7 25.2 29.7 31.4 34.7C37.6 39.7 44.2 39.7 51 33.7" fill="none" stroke="#fff" stroke-opacity=".82" stroke-width="4.1" stroke-linecap="round" />
+        <path d="M15.5 45C20.8 40.6 26.5 40.6 32 44.8C37.5 49 43.2 49 48.5 44.2" fill="none" stroke="#fff" stroke-opacity=".54" stroke-width="3.7" stroke-linecap="round" />
+        <circle cx="48.5" cy="16.5" r="2.7" fill="#fff" fill-opacity=".92" stroke="none" />
       </symbol>
       <symbol id="i-compass" viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="9" />
@@ -116,6 +130,7 @@
       <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 19-7-7 7-7" /></symbol>
       <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></symbol>
       <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5" /></symbol>
+      <symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="M12 19V5m-5 5 5-5 5 5" /></symbol>
       <symbol id="i-external" viewBox="0 0 24 24">
         <path d="M14 5h5v5M19 5l-8 8" />
         <path d="M18 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />
@@ -210,41 +225,40 @@
       <symbol id="i-download" viewBox="0 0 24 24">
         <path d="M12 3.5v11m0 0 4-4m-4 4-4-4M5 19.5h14" />
       </symbol>
-      <symbol id="i-star" viewBox="0 0 24 24">
-        <polygon points="12 2.5 14.9 8.4 21.5 9.3 16.7 14 17.8 20.5 12 17.4 6.2 20.5 7.3 14 2.5 9.3 9.1 8.4 12 2.5" />
-      </symbol>
     </svg>
 
-    <!-- 顶栏：统一酱海带生态导航 -->
+    <!-- 顶栏：统一酱海带数字生态导航 -->
     <header class="site-header" data-header>
       <div class="header-inner">
         <div class="header-left">
           <button
-            class="icon-btn mobile-only"
+            class="icon-btn drawer-trigger-btn"
             type="button"
             id="sidebar-toggle-btn"
-            aria-label="打开章节目录"
+            aria-label="打开全站章节目录"
             aria-expanded="false"
             aria-controls="guide-sidebar"
           >
             <svg><use href="#i-menu" /></svg>
           </button>
-          <a class="brand" href="#/home/home" aria-label="江苏海洋大学校园指南首页">
-            <span class="brand-mark"><svg><use href="#i-wave" /></svg></span>
+          <a class="brand" href="/" data-link aria-label="江苏海洋大学校园指南门户首页">
+            <span class="brand-mark"><svg><use href="#i-brand" /></svg></span>
             <span class="brand-text">
               <strong>酱海带 · 校园指南</strong>
-              <small>江苏海洋大学</small>
+              <small>江苏海洋大学实用门户</small>
             </span>
           </a>
         </div>
 
         <nav class="eco-nav" aria-label="酱海带生态导航">
-          <a href="#/home/home" class="is-active" aria-current="page">校园指南</a>
-          <a href="https://bbs.jianghaidai.com/" target="_blank" rel="noopener">
+          <a href="/" data-link class="eco-link is-active" data-eco-portal>门户总览</a>
+          <a href="/preparation/campusQuery" data-link class="eco-link" data-eco-reader>指南阅读</a>
+          <span class="eco-divider" aria-hidden="true"></span>
+          <a href="https://bbs.jianghaidai.com/" target="_blank" rel="noopener" class="eco-link">
             <span>校园社区</span>
             <svg><use href="#i-external" /></svg>
           </a>
-          <a href="https://app.jianghaidai.com/" target="_blank" rel="noopener">
+          <a href="https://app.jianghaidai.com/" target="_blank" rel="noopener" class="eco-link eco-app-link">
             <span>客户端下载</span>
             <svg><use href="#i-external" /></svg>
           </a>
@@ -255,19 +269,19 @@
             class="search-trigger"
             type="button"
             id="open-search-btn"
-            aria-label="搜索指南、宿舍、食堂与专业"
+            aria-label="全局检索指南、宿舍、食堂与专业"
           >
             <svg><use href="#i-search" /></svg>
-            <span class="search-trigger-placeholder">搜索指南、宿舍、专业...</span>
-            <kbd class="search-kbd">/</kbd>
+            <span class="search-trigger-placeholder">搜索专业、宿舍、宽带...</span>
+            <kbd class="search-kbd">⌘K</kbd>
           </button>
 
           <button
             class="campus-pill"
             type="button"
             id="open-campus-btn"
-            title="切换当前校区"
-            aria-label="切换当前校区"
+            title="切换当前关注校区"
+            aria-label="切换当前关注校区"
           >
             <svg><use href="#i-map-pin" /></svg>
             <span id="header-campus-label">苍梧校区</span>
@@ -278,7 +292,7 @@
             type="button"
             id="theme-toggle-btn"
             aria-label="切换深浅色主题"
-            title="切换主题"
+            title="切换深浅色主题"
           >
             <svg class="theme-sun"><use href="#i-sun" /></svg>
             <svg class="theme-moon"><use href="#i-moon" /></svg>
@@ -287,29 +301,29 @@
       </div>
     </header>
 
-    <!-- 移动端侧栏遮罩 -->
+    <!-- 侧栏背景遮罩 -->
     <div class="sidebar-backdrop" id="sidebar-backdrop" hidden></div>
 
-    <!-- 主体双栏知识库布局 -->
+    <!-- 主体双模态布局：门户全宽模式 (portal) / 三栏知识库阅读模式 (reader) -->
     <div class="guide-layout">
       <aside class="guide-sidebar" id="guide-sidebar" aria-label="指南章节目录">
-        <div class="sidebar-mobile-head mobile-only">
-          <span>章节目录</span>
+        <div class="sidebar-mobile-head">
+          <span>全站章节目录</span>
           <button class="icon-btn" type="button" id="sidebar-close-btn" aria-label="关闭章节目录">
             <svg><use href="#i-close" /></svg>
           </button>
         </div>
 
         <nav class="sidebar-nav" id="sidebar-nav">
-          <!-- 动态生成目录树 -->
+          <!--SSR_SIDEBAR-->
         </nav>
 
         <div class="sidebar-footer">
           <a class="sidebar-app-card" href="https://app.jianghaidai.com/" target="_blank" rel="noopener">
             <div class="sidebar-app-icon"><svg><use href="#i-download" /></svg></div>
             <div>
-              <strong>下载酱海带 App</strong>
-              <small>查课表 · 锁屏提醒 · 成绩考试</small>
+              <strong>酱海带 App v0.9.5</strong>
+              <small>实况课表 · 资料直看 · 成绩</small>
             </div>
           </a>
           <div class="sidebar-utility-row">
@@ -324,7 +338,7 @@
               rel="noopener"
             >
               <svg><use href="#i-message-circle" /></svg>
-              <span>去社区提问</span>
+              <span>社区提问</span>
             </a>
           </div>
         </div>
@@ -332,7 +346,7 @@
 
       <main class="guide-main" id="main-content" tabindex="-1">
         <div class="article-stage" id="article-container">
-          <!-- 首屏骨架占位，数据就绪后即时替换 -->
+          <!--SSR_MAIN_START-->
           <div class="skeleton-card" aria-busy="true" aria-label="正在加载江苏海洋大学校园指南">
             <div class="skeleton-line skeleton-kicker"></div>
             <div class="skeleton-line skeleton-title"></div>
@@ -343,40 +357,45 @@
               <div class="skeleton-box"></div>
             </div>
           </div>
+          <!--SSR_MAIN_END-->
           <noscript>
             <div class="noscript-banner">
-              <h1>江苏海洋大学校园指南</h1>
-              <p>浏览完整交互式指南（含校区查询、行李勾选清单、三校区宿舍与食堂导览）请启用浏览器 JavaScript。</p>
-              <p>
-                快捷入口：
-                <a href="https://app.jianghaidai.com/">酱海带校园助手官方下载</a> ·
-                <a href="https://bbs.jianghaidai.com/">酱海带校园社区</a>
-              </p>
+              <h2>江苏海洋大学校园指南</h2>
+              <p>本页面已输出完整正文，启用浏览器 JavaScript 可解锁即时搜索、清单勾选保存与图片灯箱体验。</p>
             </div>
           </noscript>
         </div>
 
         <footer class="guide-footer">
           <div class="guide-footer-inner">
-            <p>
-              © <span id="footer-year">2026</span> 酱海带 · 江苏海洋大学非官方校园指南 ·
-              涉及报到、教学与管理规定请以学校官方通知为准
-            </p>
+            <div class="footer-brand-note">
+              <strong>酱海带 · 江苏海洋大学非官方校园指南</strong>
+              <p>
+                © <span id="footer-year">2026</span> jianghaidai.com ·
+                涉及新生报到、教学与管理规定请始终以学校各部门官方通知为准
+              </p>
+            </div>
             <div class="guide-footer-links">
               <button type="button" class="link-btn" id="footer-feedback-btn">提交勘误</button>
+              <a href="/preparation/campusQuery" data-link>校区查询</a>
+              <a href="/preparation/arrivalAndMap" data-link>到校交通</a>
               <a href="https://bbs.jianghaidai.com/" target="_blank" rel="noopener">校园社区</a>
-              <a href="https://app.jianghaidai.com/" target="_blank" rel="noopener">下载 App</a>
+              <a href="https://app.jianghaidai.com/" target="_blank" rel="noopener">客户端下载</a>
             </div>
           </div>
         </footer>
       </main>
+
+      <aside class="guide-toc" id="guide-toc" aria-label="本页目录导览">
+        <!--SSR_TOC-->
+      </aside>
     </div>
 
     <!-- 移动端底部快捷栏 -->
     <nav class="mobile-tabbar mobile-only" aria-label="移动端快捷导航">
-      <a href="#/home/home" class="tabbar-item is-active" data-tab="home">
+      <a href="/" data-link class="tabbar-item is-active" data-tab="home">
         <svg><use href="#i-compass" /></svg>
-        <span>总览</span>
+        <span>门户</span>
       </a>
       <button type="button" class="tabbar-item" id="mobile-tab-menu" data-tab="menu">
         <svg><use href="#i-menu" /></svg>
@@ -396,21 +415,24 @@
       </a>
     </nav>
 
-    <!-- 全局即时搜索弹窗 -->
-    <dialog class="modal-dialog search-dialog" id="search-dialog" aria-label="全局搜索">
+    <!-- 全局智能搜索弹窗 (Cmd/Ctrl+K 或 /) -->
+    <dialog class="modal-dialog search-dialog" id="search-dialog" aria-label="全局检索">
       <div class="search-modal-box">
         <div class="search-modal-header">
           <svg class="search-modal-icon"><use href="#i-search" /></svg>
           <input
             type="search"
             id="global-search-input"
-            placeholder="搜索章节、专业所属校区、宿舍、食堂、社团或常见问题..."
+            placeholder="搜专业校区、上床下桌、食堂菜品、社团或宽带配置（支持空格多词组合）..."
             autocomplete="off"
           />
           <button type="button" class="esc-btn" id="close-search-btn" aria-label="关闭搜索">ESC</button>
         </div>
-        <div class="search-modal-results" id="global-search-results" role="listbox">
-          <!-- 动态搜索结果 -->
+        <div class="search-modal-results" id="global-search-results" role="listbox"></div>
+        <div class="search-modal-footer">
+          <span><kbd>↑</kbd><kbd>↓</kbd> 选择结果</span>
+          <span><kbd>Enter</kbd> 直达页面</span>
+          <span><kbd>ESC</kbd> 关闭</span>
         </div>
       </div>
     </dialog>
@@ -420,34 +442,34 @@
       <div class="modal-card modal-card-wide">
         <div class="modal-head">
           <div>
-            <span class="modal-kicker">Campus Switcher</span>
+            <span class="modal-kicker">Campus Preference</span>
             <h2 id="campus-dialog-title">选择你关注的校区</h2>
           </div>
           <button type="button" class="icon-btn" data-close-dialog="campus-dialog" aria-label="关闭校区选择">
             <svg><use href="#i-close" /></svg>
           </button>
         </div>
-        <p class="modal-desc">切换校区后，「食堂导览」与「宿舍导览」将优先展示对应校区的实拍详情。</p>
+        <p class="modal-desc">切换偏好后，全站「宿舍实拍导览」与「食堂风味地图」将自动优先展示对应校区详情。</p>
         <div class="campus-picker-grid" id="campus-picker-grid">
           <button type="button" class="campus-option-card" data-select-campus="cangwu">
             <img src="/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA.jpg" alt="苍梧校区实景" loading="lazy" />
             <div class="campus-option-body">
               <strong>苍梧校区</strong>
-              <span>海州区苍梧路 · 主校区</span>
+              <span>苍梧路 59 号 · 校本部主校区</span>
             </div>
           </button>
           <button type="button" class="campus-option-card" data-select-campus="tongguan">
             <img src="/uploads/images/%E9%80%9A%E7%81%8C%E6%A0%A1%E5%8C%BA.jpg" alt="通灌校区实景" loading="lazy" />
             <div class="campus-option-body">
               <strong>通灌校区</strong>
-              <span>海州区通灌南路 · 商院/艺设等</span>
+              <span>通灌南路 108 号 · 市中心大一驻区</span>
             </div>
           </button>
           <button type="button" class="campus-option-card" data-select-campus="songtiao">
             <img src="/uploads/images/%E5%AE%8B%E8%B7%B3%E6%A0%A1%E5%8C%BA.jpg" alt="宋跳校区实景" loading="lazy" />
             <div class="campus-option-body">
               <strong>宋跳校区</strong>
-              <span>高新区苍梧东路 · 应用技术学院</span>
+              <span>高新八路 2 号 · 应用技术学院</span>
             </div>
           </button>
         </div>
@@ -460,14 +482,14 @@
         <div class="modal-head">
           <div>
             <span class="modal-kicker">Feedback &amp; Errata</span>
-            <h2 id="feedback-dialog-title">指南勘误与建议</h2>
+            <h2 id="feedback-dialog-title">指南勘误与补充建议</h2>
           </div>
           <button type="button" class="icon-btn" data-close-dialog="feedback-dialog" aria-label="关闭反馈窗口">
             <svg><use href="#i-close" /></svg>
           </button>
         </div>
         <form id="feedback-form" class="feedback-form">
-          <p class="feedback-context" id="feedback-page-context">关联章节：指南总览</p>
+          <p class="feedback-context" id="feedback-page-context">关联页面：指南门户总览</p>
           <label class="field-label" for="feedback-content">
             <span>发现的信息变动或补充建议 <em>*</em></span>
             <textarea
@@ -476,7 +498,7 @@
               rows="4"
               required
               maxlength="1800"
-              placeholder="例如：苍梧二食堂二楼新增窗口、某宿舍楼门禁方式变动、希望补充的内容..."
+              placeholder="例如：某食堂新增宝藏窗口、某栋公寓门禁或热水规则调整、希望补充的新生干货..."
             ></textarea>
           </label>
           <label class="field-label" for="feedback-contact">
@@ -486,7 +508,7 @@
               id="feedback-contact"
               name="contact"
               maxlength="120"
-              placeholder="QQ / 邮箱 / 社区昵称"
+              placeholder="QQ / 邮箱 / 酱海带社区昵称"
             />
           </label>
           <div class="feedback-actions">
@@ -498,13 +520,13 @@
             >
               需要互动答疑？去社区发帖 <svg><use href="#i-external" /></svg>
             </a>
-            <button type="submit" class="btn btn-primary" id="feedback-submit-btn">提交反馈</button>
+            <button type="submit" class="btn btn-primary" id="feedback-submit-btn">提交勘误</button>
           </div>
         </form>
       </div>
     </dialog>
 
-    <!-- 全屏图片灯箱 -->
+    <!-- 全屏实拍灯箱 -->
     <dialog class="modal-dialog lightbox-dialog" id="lightbox-dialog" aria-label="实景大图预览">
       <div class="lightbox-stage">
         <button type="button" class="lightbox-close icon-btn" data-close-dialog="lightbox-dialog" aria-label="关闭大图">
@@ -529,6 +551,6 @@
       <span id="toast-text"></span>
     </div>
 
-    <script type="module" src="/js/app.js?v=20261121"></script>
+    <script type="module" src="/js/app.js?v=20261121-v3"></script>
   </body>
 </html>

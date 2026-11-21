@@ -2,23 +2,113 @@
   "campuses": [
     {
       "id": "cangwu",
-      "name": "苍梧校区"
+      "name": "苍梧校区",
+      "shortName": "苍梧",
+      "badge": "校本部 · 主校区",
+      "address": "连云港市海州区苍梧路 59 号（花果山西麓）",
+      "positioning": "学校行政与教学科研核心主校区，绝大多数高年级本科生、研究生及理工涉海学院常驻于此。",
+      "image": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA.jpg",
+      "transitSummary": "距连云港站约 9 km · 打车约 18–25 分钟 · BRT 环1线 / 定制 D3 路可达",
+      "landmarks": [
+        "南门 / 西门（苍梧路迎新主入口）",
+        "文渊楼 · 文通楼 · 海洋楼教学群",
+        "校本部中心图书馆与大礼堂",
+        "A/B 生活区与三食堂美食广场",
+        "东区（D 区公寓 · 东区食堂 · 标准运动场）"
+      ],
+      "routes": {
+        "lyg_station": {
+          "bus": "出站乘「BRT 环1线」至苍梧路站转短途或步行，客流高峰/返校季可乘「定制公交 D3 路」直达校门；迎新报到日出站即有学校免费接站大巴。",
+          "taxi": "约 9 公里，车程 18–25 分钟，打表参考 22–28 元（行李多建议定位「苍梧校区西门」或对应宿舍区校门）。"
+        },
+        "lyg_east": {
+          "bus": "连云港东站乘「BRT B12 / B1 线」往市区方向换乘至苍梧路沿线（全程约 45–55 分钟）。",
+          "taxi": "约 22 公里，车程 30–40 分钟，打表参考 45–60 元。"
+        },
+        "airport": {
+          "bus": "花果山国际机场乘坐「机场巴士市区线」至海州城区后，换乘公交或打车前往苍梧路 59 号。",
+          "taxi": "约 34 公里，车程 40–50 分钟，打表参考 75–95 元。"
+        }
+      }
     },
     {
       "id": "tongguan",
-      "name": "通灌校区"
+      "name": "通灌校区",
+      "shortName": "通灌",
+      "badge": "市中心 · 大一驻区",
+      "address": "连云港市海州区通灌南路 108 号",
+      "positioning": "地处海州主城繁华商圈旁，生活出行极其便利；承担商院、文法、外院、艺设、机械、测绘等部分学院大一新生的培养。",
+      "image": "/uploads/images/%E9%80%9A%E7%81%8C%E6%A0%A1%E5%8C%BA.jpg",
+      "transitSummary": "距连云港站仅约 3.8 km · 打车约 10 分钟 · BRT 环1线直达周边",
+      "landmarks": [
+        "通灌南路主校门（紧邻万达/苏宁市区商圈）",
+        "至善楼 · 诚意楼教学区",
+        "通灌校区分馆图书馆",
+        "锦绣学生公寓（1–8 号楼）",
+        "前程餐厅 · 美食广场 · 民族风味餐厅"
+      ],
+      "routes": {
+        "lyg_station": {
+          "bus": "距离高铁站最近！出站乘「BRT 环1线」至通灌路站下车步行即达，或乘市区多路常规公交至海洋大学通灌校区站；迎新日同样设专车接站。",
+          "taxi": "仅约 3.8 公里，车程 10–15 分钟，起步价至 14 元左右即可抵达。"
+        },
+        "lyg_east": {
+          "bus": "乘「BRT B1 / B12 线」直达市区通灌路沿线站台，下车步行或换乘 1–2 站公交（全程约 50 分钟）。",
+          "taxi": "约 26 公里，车程 38–45 分钟，打表参考 55–70 元。"
+        },
+        "airport": {
+          "bus": "乘「机场巴士市区线」抵达市区站点后打车约 10 分钟即到。",
+          "taxi": "约 30 公里，车程 35–45 分钟，打表参考 65–85 元。"
+        }
+      }
     },
     {
       "id": "songtiao",
-      "name": "宋跳校区"
+      "name": "宋跳校区",
+      "shortName": "宋跳",
+      "badge": "应用技术学院",
+      "address": "连云港市高新区高新八路 2 号（昌生路 2 号）",
+      "positioning": "公办本科二级学院「应用技术学院」所在地，距苍梧主校区约 7 公里，园区安静独立、宿舍空间宽敞。",
+      "image": "/uploads/images/%E5%AE%8B%E8%B7%B3%E6%A0%A1%E5%8C%BA.jpg",
+      "transitSummary": "距连云港站约 8.5 km · 打车约 18 分钟 · BRT B11 路 / 16 路可达",
+      "landmarks": [
+        "宋跳校区正门与中心教学楼",
+        "实训实验中心与自习阅览室",
+        "学生公寓 1–8 号楼生活区",
+        "东港餐厅综合食堂",
+        "校内田径运动场与球类场地"
+      ],
+      "routes": {
+        "lyg_station": {
+          "bus": "出站可直接乘坐「BRT 支线 B11 路」（往花果山方向）至宋艞（BRT）站，或换乘常规公交「16 路」（直达海洋大学宋艞校区站）；迎新日设接站专车。",
+          "taxi": "约 8.5 公里，车程 18–22 分钟，打表参考 20–26 元。"
+        },
+        "lyg_east": {
+          "bus": "乘「BRT B1 线」至宋艞（BRT）站换乘短途公交或打车起步价即达（全程约 40 分钟）。",
+          "taxi": "约 20 公里，车程 28–35 分钟，打表参考 42–55 元。"
+        },
+        "airport": {
+          "bus": "乘机场巴士至市区后转乘 BRT B11 路或打车前往高新区宋跳校区。",
+          "taxi": "约 33 公里，车程 40–50 分钟，打表参考 72–90 元。"
+        }
+      }
     }
   ],
   "canteens": [
     {
+      "id": "cangwu_canteen1",
       "campusId": "cangwu",
+      "name": "第一食堂",
+      "summary": "紧邻大学生活动中心，上下课动线必经，出餐快、早八人友好。",
+      "image": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E9%A3%9F%E5%A0%82/%E7%AC%AC%E4%B8%80%E9%A3%9F%E5%A0%82.jpg",
+      "tags": ["早八快餐", "近教学区", "面点丰富"],
       "details": [
         {
-          "area": "第一食堂",
+          "area": "一楼综合快餐与风味档口",
+          "openingHours": "早 06:30–08:30 · 午 11:00–13:00 · 晚 16:30–19:00",
+          "priceRange": "人均 ¥7 – ¥15",
+          "specialty": ["自选快餐", "特色炒饭", "腊汁肉夹馍", "鸡蛋拌面", "早餐包点"],
+          "notes": "主打高效率大众快餐与北方风味面点，早八赶课顺路买包子豆浆或肉夹馍非常省时。",
           "images": [
             {
               "caption": "麻辣香锅",
@@ -32,28 +122,24 @@
               "caption": "鸡蛋拌面",
               "src": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E9%A3%9F%E5%A0%82/%E7%AC%AC%E4%B8%80%E9%A3%9F%E5%A0%82/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA_%E7%AC%AC%E4%B8%80%E9%A3%9F%E5%A0%82_%E9%B8%A1%E8%9B%8B%E6%8B%8C%E9%9D%A2.jpg"
             }
-          ],
-          "notes": "主打便捷快餐，出餐速度快，是上下课间快速解决吃饭问题的首选。",
-          "openingHours": "待补充",
-          "priceRange": "待补充",
-          "specialty": [
-            "自选快餐",
-            "特色炒饭",
-            "肉夹馍",
-            "包子"
           ]
         }
-      ],
-      "id": "cangwu_canteen1",
-      "image": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E9%A3%9F%E5%A0%82/%E7%AC%AC%E4%B8%80%E9%A3%9F%E5%A0%82.jpg",
-      "name": "第一食堂",
-      "summary": "位于大学生活动中心旁，上下课必经之路。"
+      ]
     },
     {
+      "id": "cangwu_canteen2",
       "campusId": "cangwu",
+      "name": "第二食堂 & 风味餐厅",
+      "summary": "毗邻海洋楼与主教学群，一楼实惠快餐、二楼各地特色风味。",
+      "image": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E9%A3%9F%E5%A0%82/%E7%AC%AC%E4%BA%8C%E9%A3%9F%E5%A0%82.jpg",
+      "tags": ["双层餐厅", "近海洋楼", "各地风味"],
       "details": [
         {
           "area": "一楼：第二食堂",
+          "openingHours": "早 06:30–08:30 · 午 11:00–13:00 · 晚 16:30–19:00",
+          "priceRange": "人均 ¥8 – ¥15",
+          "specialty": ["精品盖浇饭", "旋转小火锅", "家常川湘菜", "虾仁炒面"],
+          "notes": "离教学楼最近的主力食堂之一，下课步行两分钟即达，日常三餐性价比稳健。",
           "images": [
             {
               "caption": "明炉羊肉",
@@ -63,19 +149,14 @@
               "caption": "虾仁鸡蛋炒面",
               "src": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E9%A3%9F%E5%A0%82/%E7%AC%AC%E4%BA%8C%E9%A3%9F%E5%A0%82%26%E9%A3%8E%E5%91%B3%E9%A4%90%E5%8E%85/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA_%E7%AC%AC%E4%BA%8C%E9%A3%9F%E5%A0%82%20%26%20%E9%A3%8E%E5%91%B3%E9%A4%90%E5%8E%85_%E8%99%BE%E4%BB%81%E9%B8%A1%E8%9B%8B%E7%82%92%E9%9D%A2.jpg"
             }
-          ],
-          "notes": "离教学楼最近，菜品实惠，是解决日常三餐的主要场所。",
-          "openingHours": "待补充",
-          "priceRange": "待补充",
-          "specialty": [
-            "小火锅",
-            "盖浇饭",
-            "川菜",
-            "拌饭"
           ]
         },
         {
           "area": "二楼：风味餐厅",
+          "openingHours": "午 10:50–13:15 · 晚 16:30–19:30",
+          "priceRange": "人均 ¥11 – ¥18",
+          "specialty": ["特色米线", "淮南牛肉汤", "石锅煎肉拌饭", "日式咖喱饭"],
+          "notes": "卡座装修清爽明亮，空调充足，很适合和室友约饭改善伙食。",
           "images": [
             {
               "caption": "特色米线",
@@ -85,360 +166,655 @@
               "caption": "煎肉拌饭",
               "src": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E9%A3%9F%E5%A0%82/%E7%AC%AC%E4%BA%8C%E9%A3%9F%E5%A0%82%26%E9%A3%8E%E5%91%B3%E9%A4%90%E5%8E%85/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA_%E7%AC%AC%E4%BA%8C%E9%A3%9F%E5%A0%82%20%26%20%E9%A3%8E%E5%91%B3%E9%A4%90%E5%8E%85_%E7%85%8E%E8%82%89%E6%8B%8C%E9%A5%AD.jpg"
             }
-          ],
-          "notes": "环境优雅，提供各地风味美食，适合改善伙食或朋友小聚。",
-          "openingHours": "待补充",
-          "priceRange": "待补充",
-          "specialty": [
-            "米线",
-            "牛肉汤",
-            "石锅拌饭",
-            "咖喱饭"
           ]
         }
-      ],
-      "id": "cangwu_canteen2",
-      "image": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E9%A3%9F%E5%A0%82/%E7%AC%AC%E4%BA%8C%E9%A3%9F%E5%A0%82.jpg",
-      "name": "第二食堂 & 风味餐厅",
-      "summary": "位于海洋楼旁，离教学区最近，装修典雅。"
+      ]
     },
     {
+      "id": "cangwu_canteen3",
       "campusId": "cangwu",
+      "name": "第三食堂 & 第四食堂",
+      "summary": "A/B 宿舍生活区核心美食地标，面积最大、网红档口最密集。",
+      "image": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E9%A3%9F%E5%A0%82/%E7%AC%AC%E4%B8%89%E9%A3%9F%E5%A0%82.jpg",
+      "tags": ["人气最高", "近A/B区宿舍", "夜宵友好"],
       "details": [
         {
           "area": "一楼：第三食堂",
+          "openingHours": "早 06:30–08:40 · 午 10:50–13:10 · 晚 16:30–19:30",
+          "priceRange": "人均 ¥6 – ¥14",
+          "specialty": ["平价特惠快餐", "干锅鸡块", "手工拉面", "武汉热干面"],
+          "notes": "以高性价比平价快餐窗口闻名，分量实在，紧邻公共浴室与生活商超。",
           "images": [
             {
-              "caption": "干锅鸡快",
+              "caption": "干锅鸡块",
               "src": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E9%A3%9F%E5%A0%82/%E7%AC%AC%E4%B8%89%E9%A3%9F%E5%A0%82%26%E7%AC%AC%E5%9B%9B%E9%A3%9F%E5%A0%82/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA_%E7%AC%AC%E4%B8%89%20%26%20%E7%AC%AC%E5%9B%9B%E9%A3%9F%E5%A0%82_%E5%B9%B2%E9%94%85%E9%B8%A1%E5%BF%AB.jpg"
             }
-          ],
-          "notes": "学以其超高性价比的5元快餐闻名，是月底的“救星”。",
-          "openingHours": "待补充",
-          "priceRange": "待补充",
-          "specialty": [
-            "5元特价快餐",
-            "校园川菜",
-            "拉面",
-            "武汉热干面"
           ]
         },
         {
           "area": "二楼：第四食堂",
+          "openingHours": "午 10:50–13:30 · 晚 16:30–20:30",
+          "priceRange": "人均 ¥12 – ¥20",
+          "specialty": ["铁板烤盘饭", "成都冒烤鸭", "骨汤麻辣烫", "轻食水吧"],
+          "notes": "苍梧校区人气美食中心，档口更新迭代快，晚间部分窗口营业较晚。",
           "images": [
             {
-              "caption": "烤盘饭",
+              "caption": "铁板烤盘饭",
               "src": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E9%A3%9F%E5%A0%82/%E7%AC%AC%E4%B8%89%E9%A3%9F%E5%A0%82%26%E7%AC%AC%E5%9B%9B%E9%A3%9F%E5%A0%82/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA_%E7%AC%AC%E4%B8%89%20%26%20%E7%AC%AC%E5%9B%9B%E9%A3%9F%E5%A0%82_%E7%83%A4%E7%9B%98%E9%A5%AD.jpg"
             }
-          ],
-          "notes": "学校的美食中心，选择多样，冒烤鸭尤其好吃。",
-          "openingHours": "待补充",
-          "priceRange": "待补充",
-          "specialty": [
-            "麻辣烫",
-            "冒烤鸭",
-            "烤肉饭"
           ]
         }
-      ],
-      "id": "cangwu_canteen3",
-      "image": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E9%A3%9F%E5%A0%82/%E7%AC%AC%E4%B8%89%E9%A3%9F%E5%A0%82.jpg",
-      "name": "第三食堂 & 第四食堂",
-      "summary": "网红餐厅，种类丰富，最大和豪华的食堂。"
+      ]
     },
     {
+      "id": "cangwu_canteen_east",
       "campusId": "cangwu",
+      "name": "东区食堂",
+      "summary": "服务 D 区公寓与东区运动场师生，大厅挑高宽敞，饭点不拥挤。",
+      "image": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E9%A3%9F%E5%A0%82/%E4%B8%9C%E5%8C%BA%E9%A3%9F%E5%A0%82.jpg",
+      "tags": ["D区配套", "座位充裕", "香锅面食"],
       "details": [
         {
-          "area": "D区食堂",
+          "area": "东区综合就餐大厅",
+          "openingHours": "早 06:30–08:30 · 午 11:00–13:00 · 晚 16:30–19:15",
+          "priceRange": "人均 ¥8 – ¥16",
+          "specialty": ["自选大众快餐", "现炒麻辣香锅", "北方手工水饺", "特色汤面"],
+          "notes": "空间开阔明亮、座位充足，住在 D 区的同学下楼几步即可就餐，体育课后补充能量也很顺路。",
           "images": [
             {
               "caption": "麻辣香锅",
               "src": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E9%A3%9F%E5%A0%82/%E4%B8%9C%E5%8C%BA%E9%A3%9F%E5%A0%82/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA_%E4%B8%9C%E5%8C%BA%E9%A3%9F%E5%A0%82_%E9%BA%BB%E8%BE%A3%E9%A6%99%E9%94%85.jpg"
             }
-          ],
-          "notes": "空间宽敞明亮，座位充足，不用担心饭点找不到位置。服务D区及附近师生。",
-          "openingHours": "待补充",
-          "priceRange": "待补充",
-          "specialty": [
-            "大众快餐",
-            "面食窗口",
-            "水饺",
-            "香锅"
           ]
         }
-      ],
-      "id": "cangwu_canteen_east",
-      "image": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E9%A3%9F%E5%A0%82/%E4%B8%9C%E5%8C%BA%E9%A3%9F%E5%A0%82.jpg",
-      "name": "东区食堂",
-      "summary": "D区食堂，空间大，座位多。"
+      ]
     },
     {
+      "id": "cangwu_canteen_ethnic",
       "campusId": "cangwu",
+      "name": "民族餐厅",
+      "summary": "位于校医务室旁的标准清真餐厅，牛羊肉面食与现烙饼口碑极佳。",
+      "image": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E9%A3%9F%E5%A0%82/%E6%B0%91%E6%97%8F%E9%A4%90%E5%8E%85.jpg",
+      "tags": ["清真认证", "牛羊面食", "特色早点"],
       "details": [
         {
-          "area": "清真美食",
+          "area": "清真风味专窗",
+          "openingHours": "早 06:40–08:30 · 午 11:00–13:00 · 晚 16:30–19:00",
+          "priceRange": "人均 ¥9 – ¥17",
+          "specialty": ["清真牛肉拉面", "新疆风味拌面/炒面", "清真小火锅", "现烙葱油饼"],
+          "notes": "严格遵循清真餐饮规范，向全校师生开放，早餐现做的饼类和热汤面人气很高。",
           "images": [
             {
               "caption": "特色风味面",
               "src": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E9%A3%9F%E5%A0%82/%E6%B0%91%E6%97%8F%E9%A4%90%E5%8E%85/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA_%E6%B0%91%E6%97%8F%E9%A4%90%E5%8E%85_%E7%89%B9%E8%89%B2%E9%A3%8E%E5%91%B3%E9%9D%A2.jpg"
             }
-          ],
-          "notes": "严格的清真食堂，为有需要的同学提供地道的民族风味美食，早餐的饼类尤其受欢迎。",
-          "openingHours": "待补充",
-          "priceRange": "待补充",
-          "specialty": [
-            "清真涮煮",
-            "风味面",
-            "炒面",
-            "特色早餐"
           ]
         }
-      ],
-      "id": "cangwu_canteen_ethnic",
-      "image": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E9%A3%9F%E5%A0%82/%E6%B0%91%E6%97%8F%E9%A4%90%E5%8E%85.jpg",
-      "name": "民族餐厅",
-      "summary": "位于医务室旁，清真食堂。"
+      ]
     },
     {
+      "id": "cangwu_canteen_south",
       "campusId": "cangwu",
+      "name": "南园餐厅",
+      "summary": "毗邻文予楼，兼顾日常简餐与现炒桌餐包间，适合社团部门聚餐。",
+      "image": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E9%A3%9F%E5%A0%82/%E5%8D%97%E5%9B%AD%E9%A4%90%E5%8E%85.jpg",
+      "tags": ["现炒小炒", "包间聚餐", "隆江猪脚饭"],
       "details": [
         {
-          "area": "海洋餐厅",
+          "area": "南园简餐与点菜厅",
+          "openingHours": "午 11:00–13:30 · 晚 16:30–20:30",
+          "priceRange": "简餐 ¥12–18 · 聚餐人均 ¥30–45",
+          "specialty": ["隆江猪脚饭", "现炒时令家常菜", "淮扬风味桌餐"],
+          "notes": "既有单人快餐档口，也提供小炒点菜与圆桌包间，班级团建或朋友庆生不出校门就能安排。",
           "images": [
             {
               "caption": "隆江猪脚饭",
               "src": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E9%A3%9F%E5%A0%82/%E5%8D%97%E5%9B%AD%E9%A4%90%E5%8E%85/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA_%E5%8D%97%E5%9B%AD%E9%A4%90%E5%8E%85_%E9%9A%86%E6%B1%9F%E7%8C%AA%E8%84%9A%E9%A5%AD.jpg"
             }
-          ],
-          "notes": "更像是校内的社会餐厅，提供点菜服务和包间，适合班级聚餐、生日宴请等活动。",
-          "openingHours": "待补充",
-          "priceRange": "待补充",
-          "specialty": [
-            "家常炒菜",
-            "隆江猪脚饭",
-            "小炒"
           ]
         }
-      ],
-      "id": "cangwu_canteen_south",
-      "image": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E9%A3%9F%E5%A0%82/%E5%8D%97%E5%9B%AD%E9%A4%90%E5%8E%85.jpg",
-      "name": "南园餐厅",
-      "summary": "位于文予楼旁，特色是宴席。"
+      ]
     },
     {
+      "id": "tongguan_qiancheng_canteen",
       "campusId": "tongguan",
+      "name": "前程餐厅",
+      "summary": "通灌校区主力大食堂，紧邻锦绣宿舍与公共浴室，窗口齐全实惠。",
+      "image": "/uploads/images/%E9%80%9A%E7%81%8C%E6%A0%A1%E5%8C%BA/%E9%A3%9F%E5%A0%82/%E5%89%8D%E7%A8%8B%E9%A4%90%E5%8E%85.jpg",
+      "tags": ["通灌主食堂", "平价管饱", "近锦绣公寓"],
       "details": [
         {
-          "area": "前程餐厅",
+          "area": "前程综合大厅",
+          "openingHours": "早 06:30–08:30 · 午 11:00–13:00 · 晚 16:30–19:00",
+          "priceRange": "人均 ¥7 – ¥14",
+          "specialty": ["安徽板面", "西红柿鸡蛋拌面", "自选两荤两素", "脆皮烤鸭饭", "手工水饺"],
+          "notes": "通灌校区大一新生日常三餐首选，出餐稳、价格亲民，旁边就是澡堂与开水房。",
           "images": [
             {
               "caption": "西红柿鸡蛋拌面",
               "src": "/uploads/images/%E9%80%9A%E7%81%8C%E6%A0%A1%E5%8C%BA/%E9%A3%9F%E5%A0%82/%E5%89%8D%E7%A8%8B%E9%A4%90%E5%8E%85/%E9%80%9A%E7%81%8C%E6%A0%A1%E5%8C%BA_%E5%89%8D%E7%A8%8B%E9%A4%90%E5%8E%85_%E8%A5%BF%E7%BA%A2%E6%9F%BF%E9%B8%A1%E8%9B%8B%E6%8B%8C%E9%9D%A2.jpg"
             }
-          ],
-          "notes": "菜品丰富，价格实惠，快餐很棒，窗口很多",
-          "openingHours": "待补充",
-          "priceRange": "待补充",
-          "specialty": [
-            "版面",
-            "快餐",
-            "水饺",
-            "烤鸭"
           ]
         }
-      ],
-      "id": "tongguan_qiancheng_canteen",
-      "image": "/uploads/images/%E9%80%9A%E7%81%8C%E6%A0%A1%E5%8C%BA/%E9%A3%9F%E5%A0%82/%E5%89%8D%E7%A8%8B%E9%A4%90%E5%8E%85.jpg",
-      "name": "前程餐厅",
-      "summary": "校区主食堂，满足日常用餐需求。"
+      ]
     },
     {
+      "id": "tongguan_food_square",
       "campusId": "tongguan",
+      "name": "美食广场",
+      "summary": "通灌校区风味小吃聚合地，营业时段灵活，晚自习后夜宵好去处。",
+      "image": "/uploads/images/%E9%80%9A%E7%81%8C%E6%A0%A1%E5%8C%BA/%E9%A3%9F%E5%A0%82/%E7%BE%8E%E9%A3%9F%E5%B9%BF%E5%9C%BA.jpg",
+      "tags": ["风味小吃", "营业时间长", "夜宵休闲"],
       "details": [
         {
-          "area": "美食广场",
+          "area": "特色风味档口区",
+          "openingHours": "早 07:00–09:00 · 午 10:50–13:30 · 晚 16:30–21:00",
+          "priceRange": "人均 ¥10 – ¥18",
+          "specialty": ["脆皮鸡肉饭", "中式营养快餐", "现炒香锅", "特色拌面与饮品"],
+          "notes": "档口风味年轻多元，营业时间比传统大伙食堂更长，适合错峰就餐或晚间加餐。",
           "images": [
             {
               "caption": "中式快餐",
               "src": "/uploads/images/%E9%80%9A%E7%81%8C%E6%A0%A1%E5%8C%BA/%E9%A3%9F%E5%A0%82/%E7%BE%8E%E9%A3%9F%E5%B9%BF%E5%9C%BA/%E9%80%9A%E7%81%8C%E6%A0%A1%E5%8C%BA_%E7%BE%8E%E9%A3%9F%E5%B9%BF%E5%9C%BA_%E4%B8%AD%E5%BC%8F%E5%BF%AB%E9%A4%90.jpg"
             }
-          ],
-          "notes": "年轻人喜爱的地方，营业时间长，适合休闲和夜宵。",
-          "openingHours": "待补充",
-          "priceRange": "待补充",
-          "specialty": [
-            "中式快餐",
-            "鸡肉饭",
-            "拌面",
-            "香锅"
           ]
         }
-      ],
-      "id": "tongguan_food_square",
-      "image": "/uploads/images/%E9%80%9A%E7%81%8C%E6%A0%A1%E5%8C%BA/%E9%A3%9F%E5%A0%82/%E7%BE%8E%E9%A3%9F%E5%B9%BF%E5%9C%BA.jpg",
-      "name": "美食广场",
-      "summary": "汇集多种风味美食，提供多样化选择。"
+      ]
     },
     {
+      "id": "tongguan_ethnic_canteen",
       "campusId": "tongguan",
+      "name": "民族风味餐厅",
+      "summary": "通灌校区特色清真与砂锅简餐餐厅，现做黄焖鸡与鸡排饭很受欢迎。",
+      "image": "/uploads/images/%E9%80%9A%E7%81%8C%E6%A0%A1%E5%8C%BA/%E9%A3%9F%E5%A0%82/%E6%B0%91%E6%97%8F%E9%A3%8E%E5%91%B3%E9%A4%90%E5%8E%85.jpg",
+      "tags": ["民族风味", "砂锅简餐", "番茄鸡排饭"],
       "details": [
         {
-          "area": "民族风味餐厅",
+          "area": "民族风味与砂锅区",
+          "openingHours": "午 11:00–13:15 · 晚 16:30–19:30",
+          "priceRange": "人均 ¥10 – ¥17",
+          "specialty": ["番茄鸡排饭", "浓汤黄焖鸡", "牛羊肉粉丝汤", "西北拉面"],
+          "notes": "兼顾清真饮食需求与热乎砂锅简餐，秋冬季节来一碗热汤粉丝或黄焖鸡非常暖胃。",
           "images": [
             {
               "caption": "番茄鸡排饭",
               "src": "/uploads/images/%E9%80%9A%E7%81%8C%E6%A0%A1%E5%8C%BA/%E9%A3%9F%E5%A0%82/%E6%B0%91%E6%97%8F%E9%A3%8E%E5%91%B3%E9%A4%90%E5%8E%85/%E9%80%9A%E7%81%8C%E6%A0%A1%E5%8C%BA_%E6%B0%91%E6%97%8F%E9%A3%8E%E5%91%B3%E9%A4%90%E5%8E%85_%E7%95%AA%E8%8C%84%E9%B8%A1%E6%8E%92%E9%A5%AD.jpg"
             }
-          ],
-          "notes": "年轻人喜爱的地方，营业时间长，适合休闲和夜宵。",
-          "openingHours": "待补充",
-          "priceRange": "待补充",
-          "specialty": [
-            "黄焖鸡",
-            "粉丝",
-            "鸡排饭"
           ]
         }
-      ],
-      "id": "tongguan_ethnic_canteen",
-      "image": "/uploads/images/%E9%80%9A%E7%81%8C%E6%A0%A1%E5%8C%BA/%E9%A3%9F%E5%A0%82/%E6%B0%91%E6%97%8F%E9%A3%8E%E5%91%B3%E9%A4%90%E5%8E%85.jpg",
-      "name": "民族风味餐厅",
-      "summary": "汇集多种风味美食，提供多样化选择。"
+      ]
     },
     {
+      "id": "songtiao_donggang_canteen",
       "campusId": "songtiao",
+      "name": "东港餐厅",
+      "summary": "宋跳校区综合学生食堂，涵盖南北快餐、拉面与现炒粉面。",
+      "image": "/uploads/images/%E5%AE%8B%E8%B7%B3%E6%A0%A1%E5%8C%BA/%E9%A3%9F%E5%A0%82/%E4%B8%9C%E6%B8%AF%E9%A4%90%E5%8E%85.jpg",
+      "tags": ["宋跳主食堂", "南北风味", "近宿舍区"],
       "details": [
         {
-          "area": "综合食堂",
+          "area": "东港综合就餐区",
+          "openingHours": "早 06:30–08:30 · 午 11:00–13:00 · 晚 16:30–19:00",
+          "priceRange": "人均 ¥8 – ¥15",
+          "specialty": ["兰州手工拉面", "新疆炒米粉", "现炒盖浇饭", "川味小炒", "早点粥铺"],
+          "notes": "位于宋跳生活区核心位置，从各栋宿舍步行几分钟即达，日常三餐品类齐全、口味扎实。",
           "images": [
             {
               "caption": "兰州拉面",
               "src": "/uploads/images/%E5%AE%8B%E8%B7%B3%E6%A0%A1%E5%8C%BA/%E9%A3%9F%E5%A0%82/%E4%B8%9C%E6%B8%AF%E9%A4%90%E5%8E%85/%E5%AE%8B%E8%B7%B3%E6%A0%A1%E5%8C%BA_%E4%B8%9C%E6%B8%AF%E9%A4%90%E5%8E%85_%E5%85%B0%E5%B7%9E%E6%8B%89%E9%9D%A2.jpg"
             }
-          ],
-          "notes": "虽然选择不如主校区多，但能满足日常基本用餐需求，口味不错。",
-          "openingHours": "待补充",
-          "priceRange": "待补充",
-          "specialty": [
-            "新疆炒米粉",
-            "兰州拉面",
-            "盖浇饭",
-            "川味小炒"
           ]
         }
-      ],
-      "id": "songtiao_donggang_canteen",
-      "image": "/uploads/images/%E5%AE%8B%E8%B7%B3%E6%A0%A1%E5%8C%BA/%E9%A3%9F%E5%A0%82/%E4%B8%9C%E6%B8%AF%E9%A4%90%E5%8E%85.jpg",
-      "name": "东港餐厅",
-      "summary": "校区内唯一的学生食堂。"
+      ]
+    }
+  ],
+  "dormitories": [
+    {
+      "id": "cangwu_a_dorm",
+      "campusId": "cangwu",
+      "name": "A区宿舍（女生）",
+      "summary": "苍梧西生活区主力女生公寓，紧邻三食堂、商超与公共浴室，生活极便利。",
+      "image": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/A%E5%8C%BA%E5%AE%BF%E8%88%8D.jpg",
+      "tags": ["四人间", "上床下桌", "上下铺", "独立卫生间", "空调"],
+      "details": [
+        {
+          "building": "A5 – A8 栋（翻新上床下桌）",
+          "roomType": "四人间",
+          "layout": "上床下桌",
+          "price": "1200 元/年",
+          "ac": "全配空调",
+          "balcony": "独立阳台",
+          "bathroom": "室内独立卫生间 · 公共浴室紧邻三食堂",
+          "laundry": "一楼公共自助洗衣房",
+          "waterHeater": "楼内配备直饮/开水机",
+          "network": "周日至周四 24:00 断网，周五周六不断网",
+          "notes": "近年暑期焕新改造为标准上床下桌结构，收纳空间宽裕，刷校园一卡通进出楼栋门禁。",
+          "images": [
+            {
+              "caption": "A5–A8 栋宿舍内景（上床下桌）",
+              "src": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/A%E5%8C%BA/A5-A8%E6%A0%8B%E6%A5%BC/A5-A8%E6%A0%8B%E6%A5%BC%E5%AE%BF%E8%88%8D%E5%86%85%E6%99%AF.jpg"
+            }
+          ]
+        },
+        {
+          "building": "A1 – A4、A9 – A10 栋",
+          "roomType": "四人间",
+          "layout": "上下铺 + 独立书桌柜",
+          "price": "1200 元/年",
+          "ac": "全配空调",
+          "balcony": "独立阳台",
+          "bathroom": "室内独立卫生间 · 公共浴室紧邻三食堂",
+          "laundry": "一楼公共自助洗衣房",
+          "waterHeater": "部分楼层配备开水设备",
+          "network": "周日至周四 24:00 断网，周五周六不断网",
+          "notes": "经典四人间布局，下楼两分钟即到三食堂与快递超市区，刷校园卡通行。",
+          "images": [
+            {
+              "caption": "A1–A4 栋宿舍内景（上下铺）",
+              "src": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/A%E5%8C%BA/A1-A4%2CA8-A9%E6%A0%8B%E6%A5%BC/A1-A4%2CA8-A9%E5%AE%BF%E8%88%8D%E5%86%85%E6%99%AF.jpg"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cangwu_b_dorm",
+      "campusId": "cangwu",
+      "name": "B区宿舍（男生）",
+      "summary": "苍梧规模最大的男生公寓群，紧邻篮球场、三食堂与快递街。",
+      "image": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/B%E5%8C%BA%E5%AE%BF%E8%88%8D.jpg",
+      "tags": ["四人间", "六人间", "上床下桌", "上下铺", "独立卫生间", "空调"],
+      "details": [
+        {
+          "building": "B5 – B6 栋",
+          "roomType": "四人间（含少量三人间）",
+          "layout": "上床下桌",
+          "price": "1000 元/年",
+          "ac": "全配空调",
+          "balcony": "独立阳台",
+          "bathroom": "楼层整洁公共卫浴 · 大浴室位于三食堂西侧",
+          "laundry": "B5 楼下（篮球场南侧集中洗衣房）",
+          "waterHeater": "每层均设 24h 饮水/热水机",
+          "network": "周日至周四 24:00 断网，周五周六不断网",
+          "notes": "上床下桌个人桌面宽敞，楼下即是篮球场与便利商超，使用独立门禁卡开门。",
+          "images": [
+            {
+              "caption": "B5–B6 宿舍内景（上床下桌）",
+              "src": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/B%E5%8C%BA/B5-B6/B5-B6%E5%AE%BF%E8%88%8D%E5%86%85%E6%99%AF.jpg"
+            },
+            {
+              "caption": "书桌与收纳详景",
+              "src": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/B%E5%8C%BA/B5-B6/%E5%AE%BF%E8%88%8D%E5%86%85%E8%AF%A6%E6%99%AF.jpg"
+            },
+            {
+              "caption": "楼层公共卫生间",
+              "src": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/B%E5%8C%BA/B5-B6/%E5%85%AC%E5%85%B1%E5%8D%AB%E7%94%9F%E9%97%B4.jpg"
+            },
+            {
+              "caption": "公共洗漱台",
+              "src": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/B%E5%8C%BA/B5-B6/%E5%85%AC%E5%85%B1%E5%8D%AB%E7%94%9F%E9%97%B4%E6%B4%97%E6%89%8B%E6%B1%A0.jpg"
+            }
+          ]
+        },
+        {
+          "building": "B1 – B4 栋",
+          "roomType": "四人间",
+          "layout": "上下铺 + 对排连体书桌",
+          "price": "1200 元/年",
+          "ac": "全配空调",
+          "balcony": "独立阳台",
+          "bathroom": "公共浴室位于三食堂西侧",
+          "laundry": "B5 楼下集中洗衣房",
+          "waterHeater": "每层配备 24h 热水机",
+          "network": "周日至周四 24:00 断网，周五周六不断网",
+          "notes": "靠近主干道与运动场，上下课与日常取快递路线顺畅。",
+          "images": [
+            {
+              "caption": "B1–B4 宿舍内景（上下铺）",
+              "src": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/B%E5%8C%BA/B1-B4/B1-B4%E5%AE%BF%E8%88%8D%E5%86%85%E6%99%AF.jpg"
+            }
+          ]
+        },
+        {
+          "building": "B7 – B12 栋",
+          "roomType": "六人间",
+          "layout": "上下铺 + 储物书桌",
+          "price": "950 元/年",
+          "ac": "全配空调",
+          "balcony": "独立阳台",
+          "bathroom": "室内带独立卫生间 · 澡堂在三食堂西侧",
+          "laundry": "B5 楼下集中洗衣房",
+          "waterHeater": "楼内设开水供应点",
+          "network": "周日至周四 24:00 断网，周五周六不断网",
+          "notes": "住宿费极具性价比且室内自带独立卫生间，氛围热闹。",
+          "images": [
+            {
+              "caption": "B7–B12 六人间内景",
+              "src": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/B%E5%8C%BA/B7-B12/B7-B12%E5%AE%BF%E8%88%8D%E5%86%85%E6%99%AF.jpg"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cangwu_d_dorm",
+      "campusId": "cangwu",
+      "name": "D区宿舍（东区公寓）",
+      "summary": "苍梧东侧现代化公寓区，男女栋分设，全系上床下桌 + 独立卫浴。",
+      "image": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/D%E5%8C%BA%E5%AE%BF%E8%88%8D.jpg",
+      "tags": ["四人间", "三人间", "上床下桌", "独立卫浴", "空调"],
+      "details": [
+        {
+          "building": "D5 – D6、D9 – D10 栋",
+          "roomType": "四人间",
+          "layout": "上床下桌",
+          "price": "1350 – 1500 元/年",
+          "ac": "全配空调",
+          "balcony": "双寝室互通宽景大阳台",
+          "bathroom": "室内独立卫浴（刷卡淋浴）+ 一楼公共浴室",
+          "laundry": "一楼公共自助洗衣房",
+          "waterHeater": "寝室内刷卡热水 + 每层直饮水机",
+          "network": "周日至周四晚间按作息断网/控电，周末不断网",
+          "notes": "紧邻东区食堂、东区操场与四号门，周边安静宜居，建议备一辆共享单车或自行车往返主教学楼。",
+          "images": [
+            {
+              "caption": "D区四人间内景（上床下桌）",
+              "src": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/D%E5%8C%BA/D5%2C6%2C9%2C10/D5%2C6%2C9%2C10%E5%AE%BF%E8%88%8D%E5%86%85%E6%99%AF.jpg"
+            }
+          ]
+        },
+        {
+          "building": "D7 – D8 栋",
+          "roomType": "三人间",
+          "layout": "上床下桌",
+          "price": "1500 元/年",
+          "ac": "全配空调",
+          "balcony": "独立阳台",
+          "bathroom": "室内独立卫浴",
+          "laundry": "一楼公共自助洗衣房",
+          "waterHeater": "每层配备热水机与淋浴系统",
+          "network": "周日至周四 24:00 断网，周五周六不断网",
+          "notes": "少见的三人间上床下桌配置，人均活动与储物空间相当充裕。",
+          "images": [
+            {
+              "caption": "D7–D8 三人间内景",
+              "src": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/D%E5%8C%BA/D7-D8%E6%A0%8B%E6%A5%BC/D7-D8%E6%A0%8B%E6%A5%BC%E5%AE%BF%E8%88%8D%E5%86%85%E6%99%AF.jpg"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tongguan_jinxiu_dorm",
+      "campusId": "tongguan",
+      "name": "锦绣公寓（通灌校区）",
+      "summary": "通灌校区核心学生宿舍群（1–8 号楼），出门即是商圈与前程餐厅。",
+      "image": "/uploads/images/%E9%80%9A%E7%81%8C%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/%E9%94%A6%E7%BB%A3%E5%AE%BF%E8%88%8D.jpg",
+      "tags": ["四人间", "五人间", "上下铺", "独立卫生间", "空调"],
+      "details": [
+        {
+          "building": "锦绣 3、4、8 号楼",
+          "roomType": "四人间（含少量双人间）",
+          "layout": "上下铺 + 独立书桌",
+          "price": "1200 元/年",
+          "ac": "全配空调",
+          "balcony": "独立阳台",
+          "bathroom": "室内独立卫生间 + 楼层大洗漱台 · 澡堂在前程餐厅旁",
+          "laundry": "楼内设公共自助洗衣机",
+          "waterHeater": "双数楼层配备开水/热水机",
+          "network": "周日至周四 24:00 断网，周五周六不断网",
+          "notes": "室内自带独立卫生间与洗漱池，同时每层配有宽敞公共洗漱台，早起洗漱不排队。",
+          "images": [
+            {
+              "caption": "锦绣 3/4/8 号楼内景",
+              "src": "/uploads/images/%E9%80%9A%E7%81%8C%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/%E9%94%A6%E7%BB%A33%2C4%2C8%E5%8F%B7%E6%A5%BC/%E5%AE%BF%E8%88%8D%E5%86%85%E6%83%85%E5%86%B5.jpg"
+            }
+          ]
+        },
+        {
+          "building": "锦绣 1、2、5 号楼",
+          "roomType": "四人间",
+          "layout": "上下铺 + 带顶柜书桌",
+          "price": "900 元/年",
+          "ac": "全配空调",
+          "balcony": "室内晾晒区",
+          "bathroom": "楼层隔间式公共卫浴（专人保洁）· 澡堂在前程餐厅旁",
+          "laundry": "楼层配备公共洗衣机",
+          "waterHeater": "部分楼层设开水炉",
+          "network": "周日至周四 24:00 断网，周五周六不断网",
+          "notes": "配备储物大衣柜与书桌顶柜，寝室预置清扫工具，使用实体钥匙开门。",
+          "images": [
+            {
+              "caption": "锦绣 1/2/5 号楼内景",
+              "src": "/uploads/images/%E9%80%9A%E7%81%8C%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/%E9%94%A6%E7%BB%A31%2C2%2C5%E5%8F%B7%E6%A5%BC/%E9%94%A6%E7%BB%A31%2C2%2C5%E5%8F%B7%E6%A5%BC%E5%AE%BF%E8%88%8D%E5%86%85%E6%99%AF.jpg"
+            }
+          ]
+        },
+        {
+          "building": "锦绣 6、7 号楼",
+          "roomType": "五人间",
+          "layout": "4 人上下铺 + 1 人上床下桌",
+          "price": "700 元/年",
+          "ac": "全配空调",
+          "balcony": "室内晾晒区",
+          "bathroom": "楼层公共卫生间 · 澡堂在前程餐厅旁",
+          "laundry": "隔层配备公共自助洗衣机",
+          "waterHeater": "隔层配备开水炉",
+          "network": "周日至周四 24:00 断网，周五周六不断网",
+          "notes": "住宿费十分实惠，混合床位设计让室内过道与桌面空间保持通透。",
+          "images": [
+            {
+              "caption": "锦绣 6/7 号楼五人间内景",
+              "src": "/uploads/images/%E9%80%9A%E7%81%8C%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/%E9%94%A6%E7%BB%A36%2C7%E5%8F%B7%E6%A5%BC/%E9%94%A6%E7%BB%A36%2C7%E5%8F%B7%E6%A5%BC%E5%AE%BF%E8%88%8D%E5%86%85%E6%99%AF.jpg"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "songtiao_dorm",
+      "campusId": "songtiao",
+      "name": "宋跳校区学生公寓",
+      "summary": "应用技术学院配套生活区，以宽敞四人间上床下桌为主，园区清静舒适。",
+      "image": "/uploads/images/%E5%AE%8B%E8%B7%B3%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/%E5%AE%8B%E8%B7%B3%E5%AE%BF%E8%88%8D.jpg",
+      "tags": ["四人间", "六人间", "上床下桌", "独立卫生间", "空调"],
+      "details": [
+        {
+          "building": "6 号楼（四人间）、7、8 号楼",
+          "roomType": "四人间",
+          "layout": "上床下桌",
+          "price": "1200 元/年",
+          "ac": "全配空调",
+          "balcony": "独立采光阳台",
+          "bathroom": "室内独立卫生间 + 楼层公共卫浴 · 园区设公共大浴室",
+          "laundry": "楼内公共自助洗衣服务",
+          "waterHeater": "楼层直饮开水设备与集中供热",
+          "network": "周日至周四 24:00 断网，周五周六不断网",
+          "notes": "宋跳校区主力四人间房型，开间宽敞明亮，距离东港餐厅与教学楼都很近。",
+          "images": [
+            {
+              "caption": "6/7/8 号楼四人间实拍",
+              "src": "/uploads/images/%E5%AE%8B%E8%B7%B3%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/6%2C7%2C8%E5%8F%B7%E6%A5%BC/6%2C7%2C8%E5%8F%B7%E6%A5%BC%E5%AE%BF%E8%88%8D%E5%86%85%E6%99%AF.jpg"
+            }
+          ]
+        },
+        {
+          "building": "1、2 号楼",
+          "roomType": "四人间",
+          "layout": "上床下桌",
+          "price": "1000 元/年",
+          "ac": "全配空调",
+          "balcony": "生活区晾晒与设备位",
+          "bathroom": "新改造自洁式楼层公共卫生间 · 园区公共大浴室",
+          "laundry": "支持公共洗衣房或寝室合规接入洗衣设备",
+          "waterHeater": "寝室/楼层配备热水供应设备",
+          "network": "周日至周四 24:00 断网，周五周六不断网",
+          "notes": "标准四人间上床下桌，改造后的公共盥洗区整洁卫生，性价比很高。",
+          "images": [
+            {
+              "caption": "1、2 号楼四人间（上床下桌）",
+              "src": "/uploads/images/%E5%AE%8B%E8%B7%B3%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/1%2C2%E5%8F%B7%E6%A5%BC/1%2C2%E5%8F%B7%E6%A5%BC%E5%AE%BF%E8%88%8D%E5%86%85%E6%99%AF.jpg"
+            }
+          ]
+        },
+        {
+          "building": "3、6 号楼（六人间）",
+          "roomType": "六人间",
+          "layout": "上下铺 + 书桌柜",
+          "price": "1000 元/年",
+          "ac": "全配空调",
+          "balcony": "通风窗台与晾晒区",
+          "bathroom": "室内独立卫生间 + 楼层公共卫生间 · 园区公共大浴室",
+          "laundry": "楼内配备自助洗衣机",
+          "waterHeater": "楼层设开水/直饮水点",
+          "network": "周日至周四 24:00 断网，周五周六不断网",
+          "notes": "标准六人间配置，带独立卫生间，日常起居便利。",
+          "images": [
+            {
+              "caption": "3、6 号楼六人间内景",
+              "src": "/uploads/images/%E5%AE%8B%E8%B7%B3%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/3%2C6%E5%8F%B7%E6%A5%BC/3%2C6%E5%8F%B7%E6%A5%BC%E5%AE%BF%E8%88%8D%E5%86%85%E6%99%AF.jpg"
+            }
+          ]
+        }
+      ]
     }
   ],
   "colleges": [
     {
+      "id": "cangwu_1",
       "campusId": "cangwu",
       "college": "海洋科学与水产学院",
-      "id": "cangwu_1",
+      "note": "本科四年常驻苍梧主校区",
       "majors": [
-        "海洋资源与环境",
         "海洋科学",
-        "生物技术",
+        "海洋资源与环境",
         "水产养殖学",
         "水族科学与技术",
-        "水生动物和医学"
+        "生物技术",
+        "水生动物医学"
       ]
     },
     {
-      "campusId": "cangwu",
-      "college": "电子工程学院",
       "id": "cangwu_2",
-      "majors": [
-        "测控技术与仪器",
-        "电子信息工程",
-        "电子科学与技术",
-        "通信工程",
-        "自动化",
-        "电气工程及其自动化",
-        "海洋信息工程"
-      ]
-    },
-    {
       "campusId": "cangwu",
-      "college": "环境与化学工程学院",
-      "id": "cangwu_3",
-      "majors": [
-        "材料化学",
-        "环境工程",
-        "化学工程与工艺",
-        "水质科学与技术",
-        "高分子材料与工程",
-        "安全工程"
-      ]
-    },
-    {
-      "campusId": "cangwu",
-      "college": "计算机工程学院",
-      "id": "cangwu_4",
-      "majors": [
-        "计算机科学与技术",
-        "软件工程",
-        "数据科学与大数据技术",
-        "网络工程",
-        "网络空间与安全"
-      ]
-    },
-    {
-      "campusId": "cangwu",
-      "college": "药学院",
-      "id": "cangwu_5",
-      "majors": [
-        "制药工程",
-        "药物制剂",
-        "药物分析"
-      ]
-    },
-    {
-      "campusId": "cangwu",
-      "college": "体育学院",
-      "id": "cangwu_6",
-      "majors": [
-        "休闲体育",
-        "运动训练"
-      ]
-    },
-    {
-      "campusId": "cangwu",
-      "college": "马可夫洛夫海洋工程学院",
-      "id": "cangwu_7",
-      "majors": [
-        "机器人工程",
-        "船舶与海洋工程"
-      ]
-    },
-    {
-      "campusId": "tongguan",
-      "college": "海洋食品与生物工程学",
-      "id": "tongguan_1",
-      "majors": [
-        "食品科学与工程",
-        "生物工程",
-        "动植物检疫",
-        "食品质量与安全"
-      ]
-    },
-    {
-      "campusId": "tongguan",
       "college": "海洋工程学院",
-      "id": "tongguan_2",
+      "note": "按近年教务与迎新方案，本科新生在苍梧主校区报到就读",
       "majors": [
         "船舶与海洋工程",
         "海洋资源开发技术"
       ]
     },
     {
+      "id": "cangwu_3",
+      "campusId": "cangwu",
+      "college": "电子工程学院",
+      "note": "本科四年常驻苍梧主校区",
+      "majors": [
+        "电子信息工程",
+        "通信工程",
+        "自动化",
+        "电气工程及其自动化",
+        "测控技术与仪器",
+        "电子科学与技术",
+        "海洋信息工程"
+      ]
+    },
+    {
+      "id": "cangwu_4",
+      "campusId": "cangwu",
+      "college": "计算机工程学院",
+      "note": "本科四年常驻苍梧主校区",
+      "majors": [
+        "计算机科学与技术",
+        "软件工程",
+        "数据科学与大数据技术",
+        "网络工程",
+        "网络空间安全",
+        "物联网工程"
+      ]
+    },
+    {
+      "id": "cangwu_5",
+      "campusId": "cangwu",
+      "college": "环境与化学工程学院",
+      "note": "本科四年常驻苍梧主校区",
+      "majors": [
+        "化学工程与工艺",
+        "环境工程",
+        "高分子材料与工程",
+        "材料化学",
+        "水质科学与技术",
+        "安全工程"
+      ]
+    },
+    {
+      "id": "cangwu_6",
+      "campusId": "cangwu",
+      "college": "药学院",
+      "note": "本科新生在苍梧主校区报到就读",
+      "majors": [
+        "制药工程",
+        "药物制剂",
+        "药物分析",
+        "生物制药"
+      ]
+    },
+    {
+      "id": "cangwu_7",
+      "campusId": "cangwu",
+      "college": "土木与港海工程学院（建筑学）",
+      "note": "五年制建筑学专业常驻苍梧主校区；本院其余工科专业大一在通灌校区",
+      "majors": [
+        "建筑学"
+      ]
+    },
+    {
+      "id": "cangwu_8",
+      "campusId": "cangwu",
+      "college": "马卡洛夫海洋工程学院",
+      "note": "中外合作办学机构，常驻苍梧主校区",
+      "majors": [
+        "船舶与海洋工程（中外合作办学）",
+        "机器人工程（中外合作办学）"
+      ]
+    },
+    {
+      "id": "cangwu_9",
+      "campusId": "cangwu",
+      "college": "体育学院",
+      "note": "常驻苍梧主校区",
+      "majors": [
+        "休闲体育",
+        "运动训练"
+      ]
+    },
+    {
+      "id": "cangwu_10",
+      "campusId": "cangwu",
+      "college": "创新创业学院",
+      "note": "拔尖创新人才培养试点班，常驻苍梧主校区",
+      "majors": [
+        "海洋科学（拔尖人才培养班）",
+        "创新实验班"
+      ]
+    },
+    {
+      "id": "tongguan_1",
+      "campusId": "tongguan",
+      "college": "海洋食品与生物工程学院",
+      "note": "大一在通灌校区报到就读，高年级迁回苍梧主校区（以当年通知书为准）",
+      "majors": [
+        "食品科学与工程",
+        "食品质量与安全",
+        "生物工程",
+        "动植物检疫"
+      ]
+    },
+    {
+      "id": "tongguan_2",
       "campusId": "tongguan",
       "college": "机械工程学院",
-      "id": "tongguan_3",
+      "note": "大一在通灌校区报到就读，高年级迁回苍梧主校区（以当年通知书为准）",
       "majors": [
         "机械设计制造及其自动化",
         "机械电子工程",
@@ -448,71 +824,76 @@
       ]
     },
     {
+      "id": "tongguan_3",
       "campusId": "tongguan",
-      "college": "土木与港海工程学院",
-      "id": "tongguan_4",
+      "college": "土木与港海工程学院（土木/港航/工管）",
+      "note": "非建筑学专业大一在通灌校区就读，高年级迁回苍梧主校区；建筑学在苍梧",
       "majors": [
         "土木工程",
-        "建筑学",
         "港口航道与海岸工程",
         "工程管理"
       ]
     },
     {
+      "id": "tongguan_4",
       "campusId": "tongguan",
       "college": "海洋技术与测绘学院",
-      "id": "tongguan_5",
+      "note": "大一在通灌校区报到就读，高年级迁回苍梧主校区（以当年通知书为准）",
       "majors": [
         "测绘工程",
-        "海洋技术",
         "地理信息科学",
         "遥感科学与技术",
+        "海洋技术",
         "应用气象学"
       ]
     },
     {
+      "id": "tongguan_5",
       "campusId": "tongguan",
       "college": "理学院",
-      "id": "tongguan_6",
+      "note": "大一在通灌校区报到就读，高年级迁回苍梧主校区（以当年通知书为准）",
       "majors": [
+        "数学与应用数学",
         "信息与计算科学",
         "统计学",
         "光电信息科学与工程",
-        "新能源科学与工程",
-        "数学与应用数学"
+        "新能源科学与工程"
       ]
     },
     {
+      "id": "tongguan_6",
       "campusId": "tongguan",
       "college": "商学院",
-      "id": "tongguan_7",
+      "note": "大一在通灌校区报到就读，高年级迁回苍梧主校区（以当年通知书为准）",
       "majors": [
-        "金融学",
-        "国际经济与贸易",
-        "市场营销",
-        "工商管理",
         "会计学",
         "财务管理",
+        "金融学",
+        "国际经济与贸易",
+        "工商管理",
+        "市场营销",
         "物流管理"
       ]
     },
     {
+      "id": "tongguan_7",
       "campusId": "tongguan",
       "college": "文法学院",
-      "id": "tongguan_8",
+      "note": "大一在通灌校区报到就读，高年级迁回苍梧主校区（以当年通知书为准）",
       "majors": [
         "汉语言文学",
-        "新闻学",
         "法学",
+        "新闻学",
         "广告学",
         "行政管理",
         "土地资源管理"
       ]
     },
     {
+      "id": "tongguan_8",
       "campusId": "tongguan",
       "college": "外国语学院",
-      "id": "tongguan_9",
+      "note": "大一在通灌校区报到就读，高年级迁回苍梧主校区（以当年通知书为准）",
       "majors": [
         "英语",
         "日语",
@@ -521,321 +902,36 @@
       ]
     },
     {
+      "id": "tongguan_9",
       "campusId": "tongguan",
       "college": "艺术设计学院",
-      "id": "tongguan_10",
+      "note": "大一在通灌校区报到就读，高年级迁回苍梧主校区（以当年通知书为准）",
       "majors": [
         "视觉传达设计",
         "环境设计",
         "产品设计",
         "数字媒体艺术"
       ]
-    }
-  ],
-  "dormitories": [
-    {
-      "campusId": "cangwu",
-      "details": [
-        {
-          "ac": "有",
-          "balcony": "有",
-          "bathroom": "独立卫生间，澡堂在三食堂附近",
-          "building": "A1-A4,A8-A10栋",
-          "images": [
-            {
-              "caption": "宿舍内景（上下铺）",
-              "src": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/A%E5%8C%BA/A1-A4%2CA8-A9%E6%A0%8B%E6%A5%BC/A1-A4%2CA8-A9%E5%AE%BF%E8%88%8D%E5%86%85%E6%99%AF.jpg"
-            }
-          ],
-          "laundry": "一楼有洗衣房",
-          "layout": "上下铺",
-          "network": "周日至周四24:00断网，周五周六不断网",
-          "notes": "传统的宿舍结构，空间紧凑但生活气息浓厚。开门使用校卡",
-          "price": "1200元/年",
-          "roomType": "四人间",
-          "waterHeater": "部分楼层有"
-        },
-        {
-          "ac": "有",
-          "balcony": "有",
-          "bathroom": "独立卫生间，澡堂在三食堂附近",
-          "building": "A5-A8栋",
-          "images": [
-            {
-              "caption": "宿舍内景（上床下桌）",
-              "src": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/A%E5%8C%BA/A5-A8%E6%A0%8B%E6%A5%BC/A5-A8%E6%A0%8B%E6%A5%BC%E5%AE%BF%E8%88%8D%E5%86%85%E6%99%AF.jpg"
-            }
-          ],
-          "laundry": "一楼有洗衣房",
-          "layout": "上床下桌",
-          "network": "周日至周四24:00断网，周五周六不断网",
-          "notes": "24年暑假刚装修过，装修后变成上床下桌了，宿舍内环境新颖友好。开门使用校卡",
-          "price": "1200元/年",
-          "roomType": "四人间",
-          "waterHeater": "部分楼层有"
-        }
-      ],
-      "id": "cangwu_a_dorm",
-      "image": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/A%E5%8C%BA%E5%AE%BF%E8%88%8D.jpg",
-      "name": "A区宿舍 (女生)",
-      "summary": "主要为女生宿舍，靠近三食堂和浴室，生活便利。"
     },
     {
-      "campusId": "cangwu",
-      "details": [
-        {
-          "ac": "有",
-          "balcony": "有",
-          "bathroom": "三食堂西边",
-          "building": "B1-B4栋",
-          "images": [
-            {
-              "caption": "宿舍内景（上下铺）",
-              "src": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/B%E5%8C%BA/B1-B4/B1-B4%E5%AE%BF%E8%88%8D%E5%86%85%E6%99%AF.jpg"
-            }
-          ],
-          "laundry": "B5楼下，篮球场南边",
-          "layout": "上下铺，床对面一排桌子",
-          "network": "周日至周四24:00断网，周五周六不断网",
-          "notes": "B区是最大的宿舍区之一，楼下有小卖部和活动空间。开门使用单独的门卡。",
-          "price": "1200元/年",
-          "roomType": "四人间",
-          "waterHeater": "每层楼一个热水机，24H供热水"
-        },
-        {
-          "ac": "有",
-          "balcony": "有",
-          "bathroom": "公共卫生间，公共浴室在三食堂西边",
-          "building": "B5-B6栋",
-          "images": [
-            {
-              "caption": "宿舍内景（上床下桌）",
-              "src": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/B%E5%8C%BA/B5-B6/B5-B6%E5%AE%BF%E8%88%8D%E5%86%85%E6%99%AF.jpg"
-            },
-            {
-              "caption": "宿舍内详景",
-              "src": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/B%E5%8C%BA/B5-B6/%E5%AE%BF%E8%88%8D%E5%86%85%E8%AF%A6%E6%99%AF.jpg"
-            },
-            {
-              "caption": "公共卫生间",
-              "src": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/B%E5%8C%BA/B5-B6/%E5%85%AC%E5%85%B1%E5%8D%AB%E7%94%9F%E9%97%B4.jpg"
-            },
-            {
-              "caption": "公共卫生间洗手池",
-              "src": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/B%E5%8C%BA/B5-B6/%E5%85%AC%E5%85%B1%E5%8D%AB%E7%94%9F%E9%97%B4%E6%B4%97%E6%89%8B%E6%B1%A0.jpg"
-            }
-          ],
-          "laundry": "B5楼下，篮球场南边",
-          "layout": "上床下桌",
-          "network": "周日至周四24:00断网，周五周六不断网",
-          "notes": "B区是最大的宿舍区之一，楼下有小卖部和活动空间。开门使用单独的门卡。",
-          "price": "1000（3、4人间）",
-          "roomType": "四人间",
-          "waterHeater": "每层楼一个热水机，24H供热水"
-        },
-        {
-          "ac": "有",
-          "balcony": "有",
-          "bathroom": "有独立卫生间",
-          "building": "B7-B12栋",
-          "images": [
-            {
-              "caption": "六人间宿舍内景",
-              "src": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/B%E5%8C%BA/B7-B12/B7-B12%E5%AE%BF%E8%88%8D%E5%86%85%E6%99%AF.jpg"
-            }
-          ],
-          "laundry": "洗衣房在B5楼下，篮球场南边",
-          "layout": "上下铺",
-          "network": "周日至周四24:00断网，周五周六不断网",
-          "notes": "B区是最大的宿舍区之一，楼下有小卖部和活动空间。开门使用单独的门卡。",
-          "price": "950元/年",
-          "roomType": "六人间",
-          "waterHeater": "部分楼层有开水"
-        }
-      ],
-      "id": "cangwu_b_dorm",
-      "image": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/B%E5%8C%BA%E5%AE%BF%E8%88%8D.jpg",
-      "name": "B区宿舍 (男生)",
-      "summary": "主要为男生宿舍，楼栋数量多，覆盖多个学院。"
-    },
-    {
-      "campusId": "cangwu",
-      "details": [
-        {
-          "ac": "有",
-          "balcony": "两个宿舍共用一个大阳台",
-          "bathroom": "独立卫浴，一楼也有公共澡堂",
-          "building": "D5-6，D9-10栋",
-          "images": [
-            {
-              "caption": "宿舍内景（四人间）",
-              "src": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/D%E5%8C%BA/D5%2C6%2C9%2C10/D5%2C6%2C9%2C10%E5%AE%BF%E8%88%8D%E5%86%85%E6%99%AF.jpg"
-            }
-          ],
-          "laundry": "宿舍楼一楼有公共洗衣房",
-          "layout": "上床下桌",
-          "network": "周日至周四24:00断电",
-          "notes": "位于学校东侧，也被称为东区宿舍，靠近东区食堂和四号门，环境安静。",
-          "price": "1500元/年（未免费供应热水，实际按1350元/年收取）",
-          "roomType": "四人间",
-          "waterHeater": "宿舍内刷卡可取热水，每层楼有一个饮水机"
-        },
-        {
-          "ac": "有",
-          "balcony": "有",
-          "bathroom": "独立卫浴",
-          "building": "D7-8栋",
-          "images": [
-            {
-              "caption": "宿舍内景（三人间）",
-              "src": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/D%E5%8C%BA/D7-D8%E6%A0%8B%E6%A5%BC/D7-D8%E6%A0%8B%E6%A5%BC%E5%AE%BF%E8%88%8D%E5%86%85%E6%99%AF.jpg"
-            }
-          ],
-          "laundry": "宿舍楼一楼有公共洗衣房",
-          "layout": "上床下桌",
-          "network": "周日至周四24:00断网，周五周六不断网",
-          "notes": "位于学校东侧，也被称为东区宿舍，靠近东区食堂和四号门，环境安静。",
-          "price": "1500元/年",
-          "roomType": "三人间",
-          "waterHeater": "每层楼有热水机"
-        }
-      ],
-      "id": "cangwu_d_dorm",
-      "image": "/uploads/images/%E8%8B%8D%E6%A2%A7%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/D%E5%8C%BA%E5%AE%BF%E8%88%8D.jpg",
-      "name": "D区宿舍 (东区)",
-      "summary": "男女生宿舍都有，四人间独立卫浴，条件优越。"
-    },
-    {
-      "campusId": "tongguan",
-      "details": [
-        {
-          "ac": "有",
-          "balcony": "无",
-          "bathroom": "无独立卫生间，每层楼有隔间式厕所，有人定期打扫。澡堂在前程餐厅旁",
-          "building": "锦绣1,2,5号楼",
-          "images": [
-            {
-              "caption": "宿舍内景（上下铺）",
-              "src": "/uploads/images/%E9%80%9A%E7%81%8C%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/%E9%94%A6%E7%BB%A31%2C2%2C5%E5%8F%B7%E6%A5%BC/%E9%94%A6%E7%BB%A31%2C2%2C5%E5%8F%B7%E6%A5%BC%E5%AE%BF%E8%88%8D%E5%86%85%E6%99%AF.jpg"
-            }
-          ],
-          "laundry": "部分楼层有公共洗衣机",
-          "layout": "上下铺",
-          "network": "周日至周四24:00断网，周五周六不断网",
-          "notes": "部分水泥地部分有地砖，桌子上面有柜子可以放东西，宿舍还有大柜子，每个宿舍都有一套打扫工具，每层楼都有大的洗漱台，宿舍开门使用钥匙",
-          "price": "900元/年",
-          "roomType": "四人间",
-          "waterHeater": "部分楼层有开水炉"
-        },
-        {
-          "ac": "有",
-          "balcony": "有",
-          "bathroom": "有独立卫生间，澡堂在前程餐厅旁",
-          "building": "锦绣3，4，8号楼",
-          "images": [
-            {
-              "caption": "宿舍内景",
-              "src": "/uploads/images/%E9%80%9A%E7%81%8C%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/%E9%94%A6%E7%BB%A33%2C4%2C8%E5%8F%B7%E6%A5%BC/%E5%AE%BF%E8%88%8D%E5%86%85%E6%83%85%E5%86%B5.jpg"
-            }
-          ],
-          "laundry": "有",
-          "layout": "上下铺",
-          "network": "周日至周四24:00断网，周五周六不断网",
-          "notes": "不仅每间宿舍内有洗漱台 每层楼也安排大洗漱台，开门使用钥匙",
-          "price": "1200元/年",
-          "roomType": "四人间（少量双人间）",
-          "waterHeater": "双数楼层有热水机"
-        },
-        {
-          "ac": "有",
-          "balcony": "无",
-          "bathroom": "无独立卫生间，请到前程餐厅附近的澡堂洗澡",
-          "building": "锦绣6，7号楼",
-          "images": [
-            {
-              "caption": "五人间宿舍内景",
-              "src": "/uploads/images/%E9%80%9A%E7%81%8C%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/%E9%94%A6%E7%BB%A36%2C7%E5%8F%B7%E6%A5%BC/%E9%94%A6%E7%BB%A36%2C7%E5%8F%B7%E6%A5%BC%E5%AE%BF%E8%88%8D%E5%86%85%E6%99%AF.jpg"
-            }
-          ],
-          "laundry": "两层中有一层会有洗衣机",
-          "layout": "上床下桌/上下铺",
-          "network": "周日至周四24:00断网，周五周六不断网",
-          "notes": "部分水泥地部分有地砖，开门使用钥匙。多出来的桌子是上床下桌，比其他桌子大一些",
-          "price": "700元/年",
-          "roomType": "五人间，四个人上下铺，一个人上床下桌",
-          "waterHeater": "两层中有一层会有热水炉"
-        }
-      ],
-      "id": "tongguan_jinxiu_dorm",
-      "image": "/uploads/images/%E9%80%9A%E7%81%8C%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/%E9%94%A6%E7%BB%A3%E5%AE%BF%E8%88%8D.jpg",
-      "name": "锦绣宿舍",
-      "summary": "通灌校区主要学生宿舍区。"
-    },
-    {
+      "id": "songtiao_1",
       "campusId": "songtiao",
-      "details": [
-        {
-          "ac": "有",
-          "balcony": "无",
-          "bathroom": "无独立卫生间，楼内有公共卫生间。大澡堂洗澡",
-          "building": "1，2号楼",
-          "images": [
-            {
-              "caption": "四人间（上床下桌）",
-              "src": "/uploads/images/%E5%AE%8B%E8%B7%B3%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/1%2C2%E5%8F%B7%E6%A5%BC/1%2C2%E5%8F%B7%E6%A5%BC%E5%AE%BF%E8%88%8D%E5%86%85%E6%99%AF.jpg"
-            }
-          ],
-          "laundry": "阳台可自行安装洗衣机",
-          "layout": "上床下桌",
-          "network": "周日至周四24:00断网，周五周六不断网",
-          "notes": "宿舍条件较好，均为标准四人间配置，生活舒适。新改造的卫生间有自洁功能",
-          "price": "1000元/年",
-          "roomType": "四人间",
-          "waterHeater": "宿舍内独立热水器"
-        },
-        {
-          "ac": "有",
-          "balcony": "未知",
-          "bathroom": "有独立卫生间，有公共卫生间，大澡堂洗澡",
-          "building": "3，6号楼(六人间)",
-          "images": [
-            {
-              "caption": "六人间宿舍内景",
-              "src": "/uploads/images/%E5%AE%8B%E8%B7%B3%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/3%2C6%E5%8F%B7%E6%A5%BC/3%2C6%E5%8F%B7%E6%A5%BC%E5%AE%BF%E8%88%8D%E5%86%85%E6%99%AF.jpg"
-            }
-          ],
-          "laundry": "有",
-          "layout": "上下铺",
-          "network": "周日至周四24:00断网，周五周六不断网",
-          "notes": "宿舍条件较好，均为标准六人间配置，生活舒适。",
-          "price": "1000元/年",
-          "roomType": "六人间",
-          "waterHeater": "未知"
-        },
-        {
-          "ac": "有",
-          "balcony": "有",
-          "bathroom": "有独立卫生间和公共卫生间，大澡堂洗澡",
-          "building": "6号楼(四人间)，7，8号楼",
-          "images": [
-            {
-              "caption": "宽敞的四人间宿舍",
-              "src": "/uploads/images/%E5%AE%8B%E8%B7%B3%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/6%2C7%2C8%E5%8F%B7%E6%A5%BC/6%2C7%2C8%E5%8F%B7%E6%A5%BC%E5%AE%BF%E8%88%8D%E5%86%85%E6%99%AF.jpg"
-            }
-          ],
-          "laundry": "未知",
-          "layout": "上床下桌",
-          "network": "周日至周四24:00断网，周五周六不断网",
-          "notes": "宿舍条件较好，均为标准四人间配置，生活舒适。宿舍空间大。",
-          "price": "1200元/年",
-          "roomType": "四人间",
-          "waterHeater": "未知"
-        }
-      ],
-      "id": "songtiao_dorm",
-      "image": "/uploads/images/%E5%AE%8B%E8%B7%B3%E6%A0%A1%E5%8C%BA/%E5%AE%BF%E8%88%8D/%E5%AE%8B%E8%B7%B3%E5%AE%BF%E8%88%8D.jpg",
-      "name": "宋跳校区宿舍",
-      "summary": "宋跳校区学生生活区。"
+      "college": "应用技术学院",
+      "note": "学校公办本科二级学院，全部专业常驻宋跳校区培养（注意按录取通知书区分校本部同名专业）",
+      "majors": [
+        "计算机科学与技术（应用技术学院）",
+        "软件工程（应用技术学院）",
+        "电气工程及其自动化（应用技术学院）",
+        "电子信息工程（应用技术学院）",
+        "机械设计制造及其自动化（应用技术学院）",
+        "机械电子工程（应用技术学院）",
+        "土木工程（应用技术学院）",
+        "会计学（应用技术学院）",
+        "财务管理（应用技术学院）",
+        "工商管理（应用技术学院）",
+        "物流管理（应用技术学院）",
+        "汉语言文学（应用技术学院）"
+      ]
     }
   ]
 }
