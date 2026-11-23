@@ -331,13 +331,20 @@ export function createGuideServer({ fetchImpl = globalThis.fetch } = {}) {
         return sendJson(res, 200, { ok: true, time: new Date().toISOString() });
       }
 
-      // --- Download Legacy 301 Compatibility ---
+      // --- Download Legacy 301 Compatibility (preserving safe promo channel params) ---
       if (
         (pathname === '/download' || pathname === '/download/') &&
         (req.method === 'GET' || req.method === 'HEAD')
       ) {
+        const redirectTarget = new URL(DOWNLOAD_REDIRECT_URL);
+        for (const key of ['s', 'src', 'utm_source', 'ch']) {
+          const rawVal = (urlObj.searchParams.get(key) || '').trim().toLowerCase();
+          if (/^[a-z0-9][a-z0-9_-]{0,31}$/.test(rawVal)) {
+            redirectTarget.searchParams.set(key, rawVal);
+          }
+        }
         res.writeHead(301, {
-          Location: DOWNLOAD_REDIRECT_URL,
+          Location: redirectTarget.toString(),
           'Cache-Control': 'public, max-age=300'
         });
         res.end();
